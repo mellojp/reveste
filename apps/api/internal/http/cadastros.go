@@ -3,7 +3,7 @@ package http
 import (
 	nethttp "net/http"
 
-	casosdeusocadastros "reveste/apps/api/internal/casosdeuso/cadastros"
+	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/dominio/cadastros"
 )
 
@@ -25,7 +25,7 @@ func (a *API) cadastrarUsuario(w nethttp.ResponseWriter, r *nethttp.Request) {
 	if !decodificarJSON(w, r, &entrada) {
 		return
 	}
-	usuario, err := a.cadastros.CadastrarUsuario(r.Context(), casosdeusocadastros.EntradaCadastro{
+	usuario, err := a.cadastros.CadastrarUsuario(r.Context(), casosdeuso.EntradaCadastro{
 		Nome: entrada.Nome, CPF: entrada.CPF, Email: entrada.Email, Senha: entrada.Senha,
 		Telefone: entrada.Telefone, Endereco: entrada.Endereco,
 	})
@@ -44,11 +44,20 @@ func (a *API) autenticar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	if !decodificarJSON(w, r, &entrada) {
 		return
 	}
+	if !a.loginPermitido(r) {
+		escreverJSON(w, nethttp.StatusTooManyRequests, erroResposta{
+			Codigo: "MUITAS_TENTATIVAS", Mensagem: "Tente autenticar novamente mais tarde.",
+			Campos: map[string]string{},
+		})
+		return
+	}
 	sessao, err := a.cadastros.Autenticar(r.Context(), entrada.Identificador, entrada.Senha)
 	if err != nil {
+		a.registrarFalhaLogin(r)
 		a.escreverErro(w, err)
 		return
 	}
+	a.limparFalhasLogin(r)
 	escreverJSON(w, nethttp.StatusCreated, sessao)
 }
 

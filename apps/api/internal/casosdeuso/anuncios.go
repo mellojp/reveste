@@ -1,27 +1,26 @@
-package anuncios
+package casosdeuso
 
 import (
 	"context"
 
-	"reveste/apps/api/internal/casosdeuso"
 	dominioanuncios "reveste/apps/api/internal/dominio/anuncios"
 )
 
-// controller
-type FluxoAnuncio struct {
-	usuarios casosdeuso.OperacoesUsuarios
-	anuncios casosdeuso.OperacoesAnuncios
-	ids      casosdeuso.GeradorID
-	relogio  casosdeuso.Relogio
+// Controla operacoes do catalogo,
+type ControladorAnuncio struct {
+	usuarios OperacoesUsuarios
+	anuncios OperacoesAnuncios
+	ids      GeradorID
+	relogio  Relogio
 }
 
-func NovoFluxoAnuncio(
-	usuarios casosdeuso.OperacoesUsuarios,
-	anuncios casosdeuso.OperacoesAnuncios,
-	ids casosdeuso.GeradorID,
-	relogio casosdeuso.Relogio,
-) *FluxoAnuncio {
-	return &FluxoAnuncio{usuarios: usuarios, anuncios: anuncios, ids: ids, relogio: relogio}
+func NovoControladorAnuncio(
+	usuarios OperacoesUsuarios,
+	anuncios OperacoesAnuncios,
+	ids GeradorID,
+	relogio Relogio,
+) *ControladorAnuncio {
+	return &ControladorAnuncio{usuarios: usuarios, anuncios: anuncios, ids: ids, relogio: relogio}
 }
 
 type EntradaAnuncio struct {
@@ -35,7 +34,7 @@ type EntradaAnuncio struct {
 	URLsFotos         []string
 }
 
-func (c *FluxoAnuncio) CriarAnuncio(
+func (c *ControladorAnuncio) CriarAnuncio(
 	ctx context.Context,
 	idVendedor string,
 	entrada EntradaAnuncio,
@@ -66,9 +65,9 @@ func (c *FluxoAnuncio) CriarAnuncio(
 	return anuncio, nil
 }
 
-func (c *FluxoAnuncio) ListarAnuncios(
+func (c *ControladorAnuncio) ListarAnuncios(
 	ctx context.Context,
-	filtro casosdeuso.FiltroAnuncios,
+	filtro FiltroAnuncios,
 ) ([]dominioanuncios.Anuncio, error) {
 	if filtro.Limite <= 0 || filtro.Limite > 50 {
 		filtro.Limite = 20

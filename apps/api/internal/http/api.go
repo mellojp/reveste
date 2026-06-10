@@ -3,23 +3,24 @@ package http
 import (
 	"log/slog"
 	nethttp "net/http"
+	"sync"
 
-	casosdeusoanuncios "reveste/apps/api/internal/casosdeuso/anuncios"
-	casosdeusocadastros "reveste/apps/api/internal/casosdeuso/cadastros"
-	casosdeusocompras "reveste/apps/api/internal/casosdeuso/compras"
+	"reveste/apps/api/internal/casosdeuso"
 )
 
 type API struct {
-	cadastros *casosdeusocadastros.FluxoCadastro
-	anuncios  *casosdeusoanuncios.FluxoAnuncio
-	compras   *casosdeusocompras.FluxoCarrinho
+	cadastros *casosdeuso.ControladorCadastro
+	anuncios  *casosdeuso.ControladorAnuncio
+	compras   *casosdeuso.ControladorCarrinho
 	logger    *slog.Logger
+	loginMu   sync.Mutex
+	logins    map[string]tentativasLogin
 }
 
 func NovaAPI(
-	cadastros *casosdeusocadastros.FluxoCadastro,
-	anuncios *casosdeusoanuncios.FluxoAnuncio,
-	compras *casosdeusocompras.FluxoCarrinho,
+	cadastros *casosdeuso.ControladorCadastro,
+	anuncios *casosdeuso.ControladorAnuncio,
+	compras *casosdeuso.ControladorCarrinho,
 	logger *slog.Logger,
 ) nethttp.Handler {
 	api := &API{
@@ -27,6 +28,7 @@ func NovaAPI(
 		anuncios:  anuncios,
 		compras:   compras,
 		logger:    logger,
+		logins:    make(map[string]tentativasLogin),
 	}
 	mux := nethttp.NewServeMux()
 

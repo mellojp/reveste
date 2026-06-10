@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	errosdominio "reveste/apps/api/internal/dominio/erros"
+	"reveste/apps/api/internal/common"
 )
 
 func TestAnuncioExigeEntreDuasECincoFotos(t *testing.T) {
@@ -12,7 +12,7 @@ func TestAnuncioExigeEntreDuasECincoFotos(t *testing.T) {
 
 	anuncio := anuncioValido()
 	anuncio.Fotos = anuncio.Fotos[:1]
-	if !errors.Is(anuncio.ValidarNovo(), errosdominio.ErrDadosInvalidos) {
+	if !errors.Is(anuncio.ValidarNovo(), common.ErrDadosInvalidos) {
 		t.Fatal("anuncio com uma foto deveria ser invalido")
 	}
 
@@ -20,7 +20,7 @@ func TestAnuncioExigeEntreDuasECincoFotos(t *testing.T) {
 	for len(anuncio.Fotos) < 6 {
 		anuncio.Fotos = append(anuncio.Fotos, Foto{URL: "https://exemplo.test/foto.jpg"})
 	}
-	if !errors.Is(anuncio.ValidarNovo(), errosdominio.ErrDadosInvalidos) {
+	if !errors.Is(anuncio.ValidarNovo(), common.ErrDadosInvalidos) {
 		t.Fatal("anuncio com seis fotos deveria ser invalido")
 	}
 }
@@ -29,7 +29,7 @@ func TestAnuncioDoProprioUsuarioNaoPodeIrAoCarrinho(t *testing.T) {
 	t.Parallel()
 
 	anuncio := anuncioValido()
-	if err := anuncio.PodeSerAdicionadoAoCarrinho(anuncio.IDVendedor); !errors.Is(err, errosdominio.ErrAnuncioDoProprioAutor) {
+	if err := anuncio.PodeSerAdicionadoAoCarrinho(anuncio.IDVendedor); !errors.Is(err, common.ErrAnuncioDoProprioAutor) {
 		t.Fatalf("erro obtido = %v; esperado ErrAnuncioDoProprioAutor", err)
 	}
 }
@@ -39,7 +39,7 @@ func TestAnuncioIndisponivelNaoPodeIrAoCarrinho(t *testing.T) {
 
 	anuncio := anuncioValido()
 	anuncio.Status = StatusAnuncioReservado
-	if err := anuncio.PodeSerAdicionadoAoCarrinho("outro-usuario"); !errors.Is(err, errosdominio.ErrAnuncioIndisponivel) {
+	if err := anuncio.PodeSerAdicionadoAoCarrinho("outro-usuario"); !errors.Is(err, common.ErrAnuncioIndisponivel) {
 		t.Fatalf("erro obtido = %v; esperado ErrAnuncioIndisponivel", err)
 	}
 }

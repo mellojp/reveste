@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"reveste/apps/api/internal/dominio/erros"
+	"reveste/apps/api/internal/common"
 )
 
 type Endereco struct {
@@ -43,16 +43,16 @@ func (u *Usuario) Normalizar() {
 
 func (u Usuario) Validar() error {
 	if len(u.Nome) < 3 || !CPFValido(u.CPF) {
-		return erros.ErrDadosInvalidos
+		return common.ErrDadosInvalidos
 	}
 	if _, err := mail.ParseAddress(u.Email); err != nil {
-		return erros.ErrDadosInvalidos
+		return common.ErrDadosInvalidos
 	}
 	if len(u.HashSenha) == 0 || len(u.EnderecoPrincipal.CEP) != 8 ||
 		u.EnderecoPrincipal.Logradouro == "" || u.EnderecoPrincipal.Numero == "" ||
 		u.EnderecoPrincipal.Bairro == "" || u.EnderecoPrincipal.Cidade == "" ||
 		len(u.EnderecoPrincipal.Estado) != 2 {
-		return erros.ErrDadosInvalidos
+		return common.ErrDadosInvalidos
 	}
 	return nil
 }

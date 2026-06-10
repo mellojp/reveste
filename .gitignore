@@ -3,5 +3,3 @@
 *.exe
 *.test
 coverage.out
-
-compose.yaml

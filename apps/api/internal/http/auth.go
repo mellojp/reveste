@@ -4,7 +4,7 @@ import (
 	nethttp "net/http"
 	"strings"
 
-	errosdominio "reveste/apps/api/internal/dominio/erros"
+	"reveste/apps/api/internal/common"
 )
 
 type manipuladorAutenticado func(nethttp.ResponseWriter, *nethttp.Request, string, string)
@@ -14,7 +14,7 @@ func (a *API) autenticado(proximo manipuladorAutenticado) nethttp.HandlerFunc {
 		token := extrairToken(r.Header.Get("Authorization"))
 		idUsuario, err := a.cadastros.IdentificarUsuario(r.Context(), token)
 		if err != nil {
-			a.escreverErro(w, errosdominio.ErrNaoAutorizado)
+			a.escreverErro(w, common.ErrNaoAutorizado)
 			return
 		}
 		proximo(w, r, idUsuario, token)

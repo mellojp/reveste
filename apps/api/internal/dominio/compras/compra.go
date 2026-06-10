@@ -3,6 +3,7 @@ package compras
 import (
 	"time"
 
+	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 )
@@ -35,6 +36,24 @@ func (c Compra) CalcularTotal() int64 {
 	return c.ValorTotalItensCentavos + c.ValorTotalFretesCentavos + c.ValorTaxaServicoCentavos
 }
 
+func (c *Compra) AlterarStatus(status StatusCompra) error {
+	if c.Status != StatusCompraAguardandoPagamento ||
+		!statusCompraFinal(status) {
+		return common.ErrTransicaoInvalida
+	}
+	c.Status = status
+	return nil
+}
+
+func statusCompraFinal(status StatusCompra) bool {
+	switch status {
+	case StatusCompraAprovada, StatusCompraRecusada, StatusCompraExpirada, StatusCompraCancelada:
+		return true
+	default:
+		return false
+	}
+}
+
 type StatusPedido string
 
 const (
@@ -57,6 +76,7 @@ type Pedido struct {
 	ValorFreteCentavos           int64              `json:"valor_frete_centavos"`
 	TaxaServicoCentavos          int64              `json:"taxa_servico_centavos"`
 	ValorLiquidoVendedorCentavos int64              `json:"valor_liquido_vendedor_centavos"`
+	NomeDestinatario             string             `json:"nome_destinatario"`
 	EnderecoEntrega              cadastros.Endereco `json:"endereco_entrega"`
 	Itens                        []ItemPedido       `json:"itens"`
 	Entrega                      *Entrega           `json:"entrega,omitempty"`
@@ -64,8 +84,31 @@ type Pedido struct {
 	FinalizadoEm                 *time.Time         `json:"finalizado_em,omitempty"`
 }
 
-func (p *Pedido) AlterarStatus(status StatusPedido) {
+func (p *Pedido) AlterarStatus(status StatusPedido) error {
+	if !transicaoPedidoValida(p.Status, status) {
+		return common.ErrTransicaoInvalida
+	}
 	p.Status = status
+	return nil
+}
+
+func transicaoPedidoValida(atual, proximo StatusPedido) bool {
+	switch atual {
+	case StatusPedidoCriado:
+		return proximo == StatusPedidoAguardandoPagamento ||
+			proximo == StatusPedidoCancelado
+	case StatusPedidoAguardandoPagamento:
+		return proximo == StatusPedidoAguardandoEnvio ||
+			proximo == StatusPedidoCancelado ||
+			proximo == StatusPedidoExpirado
+	case StatusPedidoAguardandoEnvio:
+		return proximo == StatusPedidoAguardandoEntrega ||
+			proximo == StatusPedidoCancelado
+	case StatusPedidoAguardandoEntrega:
+		return proximo == StatusPedidoFinalizado
+	default:
+		return false
+	}
 }
 
 type StatusItemPedido string
@@ -99,6 +142,18 @@ func (i ItemPedido) CalcularTotal() int64 {
 	return i.ValorUnitarioCentavos + i.TaxaServicoCentavos
 }
 
+func (i *ItemPedido) AlterarStatus(status StatusItemPedido) error {
+	valida := i.Status == StatusItemAguardandoEnvio &&
+		(status == StatusItemEnviado || status == StatusItemNaoEnviado) ||
+		i.Status == StatusItemEnviado && status == StatusItemRecebido ||
+		i.Status == StatusItemNaoEnviado && status == StatusItemSuspenso
+	if !valida {
+		return common.ErrTransicaoInvalida
+	}
+	i.Status = status
+	return nil
+}
+
 type StatusPagamento string
 
 const (
@@ -120,6 +175,19 @@ type Pagamento struct {
 	PagoEm               *time.Time      `json:"pago_em,omitempty"`
 }
 
+func (p *Pagamento) AlterarStatus(status StatusPagamento) error {
+	valida := p.Status == StatusPagamentoPendente &&
+		(status == StatusPagamentoAprovado || status == StatusPagamentoRecusado) ||
+		p.Status == StatusPagamentoAprovado &&
+			(status == StatusPagamentoReembolsadoParcial || status == StatusPagamentoReembolsado) ||
+		p.Status == StatusPagamentoReembolsadoParcial && status == StatusPagamentoReembolsado
+	if !valida {
+		return common.ErrTransicaoInvalida
+	}
+	p.Status = status
+	return nil
+}
+
 type StatusReembolso string
 
 const (
@@ -136,7 +204,17 @@ type Reembolso struct {
 	Status               StatusReembolso `json:"status"`
 	ValorCentavos        int64           `json:"valor_centavos"`
 	Motivo               string          `json:"motivo"`
+	ChaveIdempotencia    string          `json:"chave_idempotencia"`
 	ProcessadoEm         *time.Time      `json:"processado_em,omitempty"`
+}
+
+func (r *Reembolso) AlterarStatus(status StatusReembolso) error {
+	if r.Status != StatusReembolsoPendente ||
+		(status != StatusReembolsoProcessado && status != StatusReembolsoFalhou) {
+		return common.ErrTransicaoInvalida
+	}
+	r.Status = status
+	return nil
 }
 
 type StatusEntrega string
@@ -158,4 +236,17 @@ type Entrega struct {
 	ValorFreteCentavos int64         `json:"valor_frete_centavos"`
 	PostadoEm          *time.Time    `json:"postado_em,omitempty"`
 	EntregueEm         *time.Time    `json:"entregue_em,omitempty"`
+}
+
+func (e *Entrega) AlterarStatus(status StatusEntrega) error {
+	valida := e.Status == StatusEntregaAguardandoPostagem && status == StatusEntregaPostado ||
+		e.Status == StatusEntregaPostado &&
+			(status == StatusEntregaEmTransito || status == StatusEntregaEntregue || status == StatusEntregaFalhou) ||
+		e.Status == StatusEntregaEmTransito &&
+			(status == StatusEntregaEntregue || status == StatusEntregaFalhou)
+	if !valida {
+		return common.ErrTransicaoInvalida
+	}
+	e.Status = status
+	return nil
 }

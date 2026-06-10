@@ -40,7 +40,8 @@ type OperacoesAnuncios interface {
 
 type OperacoesCarrinhos interface {
 	ObterOuCriarCarrinho(context.Context, string, string, time.Time) (compras.Carrinho, error)
-	SalvarCarrinho(context.Context, compras.Carrinho) error
+	AdicionarAnuncioAoCarrinho(context.Context, string, string, string, time.Time) (compras.Carrinho, error)
+	RemoverAnuncioDoCarrinho(context.Context, string, string, string, time.Time) (compras.Carrinho, error)
 }
 
 type GeradorID interface {

@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
-	errosdominio "reveste/apps/api/internal/dominio/erros"
 )
 
 type Store struct {
@@ -47,10 +47,10 @@ func (r *Store) CriarUsuario(ctx context.Context, usuario cadastros.Usuario) err
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, existe := r.usuarioPorEmail[usuario.Email]; existe {
-		return errosdominio.ErrConflito
+		return common.ErrConflito
 	}
 	if _, existe := r.usuarioPorCPF[usuario.CPF]; existe {
-		return errosdominio.ErrConflito
+		return common.ErrConflito
 	}
 	r.usuarios[usuario.ID] = usuario
 	r.usuarioPorEmail[usuario.Email] = usuario.ID
@@ -66,7 +66,7 @@ func (r *Store) BuscarUsuarioPorID(ctx context.Context, id string) (cadastros.Us
 	defer r.mu.RUnlock()
 	usuario, existe := r.usuarios[id]
 	if !existe {
-		return cadastros.Usuario{}, errosdominio.ErrNaoEncontrado
+		return cadastros.Usuario{}, common.ErrNaoEncontrado
 	}
 	return usuario, nil
 }
@@ -84,7 +84,7 @@ func (r *Store) BuscarUsuarioPorEmailOuCPF(ctx context.Context, identificador st
 		id, existe = r.usuarioPorCPF[cpf]
 	}
 	if !existe {
-		return cadastros.Usuario{}, errosdominio.ErrNaoEncontrado
+		return cadastros.Usuario{}, common.ErrNaoEncontrado
 	}
 	return r.usuarios[id], nil
 }
@@ -96,7 +96,7 @@ func (r *Store) CriarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) erro
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, existe := r.anuncios[anuncio.ID]; existe {
-		return errosdominio.ErrConflito
+		return common.ErrConflito
 	}
 	r.anuncios[anuncio.ID] = copiarAnuncio(anuncio)
 	return nil
@@ -110,7 +110,7 @@ func (r *Store) BuscarAnuncioPorID(ctx context.Context, id string) (anuncios.Anu
 	defer r.mu.RUnlock()
 	anuncio, existe := r.anuncios[id]
 	if !existe {
-		return anuncios.Anuncio{}, errosdominio.ErrNaoEncontrado
+		return anuncios.Anuncio{}, common.ErrNaoEncontrado
 	}
 	return copiarAnuncio(anuncio), nil
 }
@@ -182,14 +182,54 @@ func (r *Store) ObterOuCriarCarrinho(ctx context.Context, novoID, idUsuario stri
 	return copiarCarrinho(carrinho), nil
 }
 
-func (r *Store) SalvarCarrinho(ctx context.Context, carrinho compras.Carrinho) error {
+func (r *Store) AdicionarAnuncioAoCarrinho(
+	ctx context.Context,
+	novoID,
+	idUsuario,
+	idAnuncio string,
+	agora time.Time,
+) (compras.Carrinho, error) {
 	if err := ctx.Err(); err != nil {
-		return err
+		return compras.Carrinho{}, err
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	carrinho, existe := r.carrinhoPorUsuario[idUsuario]
+	if !existe {
+		carrinho = compras.Carrinho{
+			ID: novoID, IDUsuario: idUsuario, IDsAnuncios: []string{},
+			CriadoEm: agora, AtualizadoEm: agora,
+		}
+	}
+	carrinho.Adicionar(idAnuncio)
+	carrinho.AtualizadoEm = agora
 	r.carrinhoPorUsuario[carrinho.IDUsuario] = copiarCarrinho(carrinho)
-	return nil
+	return copiarCarrinho(carrinho), nil
+}
+
+func (r *Store) RemoverAnuncioDoCarrinho(
+	ctx context.Context,
+	novoID,
+	idUsuario,
+	idAnuncio string,
+	agora time.Time,
+) (compras.Carrinho, error) {
+	if err := ctx.Err(); err != nil {
+		return compras.Carrinho{}, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	carrinho, existe := r.carrinhoPorUsuario[idUsuario]
+	if !existe {
+		carrinho = compras.Carrinho{
+			ID: novoID, IDUsuario: idUsuario, IDsAnuncios: []string{},
+			CriadoEm: agora, AtualizadoEm: agora,
+		}
+	}
+	carrinho.Remover(idAnuncio)
+	carrinho.AtualizadoEm = agora
+	r.carrinhoPorUsuario[idUsuario] = copiarCarrinho(carrinho)
+	return copiarCarrinho(carrinho), nil
 }
 
 func (r *Store) CriarSessao(ctx context.Context, token, idUsuario string, expiraEm time.Time) error {
@@ -210,7 +250,7 @@ func (r *Store) BuscarUsuarioDaSessao(ctx context.Context, token string, agora t
 	defer r.mu.RUnlock()
 	sessaoAtual, existe := r.sessoes[token]
 	if !existe || !agora.Before(sessaoAtual.ExpiraEm) {
-		return "", errosdominio.ErrNaoAutorizado
+		return "", common.ErrNaoAutorizado
 	}
 	return sessaoAtual.IDUsuario, nil
 }

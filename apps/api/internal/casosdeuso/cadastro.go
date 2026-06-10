@@ -1,32 +1,33 @@
-package cadastros
+package casosdeuso
 
 import (
 	"context"
 	"strings"
 	"time"
 
-	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/common"
 	dominiocadastros "reveste/apps/api/internal/dominio/cadastros"
-	errosdominio "reveste/apps/api/internal/dominio/erros"
 )
 
-// controller
-type FluxoCadastro struct {
-	usuarios casosdeuso.OperacoesUsuarios
-	sessoes  casosdeuso.OperacoesSessoes
-	ids      casosdeuso.GeradorID
-	senhas   casosdeuso.GerenciadorSenhas
-	relogio  casosdeuso.Relogio
+const hashSenhaInexistente = "pbkdf2_sha256$210000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+// Controla operacoes de cadastro e sessao
+type ControladorCadastro struct {
+	usuarios OperacoesUsuarios
+	sessoes  OperacoesSessoes
+	ids      GeradorID
+	senhas   GerenciadorSenhas
+	relogio  Relogio
 }
 
-func NovoFluxoCadastro(
-	usuarios casosdeuso.OperacoesUsuarios,
-	sessoes casosdeuso.OperacoesSessoes,
-	ids casosdeuso.GeradorID,
-	senhas casosdeuso.GerenciadorSenhas,
-	relogio casosdeuso.Relogio,
-) *FluxoCadastro {
-	return &FluxoCadastro{
+func NovoControladorCadastro(
+	usuarios OperacoesUsuarios,
+	sessoes OperacoesSessoes,
+	ids GeradorID,
+	senhas GerenciadorSenhas,
+	relogio Relogio,
+) *ControladorCadastro {
+	return &ControladorCadastro{
 		usuarios: usuarios,
 		sessoes:  sessoes,
 		ids:      ids,
@@ -44,12 +45,12 @@ type EntradaCadastro struct {
 	Endereco dominiocadastros.Endereco
 }
 
-func (c *FluxoCadastro) CadastrarUsuario(
+func (c *ControladorCadastro) CadastrarUsuario(
 	ctx context.Context,
 	entrada EntradaCadastro,
 ) (dominiocadastros.Usuario, error) {
 	if len(entrada.Senha) < 8 {
-		return dominiocadastros.Usuario{}, errosdominio.ErrDadosInvalidos
+		return dominiocadastros.Usuario{}, common.ErrDadosInvalidos
 	}
 	hash, err := c.senhas.Gerar(entrada.Senha)
 	if err != nil {
@@ -77,10 +78,15 @@ type Sessao struct {
 	Usuario  dominiocadastros.Usuario `json:"usuario"`
 }
 
-func (c *FluxoCadastro) Autenticar(ctx context.Context, identificador, senha string) (Sessao, error) {
+func (c *ControladorCadastro) Autenticar(ctx context.Context, identificador, senha string) (Sessao, error) {
 	usuario, err := c.usuarios.BuscarUsuarioPorEmailOuCPF(ctx, strings.TrimSpace(identificador))
-	if err != nil || !c.senhas.Comparar(usuario.HashSenha, senha) {
-		return Sessao{}, errosdominio.ErrNaoAutorizado
+	hash := usuario.HashSenha
+	if err != nil {
+		hash = hashSenhaInexistente
+	}
+	senhaValida := c.senhas.Comparar(hash, senha)
+	if err != nil || !senhaValida {
+		return Sessao{}, common.ErrNaoAutorizado
 	}
 	token := c.ids.Novo() + c.ids.Novo()
 	expiraEm := c.relogio.Agora().Add(24 * time.Hour)
@@ -90,13 +96,13 @@ func (c *FluxoCadastro) Autenticar(ctx context.Context, identificador, senha str
 	return Sessao{Token: token, ExpiraEm: expiraEm, Usuario: usuario}, nil
 }
 
-func (c *FluxoCadastro) IdentificarUsuario(ctx context.Context, token string) (string, error) {
+func (c *ControladorCadastro) IdentificarUsuario(ctx context.Context, token string) (string, error) {
 	if token == "" {
-		return "", errosdominio.ErrNaoAutorizado
+		return "", common.ErrNaoAutorizado
 	}
 	return c.sessoes.BuscarUsuarioDaSessao(ctx, token, c.relogio.Agora())
 }
 
-func (c *FluxoCadastro) EncerrarSessao(ctx context.Context, token string) error {
+func (c *ControladorCadastro) EncerrarSessao(ctx context.Context, token string) error {
 	return c.sessoes.RemoverSessao(ctx, token)
 }

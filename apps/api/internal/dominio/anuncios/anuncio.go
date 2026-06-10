@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"reveste/apps/api/internal/dominio/erros"
+	"reveste/apps/api/internal/common"
 )
 
 type StatusAnuncio string
@@ -68,11 +68,11 @@ func (a Anuncio) ValidarNovo() error {
 		a.Categoria == "" || a.Tamanho == "" || a.Cor == "" ||
 		a.PrecoCentavos <= 0 || !a.EstadoConservacao.Valido() ||
 		len(a.Fotos) < 2 || len(a.Fotos) > 5 {
-		return erros.ErrDadosInvalidos
+		return common.ErrDadosInvalidos
 	}
 	for _, foto := range a.Fotos {
 		if foto.URL == "" {
-			return erros.ErrDadosInvalidos
+			return common.ErrDadosInvalidos
 		}
 	}
 	return nil
@@ -89,10 +89,10 @@ func (e EstadoConservacao) Valido() bool {
 
 func (a Anuncio) PodeSerAdicionadoAoCarrinho(idComprador string) error {
 	if a.Status != StatusAnuncioDisponivel {
-		return erros.ErrAnuncioIndisponivel
+		return common.ErrAnuncioIndisponivel
 	}
 	if a.IDVendedor == idComprador {
-		return erros.ErrAnuncioDoProprioAutor
+		return common.ErrAnuncioDoProprioAutor
 	}
 	return nil
 }

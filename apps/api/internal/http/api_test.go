@@ -11,13 +11,10 @@ import (
 	"time"
 
 	"reveste/apps/api/internal/casosdeuso"
-	casosdeusoanuncios "reveste/apps/api/internal/casosdeuso/anuncios"
-	casosdeusocadastros "reveste/apps/api/internal/casosdeuso/cadastros"
-	casosdeusocompras "reveste/apps/api/internal/casosdeuso/compras"
+	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
-	errosdominio "reveste/apps/api/internal/dominio/erros"
 	httptransport "reveste/apps/api/internal/http"
 )
 
@@ -28,11 +25,11 @@ func (operacoesHTTP) CriarUsuario(context.Context, cadastros.Usuario) error {
 }
 
 func (operacoesHTTP) BuscarUsuarioPorID(context.Context, string) (cadastros.Usuario, error) {
-	return cadastros.Usuario{}, errosdominio.ErrNaoEncontrado
+	return cadastros.Usuario{}, common.ErrNaoEncontrado
 }
 
 func (operacoesHTTP) BuscarUsuarioPorEmailOuCPF(context.Context, string) (cadastros.Usuario, error) {
-	return cadastros.Usuario{}, errosdominio.ErrNaoEncontrado
+	return cadastros.Usuario{}, common.ErrNaoEncontrado
 }
 
 func (operacoesHTTP) CriarAnuncio(context.Context, anuncios.Anuncio) error {
@@ -40,7 +37,7 @@ func (operacoesHTTP) CriarAnuncio(context.Context, anuncios.Anuncio) error {
 }
 
 func (operacoesHTTP) BuscarAnuncioPorID(context.Context, string) (anuncios.Anuncio, error) {
-	return anuncios.Anuncio{}, errosdominio.ErrNaoEncontrado
+	return anuncios.Anuncio{}, common.ErrNaoEncontrado
 }
 
 func (operacoesHTTP) ListarAnuncios(
@@ -54,8 +51,16 @@ func (operacoesHTTP) ObterOuCriarCarrinho(context.Context, string, string, time.
 	return compras.Carrinho{}, nil
 }
 
-func (operacoesHTTP) SalvarCarrinho(context.Context, compras.Carrinho) error {
-	return nil
+func (operacoesHTTP) AdicionarAnuncioAoCarrinho(
+	context.Context, string, string, string, time.Time,
+) (compras.Carrinho, error) {
+	return compras.Carrinho{}, nil
+}
+
+func (operacoesHTTP) RemoverAnuncioDoCarrinho(
+	context.Context, string, string, string, time.Time,
+) (compras.Carrinho, error) {
+	return compras.Carrinho{}, nil
 }
 
 func (operacoesHTTP) CriarSessao(context.Context, string, string, time.Time) error {
@@ -63,7 +68,7 @@ func (operacoesHTTP) CriarSessao(context.Context, string, string, time.Time) err
 }
 
 func (operacoesHTTP) BuscarUsuarioDaSessao(context.Context, string, time.Time) (string, error) {
-	return "", errosdominio.ErrNaoAutorizado
+	return "", common.ErrNaoAutorizado
 }
 
 func (operacoesHTTP) RemoverSessao(context.Context, string) error {
@@ -94,13 +99,13 @@ func (relogioHTTP) Agora() time.Time {
 
 func novoHandler() nethttp.Handler {
 	operacoes := operacoesHTTP{}
-	cadastrosCU := casosdeusocadastros.NovoFluxoCadastro(
+	cadastrosCU := casosdeuso.NovoControladorCadastro(
 		operacoes, operacoes, idHTTP{}, senhaHTTP{}, relogioHTTP{},
 	)
-	anunciosCU := casosdeusoanuncios.NovoFluxoAnuncio(
+	anunciosCU := casosdeuso.NovoControladorAnuncio(
 		operacoes, operacoes, idHTTP{}, relogioHTTP{},
 	)
-	comprasCU := casosdeusocompras.NovoFluxoCarrinho(
+	comprasCU := casosdeuso.NovoControladorCarrinho(
 		operacoes, operacoes, idHTTP{}, relogioHTTP{},
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -143,5 +148,51 @@ func TestCarrinhoContinuaExigindoAutenticacao(t *testing.T) {
 
 	if resposta.Code != nethttp.StatusUnauthorized {
 		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusUnauthorized)
+	}
+}
+
+func TestCatalogoRejeitaFiltroInvalido(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/anuncios?deslocamento=-1", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusBadRequest {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusBadRequest)
+	}
+}
+
+func TestCadastroRejeitaSegundoValorJSON(t *testing.T) {
+	corpo := `{"nome":"Teste"} {"nome":"Outro"}`
+	requisicao := httptest.NewRequest(nethttp.MethodPost, "/v1/usuarios", strings.NewReader(corpo))
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusBadRequest {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusBadRequest)
+	}
+}
+
+func TestLoginLimitaTentativasRepetidas(t *testing.T) {
+	handler := novoHandler()
+	corpo := `{"identificador":"inexistente@teste.local","senha":"senha-invalida"}`
+
+	for tentativa := 1; tentativa <= 5; tentativa++ {
+		requisicao := httptest.NewRequest(nethttp.MethodPost, "/v1/sessoes", strings.NewReader(corpo))
+		requisicao.RemoteAddr = "192.0.2.10:1234"
+		resposta := httptest.NewRecorder()
+		handler.ServeHTTP(resposta, requisicao)
+		if resposta.Code != nethttp.StatusUnauthorized {
+			t.Fatalf("tentativa %d: status = %d; esperado %d", tentativa, resposta.Code, nethttp.StatusUnauthorized)
+		}
+	}
+
+	requisicao := httptest.NewRequest(nethttp.MethodPost, "/v1/sessoes", strings.NewReader(corpo))
+	requisicao.RemoteAddr = "192.0.2.10:1234"
+	resposta := httptest.NewRecorder()
+	handler.ServeHTTP(resposta, requisicao)
+	if resposta.Code != nethttp.StatusTooManyRequests {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusTooManyRequests)
 	}
 }

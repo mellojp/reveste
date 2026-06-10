@@ -1,30 +1,29 @@
-package compras
+package casosdeuso
 
 import (
 	"context"
 	"errors"
 
-	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	dominiocompras "reveste/apps/api/internal/dominio/compras"
-	errosdominio "reveste/apps/api/internal/dominio/erros"
 )
 
-// controller
-type FluxoCarrinho struct {
-	anuncios  casosdeuso.OperacoesAnuncios
-	carrinhos casosdeuso.OperacoesCarrinhos
-	ids       casosdeuso.GeradorID
-	relogio   casosdeuso.Relogio
+// Controla operacoes do carrinho
+type ControladorCarrinho struct {
+	anuncios  OperacoesAnuncios
+	carrinhos OperacoesCarrinhos
+	ids       GeradorID
+	relogio   Relogio
 }
 
-func NovoFluxoCarrinho(
-	anuncios casosdeuso.OperacoesAnuncios,
-	carrinhos casosdeuso.OperacoesCarrinhos,
-	ids casosdeuso.GeradorID,
-	relogio casosdeuso.Relogio,
-) *FluxoCarrinho {
-	return &FluxoCarrinho{anuncios: anuncios, carrinhos: carrinhos, ids: ids, relogio: relogio}
+func NovoControladorCarrinho(
+	anuncios OperacoesAnuncios,
+	carrinhos OperacoesCarrinhos,
+	ids GeradorID,
+	relogio Relogio,
+) *ControladorCarrinho {
+	return &ControladorCarrinho{anuncios: anuncios, carrinhos: carrinhos, ids: ids, relogio: relogio}
 }
 
 type CarrinhoDetalhado struct {
@@ -34,7 +33,7 @@ type CarrinhoDetalhado struct {
 	TotalCentavos int64              `json:"total_centavos"`
 }
 
-func (c *FluxoCarrinho) ObterCarrinho(ctx context.Context, idUsuario string) (CarrinhoDetalhado, error) {
+func (c *ControladorCarrinho) ObterCarrinho(ctx context.Context, idUsuario string) (CarrinhoDetalhado, error) {
 	carrinho, err := c.carrinhos.ObterOuCriarCarrinho(ctx, c.ids.Novo(), idUsuario, c.relogio.Agora())
 	if err != nil {
 		return CarrinhoDetalhado{}, err
@@ -42,7 +41,7 @@ func (c *FluxoCarrinho) ObterCarrinho(ctx context.Context, idUsuario string) (Ca
 	return c.detalharCarrinho(ctx, carrinho)
 }
 
-func (c *FluxoCarrinho) AdicionarAoCarrinho(
+func (c *ControladorCarrinho) AdicionarAoCarrinho(
 	ctx context.Context,
 	idUsuario,
 	idAnuncio string,
@@ -55,44 +54,40 @@ func (c *FluxoCarrinho) AdicionarAoCarrinho(
 		return CarrinhoDetalhado{}, err
 	}
 	agora := c.relogio.Agora()
-	carrinho, err := c.carrinhos.ObterOuCriarCarrinho(ctx, c.ids.Novo(), idUsuario, agora)
+	carrinho, err := c.carrinhos.AdicionarAnuncioAoCarrinho(
+		ctx, c.ids.Novo(), idUsuario, idAnuncio, agora,
+	)
 	if err != nil {
-		return CarrinhoDetalhado{}, err
-	}
-	carrinho.Adicionar(idAnuncio)
-	carrinho.AtualizadoEm = agora
-	if err := c.carrinhos.SalvarCarrinho(ctx, carrinho); err != nil {
 		return CarrinhoDetalhado{}, err
 	}
 	return c.detalharCarrinho(ctx, carrinho)
 }
 
-func (c *FluxoCarrinho) RemoverDoCarrinho(
+func (c *ControladorCarrinho) RemoverDoCarrinho(
 	ctx context.Context,
 	idUsuario,
 	idAnuncio string,
 ) (CarrinhoDetalhado, error) {
 	agora := c.relogio.Agora()
-	carrinho, err := c.carrinhos.ObterOuCriarCarrinho(ctx, c.ids.Novo(), idUsuario, agora)
+	carrinho, err := c.carrinhos.RemoverAnuncioDoCarrinho(
+		ctx, c.ids.Novo(), idUsuario, idAnuncio, agora,
+	)
 	if err != nil {
-		return CarrinhoDetalhado{}, err
-	}
-	carrinho.Remover(idAnuncio)
-	carrinho.AtualizadoEm = agora
-	if err := c.carrinhos.SalvarCarrinho(ctx, carrinho); err != nil {
 		return CarrinhoDetalhado{}, err
 	}
 	return c.detalharCarrinho(ctx, carrinho)
 }
 
-func (c *FluxoCarrinho) detalharCarrinho(
+func (c *ControladorCarrinho) detalharCarrinho(
 	ctx context.Context,
 	carrinho dominiocompras.Carrinho,
 ) (CarrinhoDetalhado, error) {
-	resultado := CarrinhoDetalhado{ID: carrinho.ID, IDUsuario: carrinho.IDUsuario}
+	resultado := CarrinhoDetalhado{
+		ID: carrinho.ID, IDUsuario: carrinho.IDUsuario, Anuncios: []anuncios.Anuncio{},
+	}
 	for _, idAnuncio := range carrinho.IDsAnuncios {
 		anuncio, err := c.anuncios.BuscarAnuncioPorID(ctx, idAnuncio)
-		if errors.Is(err, errosdominio.ErrNaoEncontrado) {
+		if errors.Is(err, common.ErrNaoEncontrado) {
 			continue
 		}
 		if err != nil {

@@ -305,11 +305,10 @@ integrar servicos externos de alta complexidade.
 |           |   |-- anuncios/
 |           |   |-- compras/
 |           |   |-- interacao/
-|           |   `-- erros/
 |           |-- casosdeuso/
-|           |   |-- cadastros/
-|           |   |-- anuncios/
-|           |   `-- compras/
+|           |   |-- cadastro.go
+|           |   |-- anuncios.go
+|           |   `-- carrinho.go
 |           |-- database/
 |           |-- http/
 |           `-- common/
@@ -333,15 +332,15 @@ No backend:
 - `dominio/anuncios`: anuncio, foto, conservacao e estados de catalogo;
 - `dominio/compras`: carrinho, compra, pedido, pagamento, reembolso e entrega;
 - `dominio/interacao`: conversa, mensagem, notificacao e avaliacao;
-- `dominio/erros`: erros compartilhados entre os modulos;
-- `casosdeuso/cadastros`: cadastro, autenticacao e gerenciamento de sessao;
-- `casosdeuso/anuncios`: publicacao e consulta do catalogo;
-- `casosdeuso/compras`: carrinho e, futuramente, checkout e pedidos;
+- `casosdeuso/cadastro.go`: cadastro, autenticacao e gerenciamento de sessao;
+- `casosdeuso/anuncios.go`: publicacao e consulta do catalogo;
+- `casosdeuso/carrinho.go`: carrinho e, futuramente, checkout e pedidos;
 - `casosdeuso/contratos.go`: contratos externos compartilhados pelo modulo;
 - `database`: implementacao de persistencia PostgreSQL;
 - `http`: transporte separado em arquivos por cadastros, anuncios, carrinho,
   autenticacao, respostas e middlewares;
-- `common`: leitura de ambiente, `.env`, seguranca, IDs e tempo.
+- `common`: erros compartilhados, leitura de ambiente, `.env`, seguranca, IDs
+  e tempo.
 
 Esta divisao deve ser aplicada pragmaticamente. Nao e necessario criar uma interface
 para cada funcao; interfaces devem existir nos limites externos e nos pontos que exigem

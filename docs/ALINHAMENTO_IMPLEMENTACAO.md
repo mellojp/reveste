@@ -30,6 +30,20 @@
 - adicionar e remover anuncio do carrinho;
 - validar CPF, anuncio, quantidade de fotos e disponibilidade.
 
+## Correspondencia dos controladores
+
+| Responsabilidade arquitetural | Implementacao |
+|---|---|
+| Controller de aplicacao (GRASP) | `casosdeuso.Controlador*` |
+| Adaptador/controller HTTP | `internal/http.API` e seus handlers |
+| Entidades e regras de dominio | `internal/dominio/*` |
+| Portas de saida | interfaces em `casosdeuso/contratos.go` |
+| Adaptador de persistencia | `database/postgres.Store` |
+
+Os controladores de aplicacao coordenam casos de uso e nao conhecem HTTP ou
+PostgreSQL. Os handlers HTTP traduzem o protocolo; o store PostgreSQL implementa
+as portas usadas pelos controladores.
+
 ## Comportamentos modelados, ainda nao executaveis
 
 - checkout e criacao de pedidos por vendedor;
