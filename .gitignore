@@ -1,0 +1,7 @@
+/.cache/
+/.env
+*.exe
+*.test
+coverage.out
+
+compose.yaml
