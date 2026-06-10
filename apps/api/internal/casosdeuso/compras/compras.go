@@ -10,6 +10,7 @@ import (
 	errosdominio "reveste/apps/api/internal/dominio/erros"
 )
 
+// controller
 type FluxoCarrinho struct {
 	anuncios  casosdeuso.OperacoesAnuncios
 	carrinhos casosdeuso.OperacoesCarrinhos

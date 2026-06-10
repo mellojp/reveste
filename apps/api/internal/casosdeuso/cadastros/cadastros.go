@@ -10,6 +10,7 @@ import (
 	errosdominio "reveste/apps/api/internal/dominio/erros"
 )
 
+// controller
 type FluxoCadastro struct {
 	usuarios casosdeuso.OperacoesUsuarios
 	sessoes  casosdeuso.OperacoesSessoes

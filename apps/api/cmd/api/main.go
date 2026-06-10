@@ -33,6 +33,7 @@ func main() {
 	}
 	defer database.Close()
 
+	//controller de cadstros
 	cadastros := casosdeusocadastros.NovoFluxoCadastro(
 		database,
 		database,
@@ -40,12 +41,14 @@ func main() {
 		common.ProcessadorPBKDF2{Iteracoes: 210_000},
 		common.RelogioSistema{},
 	)
+	//controller de anuncios
 	anuncios := casosdeusoanuncios.NovoFluxoAnuncio(
 		database,
 		database,
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 	)
+	//controller de compras
 	compras := casosdeusocompras.NovoFluxoCarrinho(
 		database,
 		database,

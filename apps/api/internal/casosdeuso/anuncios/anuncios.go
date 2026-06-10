@@ -7,6 +7,7 @@ import (
 	dominioanuncios "reveste/apps/api/internal/dominio/anuncios"
 )
 
+// controller
 type FluxoAnuncio struct {
 	usuarios casosdeuso.OperacoesUsuarios
 	anuncios casosdeuso.OperacoesAnuncios
