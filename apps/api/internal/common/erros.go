@@ -10,6 +10,7 @@ var (
 	ErrAnuncioIndisponivel   = errors.New("anuncio indisponivel")
 	ErrAnuncioDoProprioAutor = errors.New("nao e permitido adicionar o proprio anuncio ao carrinho")
 	ErrTransicaoInvalida     = errors.New("transicao de estado invalida")
+	ErrServicoIndisponivel   = errors.New("servico temporariamente indisponivel")
 )
 
 type ErroValidacao struct {

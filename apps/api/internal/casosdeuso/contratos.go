@@ -47,6 +47,25 @@ type OperacoesCarrinhos interface {
 	RemoverAnuncioDoCarrinho(context.Context, string, string, string, time.Time) (compras.Carrinho, error)
 }
 
+type SolicitacaoUpload struct {
+	Pathname           string
+	TiposPermitidos    []string
+	TamanhoMaximoBytes int64
+	ExpiraEm           time.Time
+}
+
+type AutorizacaoUpload struct {
+	URLUpload          string   `json:"url_upload"`
+	Pathname           string   `json:"pathname"`
+	Token              string   `json:"token"`
+	TiposAceitos       []string `json:"tipos_aceitos"`
+	TamanhoMaximoBytes int64    `json:"tamanho_maximo_bytes"`
+}
+
+type ArmazenamentoArquivos interface {
+	AutorizarUpload(context.Context, SolicitacaoUpload) (AutorizacaoUpload, error)
+}
+
 type GeradorID interface {
 	Novo() string
 }

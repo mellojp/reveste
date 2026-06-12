@@ -23,6 +23,9 @@ const elements = {
   searchInput: document.querySelector("#search-input"),
   conditionFilter: document.querySelector("#condition-filter"),
   toastRegion: document.querySelector("#toast-region"),
+  photoInput: document.querySelector("#photo-input"),
+  photoPreview: document.querySelector("#photo-preview"),
+  uploadStatus: document.querySelector("#upload-status"),
 };
 
 function money(cents) {
@@ -237,9 +240,103 @@ async function openProfile() {
 
 function adImage(ad, className = "") {
   const url = ad.fotos?.[0]?.url;
-  return url
+  return isPublicImageURL(url)
     ? `<img class="${className}" src="${escapeHTML(url)}" alt="" loading="lazy" onerror="this.remove()">`
     : placeholderSVG();
+}
+
+function isPublicImageURL(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function renderPhotoPreview() {
+  const files = [...elements.photoInput.files];
+  elements.photoPreview.innerHTML = "";
+  files.forEach((file, index) => {
+    const item = document.createElement("div");
+    item.className = "photo-preview-item";
+    const image = document.createElement("img");
+    image.alt = `Prévia da foto ${index + 1}`;
+    image.src = URL.createObjectURL(file);
+    image.addEventListener("load", () => URL.revokeObjectURL(image.src), { once: true });
+    const order = document.createElement("span");
+    order.textContent = `${index + 1}`;
+    item.append(image, order);
+    elements.photoPreview.append(item);
+  });
+}
+
+function validatePhotoFiles(files) {
+  if (files.length < 2 || files.length > 5) {
+    return "Selecione entre 2 e 5 imagens.";
+  }
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (files.some((file) => !allowedTypes.has(file.type))) {
+    return "Envie apenas imagens JPEG, PNG ou WebP.";
+  }
+  if (files.some((file) => file.size <= 0 || file.size > 5 * 1024 * 1024)) {
+    return "Cada imagem deve ter no máximo 5 MB.";
+  }
+  return "";
+}
+
+async function uploadPhoto(file, index, total) {
+  elements.uploadStatus.classList.remove("hidden");
+  elements.uploadStatus.textContent = `Enviando foto ${index + 1} de ${total}...`;
+  const authorization = await request("/v1/uploads/imagens/autorizacoes", {
+    method: "POST",
+    body: JSON.stringify({
+      nome_arquivo: file.name,
+      tipo: file.type,
+      tamanho: file.size,
+    }),
+  });
+  const storeId = authorization.token.split("_")[3];
+  const uploadURL = new URL(authorization.url_upload);
+  uploadURL.searchParams.set("pathname", authorization.pathname);
+  let response;
+  try {
+    response = await fetch(uploadURL, {
+      method: "PUT",
+      body: file,
+      headers: {
+        Authorization: `Bearer ${authorization.token}`,
+        "x-api-version": "12",
+        "x-api-blob-request-id": `${storeId}:${Date.now()}:${crypto.randomUUID()}`,
+        "x-api-blob-request-attempt": "0",
+        "x-vercel-blob-store-id": storeId,
+        "x-vercel-blob-access": "public",
+        "x-content-type": file.type,
+      },
+    });
+  } catch {
+    throw new Error(
+      "O upload foi recusado. Confirme que o Blob store da Vercel foi criado com acesso público.",
+    );
+  }
+  const blob = await response.json().catch(() => null);
+  if (!response.ok || !blob?.url) {
+    const providerMessage = blob?.error?.message || "";
+    if (providerMessage.includes("private store")) {
+      throw new Error("O Blob store da Vercel precisa ter acesso público.");
+    }
+    throw new Error(providerMessage || `Não foi possível enviar ${file.name}.`);
+  }
+  return blob.url;
+}
+
+async function uploadPhotos(files) {
+  const urls = [];
+  for (const [index, file] of files.entries()) {
+    urls.push(await uploadPhoto(file, index, files.length));
+  }
+  elements.uploadStatus.textContent = "Fotos enviadas. Finalizando anúncio...";
+  return urls;
 }
 
 function renderAds() {
@@ -396,6 +493,8 @@ elements.conditionFilter.addEventListener("change", () => {
   loadAds();
 });
 
+elements.photoInput.addEventListener("change", renderPhotoPreview);
+
 document.querySelector("#login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const formElement = event.currentTarget;
@@ -462,7 +561,13 @@ document.querySelector("#sell-form").addEventListener("submit", async (event) =>
   const formElement = event.currentTarget;
   const form = Object.fromEntries(new FormData(formElement));
   clearFormErrors(formElement);
-  const urls = form.fotos.split("\n").map((url) => url.trim()).filter(Boolean);
+  const files = [...elements.photoInput.files];
+  const photoError = validatePhotoFiles(files);
+  if (photoError) {
+    showFormErrors(formElement, { fotos: photoError });
+    toast(photoError);
+    return;
+  }
   const normalizedPrice = form.preco.replace(/\./g, "").replace(",", ".");
   const payload = {
     titulo: form.titulo,
@@ -472,12 +577,8 @@ document.querySelector("#sell-form").addEventListener("submit", async (event) =>
     cor: form.cor,
     estado_conservacao: form.estado_conservacao,
     preco_centavos: Math.round(Number(normalizedPrice) * 100),
-    urls_fotos: urls,
+    urls_fotos: [],
   };
-  if (urls.length < 2 || urls.length > 5) {
-    toast("Informe entre 2 e 5 URLs de fotos.");
-    return;
-  }
   if (!Number.isFinite(payload.preco_centavos) || payload.preco_centavos <= 0) {
     toast("Informe um preço válido.");
     return;
@@ -486,17 +587,22 @@ document.querySelector("#sell-form").addEventListener("submit", async (event) =>
   const button = formElement.querySelector("button[type=submit]");
   button.disabled = true;
   try {
+    payload.urls_fotos = await uploadPhotos(files);
     await request("/v1/anuncios", { method: "POST", body: JSON.stringify(payload) });
     elements.sellModal.close();
     formElement.reset();
+    elements.photoPreview.innerHTML = "";
+    elements.uploadStatus.classList.add("hidden");
     await loadAds();
     document.querySelector("#catalog").scrollIntoView();
     toast("Anúncio publicado.");
   } catch (error) {
+    elements.uploadStatus.classList.add("hidden");
     showFormErrors(formElement, error.fields);
     toast(error.message);
   } finally {
     button.disabled = false;
+    if (!elements.sellModal.open) elements.uploadStatus.classList.add("hidden");
   }
 });
 

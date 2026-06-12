@@ -45,7 +45,7 @@ Telas e fluxos disponiveis:
 - busca por texto, categoria e estado de conservacao;
 - cadastro com mensagens de validacao junto aos campos;
 - login, logout e sessao mantida em `sessionStorage`;
-- publicacao de anuncio com 2 a 5 URLs de fotos;
+- publicacao de anuncio com upload de 2 a 5 fotos;
 - perfil com dados pessoais, endereco e painel de anuncios;
 - carrinho com inclusao e remocao de pecas.
 
@@ -60,6 +60,59 @@ de producao.
 - `GET /v1/anuncios`: quando recebe um Bearer valido, omite anuncios do proprio
   usuario; sem autenticacao, continua publico;
 - erros de cadastro podem preencher `campos` com mensagens especificas por input.
+
+## Armazenamento de imagens
+
+Os arquivos de imagem sao armazenados em um Vercel Blob store configurado com
+acesso publico. O PostgreSQL persiste apenas as URLs publicas e a ordem das fotos
+em `foto_anuncio`.
+
+O fluxo adotado e:
+
+1. o frontend seleciona e valida de 2 a 5 imagens JPEG, PNG ou WebP;
+2. para cada arquivo, solicita autorizacao em
+   `POST /v1/uploads/imagens/autorizacoes`;
+3. a API autentica o usuario e emite um token Vercel Blob restrito ao pathname,
+   tipos permitidos, limite de 5 MB e validade de 10 minutos;
+4. o navegador envia o arquivo diretamente ao Vercel Blob;
+5. as URLs retornadas sao enviadas na criacao do anuncio.
+
+Os adaptadores ficam em `internal/storage/vercel` e
+`internal/storage/postgres`: o primeiro persiste objetos externos; o segundo
+persiste dados relacionais. A porta `ArmazenamentoArquivos` mantem o caso de uso
+independente do provedor e permite trocar Vercel Blob por S3 no futuro.
+
+Ainda falta implementar limpeza de imagens orfas quando o upload conclui, mas a
+criacao do anuncio falha ou e abandonada.
+
+### Politica de acesso aos arquivos
+
+Fotos de anuncios usam um Blob store publico porque o proprio catalogo e publico.
+Nesse contexto, "publico" significa que qualquer pessoa que possua a URL consegue
+ler o arquivo. Isso nao torna a listagem ou descoberta de objetos automatica, mas
+a URL nao deve ser tratada como segredo.
+
+O store publico deve conter somente midia destinada a exposicao no catalogo.
+Documentos, comprovantes, anexos de conversas e qualquer dado pessoal ou sensivel
+devem usar um store privado separado, com URLs assinadas de curta duracao ou entrega
+autorizada pela API.
+
+Controles obrigatorios para as fotos publicas:
+
+- pathnames gerados pelo servidor com identificadores imprevisiveis;
+- autorizacao de upload vinculada ao usuario autenticado;
+- token temporario restrito ao pathname, tipo e tamanho;
+- limite de 2 a 5 imagens e 5 MB por arquivo;
+- tipos permitidos: JPEG, PNG e WebP;
+- validacao do conteudo real do arquivo, nao apenas do MIME informado pelo navegador;
+- remocao de metadados EXIF, principalmente coordenadas GPS;
+- moderacao de conteudo e limites de requisicao;
+- remocao de imagens orfas e das imagens de anuncios excluidos quando permitido
+  pelas regras de auditoria.
+
+No estado atual, pathname, autenticacao, token temporario, quantidade, tamanho e MIME
+sao verificados. Validacao binaria, remocao de EXIF, moderacao, rate limiting e coleta
+de orfaos permanecem no backlog de seguranca do upload.
 
 ## Categorias canonicas
 
@@ -86,6 +139,10 @@ livres existentes antes de criar a constraint.
 - fluxo manual contra PostgreSQL real: cadastro, login, publicacao, perfil,
   exclusao de anuncio proprio do catalogo e listagem em "Meus anuncios".
 
+Os testes unitarios ficam junto aos pacotes. Testes HTTP e PostgreSQL que exercitam
+adaptadores completos ficam centralizados em `apps/api/tests/integration`. Futuros
+testes de navegador e fluxos completos devem usar `apps/api/tests/e2e`.
+
 ## Correspondencia dos controladores
 
 | Responsabilidade arquitetural | Implementacao |
@@ -94,7 +151,7 @@ livres existentes antes de criar a constraint.
 | Adaptador/controller HTTP | `internal/http.API` e seus handlers |
 | Entidades e regras de dominio | `internal/dominio/*` |
 | Portas de saida | interfaces em `casosdeuso/contratos.go` |
-| Adaptador de persistencia | `database/postgres.Store` |
+| Adaptadores de persistencia | `storage/postgres.Store` e `storage/vercel.Storage` |
 
 Os controladores de aplicacao coordenam casos de uso e nao conhecem HTTP ou
 PostgreSQL. Os handlers HTTP traduzem o protocolo; o store PostgreSQL implementa
@@ -103,7 +160,6 @@ as portas usadas pelos controladores.
 ## Comportamentos modelados, ainda nao executaveis
 
 - editar e excluir logicamente anuncios pela interface;
-- upload real de imagens;
 - checkout e criacao de pedidos por vendedor;
 - pagamento, reembolso e repasse;
 - rastreio e confirmacao de recebimento;

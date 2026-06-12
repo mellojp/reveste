@@ -1,7 +1,8 @@
-package postgres
+package integration_test
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -13,6 +14,7 @@ import (
 
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
+	"reveste/apps/api/internal/storage/postgres"
 )
 
 func TestIntegracaoFluxoPersistencia(t *testing.T) {
@@ -28,7 +30,7 @@ func TestIntegracaoFluxoPersistencia(t *testing.T) {
 	}
 	defer admin.Close()
 
-	schema := "reveste_test_" + time.Now().UTC().Format("20060102150405")
+	schema := "reveste_test_" + time.Now().UTC().Format("20060102150405_000000000")
 	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
 		t.Fatalf("criar schema: %v", err)
 	}
@@ -49,7 +51,7 @@ func TestIntegracaoFluxoPersistencia(t *testing.T) {
 	defer pool.Close()
 
 	arquivosMigracao, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "..", "..", "db", "migrations", "*.up.sql"),
+		filepath.Join("..", "..", "..", "..", "db", "migrations", "*.up.sql"),
 	)
 	if err != nil {
 		t.Fatalf("listar migracoes: %v", err)
@@ -64,7 +66,18 @@ func TestIntegracaoFluxoPersistencia(t *testing.T) {
 		}
 	}
 
-	repositorio := &Store{pool: pool}
+	urlStore, err := url.Parse(databaseURL)
+	if err != nil {
+		t.Fatalf("interpretar TEST_DATABASE_URL: %v", err)
+	}
+	consulta := urlStore.Query()
+	consulta.Set("search_path", schema)
+	urlStore.RawQuery = consulta.Encode()
+	repositorio, err := postgres.Open(ctx, urlStore.String())
+	if err != nil {
+		t.Fatalf("abrir store PostgreSQL: %v", err)
+	}
+	defer repositorio.Close()
 	agora := time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)
 	usuario := cadastros.Usuario{
 		ID: "00000000-0000-4000-8000-000000000001", Nome: "Usuario Teste",

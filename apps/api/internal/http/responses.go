@@ -43,6 +43,8 @@ func (a *API) escreverErro(w nethttp.ResponseWriter, err error) {
 		status, codigo, mensagem = nethttp.StatusUnprocessableEntity, "ANUNCIO_PROPRIO", err.Error()
 	case errors.Is(err, common.ErrTransicaoInvalida):
 		status, codigo, mensagem = nethttp.StatusConflict, "TRANSICAO_INVALIDA", err.Error()
+	case errors.Is(err, common.ErrServicoIndisponivel):
+		status, codigo, mensagem = nethttp.StatusServiceUnavailable, "SERVICO_INDISPONIVEL", "O armazenamento de imagens não está configurado."
 	default:
 		a.logger.Error("erro nao tratado", "erro", err)
 	}

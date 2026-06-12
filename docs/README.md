@@ -6,7 +6,7 @@ O fluxo principal da API e:
 HTTP (adaptador de entrada) -> controladores de casos de uso -> dominio
                                       |
                                       v
-                         portas -> database (adaptador de saida)
+                         portas -> storage (adaptadores de saida)
 ```
 
 Os casos de uso ficam no pacote unico `casosdeuso`, separados por arquivo:
@@ -24,13 +24,16 @@ interfaces definidas em `casosdeuso/contratos.go`.
 
 Eles nao sao controllers HTTP/MVC. O pacote `internal/http` e o adaptador de
 entrada: decodifica a requisicao, chama um controlador de aplicacao e converte o
-resultado em resposta HTTP. O pacote `database/postgres` e um adaptador de saida
-que implementa as interfaces exigidas pelos controladores.
+resultado em resposta HTTP. Os pacotes `storage/postgres` e `storage/vercel` sao
+adaptadores de saida que implementam as interfaces exigidas pelos controladores.
 
 O adaptador PostgreSQL permanece em um unico pacote e usa o tipo compartilhado
 `Store`, mas suas operacoes sao separadas por arquivo: `usuarios.go`,
 `anuncios.go`, `carrinhos.go` e `sessoes.go`. Conexao e configuracao ficam em
 `store.go`, enquanto a traducao de erros do driver fica em `erros.go`.
+
+O adaptador Vercel Blob fica em `storage/vercel` e implementa o armazenamento
+externo dos arquivos de imagem.
 
 Os erros compartilhados pela aplicacao ficam em `internal/common/erros.go`.
 
@@ -52,7 +55,17 @@ Crie um arquivo `.env` na raiz:
 ```text
 DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable
 HTTP_ADDRESS=:8080
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_SEU_STORE_ID_SEU_TOKEN
 ```
+
+O token e obtido ao criar/conectar um Blob store **publico** no projeto da Vercel.
+Stores privados nao podem ser usados diretamente nas imagens do catalogo. A variavel
+`REVESTE_STORE_ID` nao e necessaria quando `BLOB_READ_WRITE_TOKEN` esta configurada.
+Sem o token, a aplicacao inicia normalmente, mas o endpoint de upload retorna `503`.
+
+O store publico deve ser exclusivo para fotos publicas dos anuncios. Conteudo
+restrito ou sensivel deve usar outro store privado. A politica completa e os
+controles pendentes estao em `docs/ALINHAMENTO_IMPLEMENTACAO.md`.
 
 Inicie o banco e a API:
 
@@ -75,4 +88,37 @@ Para executar todos os testes, incluindo a integracao PostgreSQL:
 ```text
 TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable \
   go test ./...
+```
+
+## Organizacao dos testes
+
+Os testes seguem uma estrutura hibrida:
+
+```text
+apps/api/
+|-- internal/
+|   |-- dominio/.../*_test.go
+|   |-- casosdeuso/*_test.go
+|   `-- storage/vercel/*_test.go
+`-- tests/
+    `-- integration/
+        |-- http_support_test.go
+        |-- http_routes_test.go
+        |-- http_validation_test.go
+        `-- postgres_test.go
+```
+
+- testes unitarios permanecem junto ao pacote testado, conforme a convencao Go;
+- testes do adaptador HTTP e de persistencia PostgreSQL ficam em
+  `apps/api/tests/integration`;
+- fixtures compartilhadas por um conjunto de integracao ficam em arquivos
+  `*_support_test.go` no mesmo pacote de testes;
+- futuros testes de navegador e fluxos completos devem ficar em
+  `apps/api/tests/e2e`.
+
+Para executar apenas as integracoes:
+
+```text
+TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable \
+  go test ./apps/api/tests/integration
 ```

@@ -13,8 +13,9 @@ import (
 
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/common"
-	"reveste/apps/api/internal/database/postgres"
 	httptransport "reveste/apps/api/internal/http"
+	"reveste/apps/api/internal/storage/postgres"
+	"reveste/apps/api/internal/storage/vercel"
 )
 
 func main() {
@@ -58,10 +59,21 @@ func executar(logger *slog.Logger) error {
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 	)
+	controladorUpload := casosdeuso.NovoControladorUpload(
+		vercel.Novo(cfg.VercelBlobToken),
+		common.GeradorIDCriptografico{},
+		common.RelogioSistema{},
+	)
 
 	servidor := &http.Server{
-		Addr:              cfg.HTTPAddress,
-		Handler:           httptransport.NovaAPI(controladorCadastros, controladorAnuncios, controladorCarrinho, logger),
+		Addr: cfg.HTTPAddress,
+		Handler: httptransport.NovaAPI(
+			controladorCadastros,
+			controladorAnuncios,
+			controladorCarrinho,
+			controladorUpload,
+			logger,
+		),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,

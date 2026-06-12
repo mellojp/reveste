@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	HTTPAddress string
+	DatabaseURL     string
+	HTTPAddress     string
+	VercelBlobToken string
 }
 
 func Load() (Config, error) {
@@ -18,8 +19,9 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		HTTPAddress: os.Getenv("HTTP_ADDRESS"),
+		DatabaseURL:     os.Getenv("DATABASE_URL"),
+		HTTPAddress:     os.Getenv("HTTP_ADDRESS"),
+		VercelBlobToken: os.Getenv("BLOB_READ_WRITE_TOKEN"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL nao foi definida no arquivo .env ou no ambiente")

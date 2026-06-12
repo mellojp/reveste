@@ -159,7 +159,7 @@
     <div class="modal-intro">
       <span class="eyebrow">Novo anúncio</span>
       <h2>Conte a história da sua peça</h2>
-      <p>Use entre 2 e 5 URLs de fotos nesta versão inicial.</p>
+      <p>Escolha entre 2 e 5 fotos. Cada arquivo pode ter até 5 MB.</p>
     </div>
     <form id="sell-form" class="form-stack">
       <div class="form-grid">
@@ -170,7 +170,16 @@
         <label>Cor<input name="cor" required placeholder="verde"></label>
         <label>Conservação<select name="estado_conservacao" required><option value="novo">Novo</option><option value="seminovo" selected>Seminovo</option><option value="usado">Usado</option><option value="muito_usado">Muito usado</option><option value="desgastado">Desgastado</option></select></label>
         <label class="full">Preço (R$)<input name="preco" required inputmode="decimal" placeholder="89,90"></label>
-        <label class="full">Fotos (uma URL por linha)<textarea name="fotos" required rows="4" placeholder="https://...&#10;https://..."></textarea></label>
+        <label class="full photo-picker">
+          Fotos
+          <span class="photo-dropzone">
+            <input name="fotos" id="photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+            <strong>Selecionar imagens</strong>
+            <small>JPEG, PNG ou WebP · 2 a 5 arquivos · até 5 MB cada</small>
+          </span>
+        </label>
+        <div class="photo-preview full" id="photo-preview" aria-live="polite"></div>
+        <p class="upload-status full hidden" id="upload-status"></p>
       </div>
       <button class="button button-dark button-full" type="submit">Publicar anúncio</button>
     </form>

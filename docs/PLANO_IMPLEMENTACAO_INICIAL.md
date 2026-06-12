@@ -309,7 +309,7 @@ integrar servicos externos de alta complexidade.
 |           |   |-- cadastro.go
 |           |   |-- anuncios.go
 |           |   `-- carrinho.go
-|           |-- database/
+|           |-- storage/
 |           |-- http/
 |           `-- common/
 |-- contracts/
@@ -336,7 +336,7 @@ No backend:
 - `casosdeuso/anuncios.go`: publicacao e consulta do catalogo;
 - `casosdeuso/carrinho.go`: carrinho e, futuramente, checkout e pedidos;
 - `casosdeuso/contratos.go`: contratos externos compartilhados pelo modulo;
-- `database`: implementacao de persistencia PostgreSQL;
+- `storage`: implementacoes de persistencia PostgreSQL e de arquivos;
 - `http`: transporte separado em arquivos por cadastros, anuncios, carrinho,
   autenticacao, respostas e middlewares;
 - `common`: erros compartilhados, leitura de ambiente, `.env`, seguranca, IDs
