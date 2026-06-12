@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ReVeste: moda circular de pessoa para pessoa.">
+  <title>ReVeste | Moda que continua</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="Página inicial ReVeste">
+      <span class="brand-mark">R</span>
+      <span>ReVeste</span>
+    </a>
+
+    <form class="header-search" id="header-search">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.4-4.4m2.4-5.1a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/></svg>
+      <input id="search-input" type="search" placeholder="Busque por peças, marcas ou estilos" aria-label="Buscar anúncios">
+    </form>
+
+    <nav class="header-actions" aria-label="Navegação principal">
+      <button class="button button-ghost" data-action="open-sell">Quero vender</button>
+      <button class="icon-button cart-button" data-action="open-cart" aria-label="Abrir sacola">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8Zm3 2V6a3 3 0 0 1 6 0v4"/></svg>
+        <span class="badge" id="cart-count">0</span>
+      </button>
+      <button class="button button-dark" id="session-button" data-action="open-login">Entrar</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">Moda circular, escolhas únicas</span>
+        <h1>Vista novas histórias.</h1>
+        <p>Peças especiais merecem continuar circulando. Compre de outras pessoas, renove seu estilo e reduza o impacto no planeta.</p>
+        <div class="hero-actions">
+          <button class="button button-light" data-action="explore">Explorar peças</button>
+          <button class="text-link" data-action="open-sell">Desapegar agora <span>↗</span></button>
+        </div>
+        <div class="hero-proof">
+          <span><strong>Compra segura</strong> em cada etapa</span>
+          <span><strong>Peças únicas</strong> de todo o Brasil</span>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="arch arch-one"></div>
+        <div class="arch arch-two"></div>
+        <div class="clothing-card card-shirt">
+          <svg viewBox="0 0 180 190"><path d="M58 30 76 18h28l18 12 34 19-19 35-17-9v89H60V75l-17 9-19-35 34-19Z"/><path d="M76 18c0 18 28 18 28 0"/></svg>
+        </div>
+        <div class="clothing-card card-dress">
+          <svg viewBox="0 0 180 220"><path d="M72 20h36l11 47-13 25 39 105H35L74 92 61 67l11-47Z"/><path d="M72 20c3 22 33 22 36 0"/></svg>
+        </div>
+        <span class="spark spark-one">✦</span>
+        <span class="spark spark-two">✦</span>
+      </div>
+    </section>
+
+    <section class="catalog-section" id="catalog">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Descubra seu próximo favorito</span>
+          <h2>Peças recém-chegadas</h2>
+        </div>
+        <button class="text-link dark-link" data-action="clear-filters">Ver todas <span>→</span></button>
+      </div>
+
+      <div class="category-row" id="category-filters">
+        <button class="category-chip active" data-category="">Tudo</button>
+        <button class="category-chip" data-category="vestidos">Vestidos</button>
+        <button class="category-chip" data-category="camisetas">Camisetas</button>
+        <button class="category-chip" data-category="calcas">Calças</button>
+        <button class="category-chip" data-category="saias_e_shorts">Saias e shorts</button>
+        <button class="category-chip" data-category="casacos">Casacos</button>
+        <button class="category-chip" data-category="acessorios">Acessórios</button>
+        <button class="category-chip" data-category="calcados">Calçados</button>
+        <button class="category-chip" data-category="outros">Outros</button>
+      </div>
+
+      <div class="catalog-toolbar">
+        <p id="catalog-summary">Carregando peças...</p>
+        <label>
+          Conservação
+          <select id="condition-filter">
+            <option value="">Todos os estados</option>
+            <option value="novo">Novo</option>
+            <option value="seminovo">Seminovo</option>
+            <option value="usado">Usado</option>
+            <option value="muito_usado">Muito usado</option>
+            <option value="desgastado">Desgastado</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="product-grid" id="product-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="sell-banner">
+      <div>
+        <span class="eyebrow">Seu armário pode circular</span>
+        <h2>Desapegue do que não usa mais.</h2>
+        <p>Publique uma peça em poucos minutos e encontre alguém para continuar a história dela.</p>
+      </div>
+      <button class="button button-dark" data-action="open-sell">Publicar uma peça</button>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand footer-brand" href="#"><span class="brand-mark">R</span><span>ReVeste</span></a>
+    <p>Moda de pessoa para pessoa.</p>
+    <p>Projeto MVP · 2026</p>
+  </footer>
+
+  <dialog class="modal" id="auth-modal">
+    <button class="modal-close" data-action="close-modal" aria-label="Fechar">×</button>
+    <div class="modal-intro">
+      <span class="eyebrow">Bem-vindo à ReVeste</span>
+      <h2 id="auth-title">Entre para continuar</h2>
+      <p id="auth-description">Acesse sua conta para vender peças e organizar sua sacola.</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-auth-tab="login">Entrar</button>
+      <button class="tab" data-auth-tab="register">Criar conta</button>
+    </div>
+
+    <form id="login-form" class="form-stack">
+      <label>E-mail ou CPF<input name="identificador" autocomplete="username" required></label>
+      <label>Senha<input name="senha" type="password" autocomplete="current-password" minlength="8" required></label>
+      <button class="button button-dark button-full" type="submit">Entrar</button>
+    </form>
+
+    <form id="register-form" class="form-stack hidden">
+      <div class="form-grid">
+        <label class="full">Nome completo<input name="nome" autocomplete="name" required minlength="3"></label>
+        <label>CPF<input name="cpf" inputmode="numeric" required maxlength="14"></label>
+        <label>Telefone<input name="telefone" type="tel" autocomplete="tel"></label>
+        <label class="full">E-mail<input name="email" type="email" autocomplete="email" required></label>
+        <label class="full">Senha<input name="senha" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label>CEP<input name="cep" inputmode="numeric" autocomplete="postal-code" required maxlength="9"></label>
+        <label>Estado<input name="estado" autocomplete="address-level1" required maxlength="2"></label>
+        <label class="full">Logradouro<input name="logradouro" autocomplete="address-line1" required></label>
+        <label>Número<input name="numero" required></label>
+        <label>Bairro<input name="bairro" required></label>
+        <label class="full">Cidade<input name="cidade" autocomplete="address-level2" required></label>
+      </div>
+      <button class="button button-dark button-full" type="submit">Criar minha conta</button>
+    </form>
+  </dialog>
+
+  <dialog class="modal modal-wide" id="sell-modal">
+    <button class="modal-close" data-action="close-modal" aria-label="Fechar">×</button>
+    <div class="modal-intro">
+      <span class="eyebrow">Novo anúncio</span>
+      <h2>Conte a história da sua peça</h2>
+      <p>Use entre 2 e 5 URLs de fotos nesta versão inicial.</p>
+    </div>
+    <form id="sell-form" class="form-stack">
+      <div class="form-grid">
+        <label class="full">Título<input name="titulo" required minlength="3" maxlength="120" placeholder="Ex.: Vestido midi de linho"></label>
+        <label class="full">Descrição<textarea name="descricao" required minlength="10" rows="4" placeholder="Detalhes, caimento e características da peça"></textarea></label>
+        <label>Categoria<select name="categoria" required><option value="">Selecione</option><option value="vestidos">Vestidos</option><option value="camisetas">Camisetas</option><option value="calcas">Calças</option><option value="saias_e_shorts">Saias e shorts</option><option value="casacos">Casacos</option><option value="acessorios">Acessórios</option><option value="calcados">Calçados</option><option value="outros">Outros</option></select></label>
+        <label>Tamanho<input name="tamanho" required placeholder="M"></label>
+        <label>Cor<input name="cor" required placeholder="verde"></label>
+        <label>Conservação<select name="estado_conservacao" required><option value="novo">Novo</option><option value="seminovo" selected>Seminovo</option><option value="usado">Usado</option><option value="muito_usado">Muito usado</option><option value="desgastado">Desgastado</option></select></label>
+        <label class="full">Preço (R$)<input name="preco" required inputmode="decimal" placeholder="89,90"></label>
+        <label class="full">Fotos (uma URL por linha)<textarea name="fotos" required rows="4" placeholder="https://...&#10;https://..."></textarea></label>
+      </div>
+      <button class="button button-dark button-full" type="submit">Publicar anúncio</button>
+    </form>
+  </dialog>
+
+  <dialog class="modal profile-modal" id="profile-modal">
+    <button class="modal-close" data-action="close-modal" aria-label="Fechar">×</button>
+    <div class="profile-header">
+      <div class="profile-avatar" id="profile-avatar">R</div>
+      <div>
+        <span class="eyebrow">Minha conta</span>
+        <h2 id="profile-name">Perfil</h2>
+        <p id="profile-email"></p>
+      </div>
+    </div>
+
+    <section class="profile-section">
+      <div class="profile-section-heading">
+        <h3>Dados pessoais</h3>
+      </div>
+      <dl class="profile-details" id="profile-details"></dl>
+    </section>
+
+    <section class="profile-section">
+      <div class="profile-section-heading">
+        <div>
+          <h3>Meus anúncios</h3>
+          <p id="my-ads-summary">Carregando...</p>
+        </div>
+        <button class="button button-dark button-compact" data-action="profile-sell">Nova peça</button>
+      </div>
+      <div class="my-ads-list" id="my-ads-list"></div>
+    </section>
+
+    <button class="button button-danger button-full" data-action="logout">Sair da conta</button>
+  </dialog>
+
+  <dialog class="drawer" id="cart-modal">
+    <div class="drawer-header">
+      <div><span class="eyebrow">Sua seleção</span><h2>Sacola</h2></div>
+      <button class="modal-close" data-action="close-modal" aria-label="Fechar">×</button>
+    </div>
+    <div id="cart-content" class="cart-content"></div>
+    <div class="cart-footer">
+      <div><span>Total</span><strong id="cart-total">R$ 0,00</strong></div>
+      <button class="button button-dark button-full" disabled>Checkout em breve</button>
+    </div>
+  </dialog>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

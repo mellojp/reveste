@@ -11,6 +11,7 @@ func (a *API) registrarRotasCadastros(mux *nethttp.ServeMux) {
 	mux.HandleFunc("POST /v1/usuarios", a.cadastrarUsuario)
 	mux.HandleFunc("POST /v1/sessoes", a.autenticar)
 	mux.HandleFunc("DELETE /v1/sessoes/atual", a.autenticado(a.encerrarSessao))
+	mux.HandleFunc("GET /v1/me", a.autenticado(a.obterPerfil))
 }
 
 func (a *API) cadastrarUsuario(w nethttp.ResponseWriter, r *nethttp.Request) {
@@ -34,6 +35,15 @@ func (a *API) cadastrarUsuario(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 	escreverJSON(w, nethttp.StatusCreated, usuario)
+}
+
+func (a *API) obterPerfil(w nethttp.ResponseWriter, r *nethttp.Request, idUsuario, _ string) {
+	usuario, err := a.cadastros.ObterPerfil(r.Context(), idUsuario)
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	escreverJSON(w, nethttp.StatusOK, usuario)
 }
 
 func (a *API) autenticar(w nethttp.ResponseWriter, r *nethttp.Request) {

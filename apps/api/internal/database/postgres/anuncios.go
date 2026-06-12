@@ -78,18 +78,21 @@ func (s *Store) ListarAnuncios(
 		       a.estado_conservacao, a.preco_centavos, a.status, a.criado_em, a.atualizado_em
 		FROM anuncio a
 		JOIN perfil_vendedor pv ON pv.id = a.id_perfil_vendedor
-		WHERE a.status = 'disponivel'
-		  AND a.excluido_em IS NULL
+		WHERE ($7 OR a.status = 'disponivel')
+		  AND ($7 OR a.excluido_em IS NULL)
 		  AND ($1 = '' OR a.titulo ILIKE '%' || $1 || '%' OR a.descricao ILIKE '%' || $1 || '%')
 		  AND ($2 = '' OR a.categoria = LOWER($2))
 		  AND ($3 = '' OR a.tamanho = UPPER($3))
 		  AND ($4 = '' OR a.estado_conservacao = $4)
 		  AND ($5 = 0 OR a.preco_centavos >= $5)
 		  AND ($6 = 0 OR a.preco_centavos <= $6)
+		  AND ($8 = '' OR pv.id_usuario::text = $8)
+		  AND ($9 = '' OR pv.id_usuario::text <> $9)
 		ORDER BY a.criado_em DESC
-		LIMIT $7 OFFSET $8
+		LIMIT $10 OFFSET $11
 	`, strings.TrimSpace(filtro.Palavra), filtro.Categoria, filtro.Tamanho,
 		filtro.EstadoConservacao, filtro.PrecoMinCentavos, filtro.PrecoMaxCentavos,
+		filtro.IncluirTodosStatus, filtro.IDVendedor, filtro.ExcluirVendedor,
 		filtro.Limite, filtro.Deslocamento)
 	if err != nil {
 		return nil, err

@@ -11,3 +11,35 @@ var (
 	ErrAnuncioDoProprioAutor = errors.New("nao e permitido adicionar o proprio anuncio ao carrinho")
 	ErrTransicaoInvalida     = errors.New("transicao de estado invalida")
 )
+
+type ErroValidacao struct {
+	Campos map[string]string
+}
+
+func (e ErroValidacao) Error() string {
+	return ErrDadosInvalidos.Error()
+}
+
+func (e ErroValidacao) Unwrap() error {
+	return ErrDadosInvalidos
+}
+
+func NovaValidacao(campos map[string]string) error {
+	return ErroValidacao{Campos: campos}
+}
+
+type ErroConflitoCampo struct {
+	Campos map[string]string
+}
+
+func (e ErroConflitoCampo) Error() string {
+	return ErrConflito.Error()
+}
+
+func (e ErroConflitoCampo) Unwrap() error {
+	return ErrConflito
+}
+
+func NovoConflitoCampo(campo, mensagem string) error {
+	return ErroConflitoCampo{Campos: map[string]string{campo: mensagem}}
+}

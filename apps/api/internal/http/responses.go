@@ -19,7 +19,16 @@ func (a *API) escreverErro(w nethttp.ResponseWriter, err error) {
 	status := nethttp.StatusInternalServerError
 	codigo := "ERRO_INTERNO"
 	mensagem := "Ocorreu um erro interno."
+	campos := map[string]string{}
+	var validacao common.ErroValidacao
+	var conflitoCampo common.ErroConflitoCampo
 	switch {
+	case errors.As(err, &validacao):
+		status, codigo, mensagem = nethttp.StatusUnprocessableEntity, "DADOS_INVALIDOS", "Revise os campos destacados."
+		campos = validacao.Campos
+	case errors.As(err, &conflitoCampo):
+		status, codigo, mensagem = nethttp.StatusConflict, "CONFLITO", "Já existe uma conta com os dados destacados."
+		campos = conflitoCampo.Campos
 	case errors.Is(err, common.ErrDadosInvalidos):
 		status, codigo, mensagem = nethttp.StatusUnprocessableEntity, "DADOS_INVALIDOS", "Os dados informados sao invalidos."
 	case errors.Is(err, common.ErrNaoEncontrado):
@@ -37,7 +46,7 @@ func (a *API) escreverErro(w nethttp.ResponseWriter, err error) {
 	default:
 		a.logger.Error("erro nao tratado", "erro", err)
 	}
-	escreverJSON(w, status, erroResposta{Codigo: codigo, Mensagem: mensagem, Campos: map[string]string{}})
+	escreverJSON(w, status, erroResposta{Codigo: codigo, Mensagem: mensagem, Campos: campos})
 }
 
 func decodificarJSON(w nethttp.ResponseWriter, r *nethttp.Request, destino any) bool {

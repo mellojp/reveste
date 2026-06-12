@@ -126,6 +126,20 @@ func TestRotaSaudePermanecePublica(t *testing.T) {
 	}
 }
 
+func TestFrontendEEntreguePelaAPI(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusOK {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusOK)
+	}
+	if !strings.Contains(resposta.Body.String(), "ReVeste") {
+		t.Fatalf("frontend inesperado: %s", resposta.Body.String())
+	}
+}
+
 func TestCatalogoPermanecePublico(t *testing.T) {
 	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/anuncios", nil)
 	resposta := httptest.NewRecorder()
@@ -162,6 +176,17 @@ func TestCatalogoRejeitaFiltroInvalido(t *testing.T) {
 	}
 }
 
+func TestCatalogoRejeitaCategoriaLivre(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/anuncios?categoria=inventada", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusBadRequest {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusBadRequest)
+	}
+}
+
 func TestCadastroRejeitaSegundoValorJSON(t *testing.T) {
 	corpo := `{"nome":"Teste"} {"nome":"Outro"}`
 	requisicao := httptest.NewRequest(nethttp.MethodPost, "/v1/usuarios", strings.NewReader(corpo))
@@ -171,6 +196,36 @@ func TestCadastroRejeitaSegundoValorJSON(t *testing.T) {
 
 	if resposta.Code != nethttp.StatusBadRequest {
 		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusBadRequest)
+	}
+}
+
+func TestCadastroInformaCamposInvalidos(t *testing.T) {
+	corpo := `{
+		"nome":"A",
+		"cpf":"123",
+		"email":"invalido",
+		"senha":"12345678",
+		"endereco":{
+			"cep":"1",
+			"logradouro":"",
+			"numero":"",
+			"bairro":"",
+			"cidade":"",
+			"estado":"S"
+		}
+	}`
+	requisicao := httptest.NewRequest(nethttp.MethodPost, "/v1/usuarios", strings.NewReader(corpo))
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusUnprocessableEntity {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusUnprocessableEntity)
+	}
+	for _, campo := range []string{`"nome"`, `"cpf"`, `"email"`, `"endereco.cep"`} {
+		if !strings.Contains(resposta.Body.String(), campo) {
+			t.Fatalf("campo %s ausente da resposta: %s", campo, resposta.Body.String())
+		}
 	}
 }
 

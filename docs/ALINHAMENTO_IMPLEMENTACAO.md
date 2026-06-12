@@ -25,10 +25,66 @@
 ## Comportamentos ja executaveis
 
 - cadastrar e autenticar usuario;
+- consultar o perfil autenticado;
 - criar anuncio;
 - listar e filtrar anuncios;
+- consultar os anuncios do usuario autenticado;
 - adicionar e remover anuncio do carrinho;
-- validar CPF, anuncio, quantidade de fotos e disponibilidade.
+- validar CPF, anuncio, quantidade de fotos, categoria e disponibilidade;
+- apresentar um fluxo web navegavel de conta, catalogo, publicacao, perfil e carrinho.
+
+## Incremento web inicial
+
+O frontend inicial fica em `apps/front` e e servido pela propria API na rota `/`.
+Ele foi mantido como HTML, CSS e JavaScript sem etapa de build enquanto a equipe
+nao define a toolchain React/TypeScript prevista na arquitetura.
+
+Telas e fluxos disponiveis:
+
+- landing page e catalogo responsivo;
+- busca por texto, categoria e estado de conservacao;
+- cadastro com mensagens de validacao junto aos campos;
+- login, logout e sessao mantida em `sessionStorage`;
+- publicacao de anuncio com 2 a 5 URLs de fotos;
+- perfil com dados pessoais, endereco e painel de anuncios;
+- carrinho com inclusao e remocao de pecas.
+
+O uso de `sessionStorage` e provisório e acompanha o contrato Bearer atual. A decisao
+de autenticacao por cookie `HttpOnly`, protecao CSRF e deploy continua pendente antes
+de producao.
+
+## Contratos HTTP adicionados
+
+- `GET /v1/me`: retorna o usuario da sessao atual;
+- `GET /v1/me/anuncios`: retorna os anuncios publicados pelo usuario;
+- `GET /v1/anuncios`: quando recebe um Bearer valido, omite anuncios do proprio
+  usuario; sem autenticacao, continua publico;
+- erros de cadastro podem preencher `campos` com mensagens especificas por input.
+
+## Categorias canonicas
+
+Anuncios aceitam somente:
+
+- `vestidos`;
+- `camisetas`;
+- `calcas`;
+- `saias_e_shorts`;
+- `casacos`;
+- `acessorios`;
+- `calcados`;
+- `outros`.
+
+A regra existe no dominio, no transporte HTTP, no formulario web e na constraint
+`ck_anuncio_categoria`. A migracao `003_categorias_anuncio` normaliza categorias
+livres existentes antes de criar a constraint.
+
+## Validacoes verificadas
+
+- testes unitarios dos dominios e casos de uso;
+- testes dos handlers HTTP;
+- teste de integracao PostgreSQL com migracoes em schema isolado;
+- fluxo manual contra PostgreSQL real: cadastro, login, publicacao, perfil,
+  exclusao de anuncio proprio do catalogo e listagem em "Meus anuncios".
 
 ## Correspondencia dos controladores
 
@@ -46,6 +102,8 @@ as portas usadas pelos controladores.
 
 ## Comportamentos modelados, ainda nao executaveis
 
+- editar e excluir logicamente anuncios pela interface;
+- upload real de imagens;
 - checkout e criacao de pedidos por vendedor;
 - pagamento, reembolso e repasse;
 - rastreio e confirmacao de recebimento;

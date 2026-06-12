@@ -3,6 +3,7 @@ package casosdeuso
 import (
 	"context"
 
+	"reveste/apps/api/internal/common"
 	dominioanuncios "reveste/apps/api/internal/dominio/anuncios"
 )
 
@@ -39,6 +40,11 @@ func (c *ControladorAnuncio) CriarAnuncio(
 	idVendedor string,
 	entrada EntradaAnuncio,
 ) (dominioanuncios.Anuncio, error) {
+	if !dominioanuncios.CategoriaValida(entrada.Categoria) {
+		return dominioanuncios.Anuncio{}, common.NovaValidacao(map[string]string{
+			"categoria": "Selecione uma categoria válida.",
+		})
+	}
 	if _, err := c.usuarios.BuscarUsuarioPorID(ctx, idVendedor); err != nil {
 		return dominioanuncios.Anuncio{}, err
 	}
@@ -73,4 +79,15 @@ func (c *ControladorAnuncio) ListarAnuncios(
 		filtro.Limite = 20
 	}
 	return c.anuncios.ListarAnuncios(ctx, filtro)
+}
+
+func (c *ControladorAnuncio) ListarAnunciosDoVendedor(
+	ctx context.Context,
+	idVendedor string,
+) ([]dominioanuncios.Anuncio, error) {
+	return c.ListarAnuncios(ctx, FiltroAnuncios{
+		IDVendedor:         idVendedor,
+		IncluirTodosStatus: true,
+		Limite:             50,
+	})
 }

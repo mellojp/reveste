@@ -1,10 +1,15 @@
 package http
 
-import nethttp "net/http"
+import (
+	nethttp "net/http"
+	"strings"
+)
 
 func (a *API) comJSON(proximo nethttp.Handler) nethttp.Handler {
 	return nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if strings.HasPrefix(r.URL.Path, "/v1/") || r.URL.Path == "/saude" {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		}
 		proximo.ServeHTTP(w, r)
 	})
 }

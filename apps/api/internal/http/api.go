@@ -36,6 +36,7 @@ func NovaAPI(
 	api.registrarRotasCadastros(mux)
 	api.registrarRotasAnuncios(mux)
 	api.registrarRotasCarrinho(mux)
+	api.registrarRotasFrontend(mux)
 
 	return api.comRecuperacao(api.comJSON(mux))
 }

@@ -22,14 +22,17 @@ type OperacoesSessoes interface {
 }
 
 type FiltroAnuncios struct {
-	Palavra           string
-	Categoria         string
-	Tamanho           string
-	EstadoConservacao anuncios.EstadoConservacao
-	PrecoMinCentavos  int64
-	PrecoMaxCentavos  int64
-	Limite            int
-	Deslocamento      int
+	Palavra            string
+	Categoria          string
+	Tamanho            string
+	EstadoConservacao  anuncios.EstadoConservacao
+	PrecoMinCentavos   int64
+	PrecoMaxCentavos   int64
+	IDVendedor         string
+	ExcluirVendedor    string
+	IncluirTodosStatus bool
+	Limite             int
+	Deslocamento       int
 }
 
 type OperacoesAnuncios interface {

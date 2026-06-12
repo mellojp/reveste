@@ -130,7 +130,7 @@ func TestIntegracaoFluxoPersistencia(t *testing.T) {
 func novoAnuncioIntegracao(id, idVendedor string, agora time.Time) anuncios.Anuncio {
 	return anuncios.Anuncio{
 		ID: id, IDVendedor: idVendedor, Titulo: "Anuncio teste",
-		Descricao: "Descricao valida para teste", Categoria: "camisa",
+		Descricao: "Descricao valida para teste", Categoria: anuncios.CategoriaCamisetas,
 		Tamanho: "M", Cor: "azul", EstadoConservacao: anuncios.EstadoSeminovo,
 		PrecoCentavos: 10_000, Status: anuncios.StatusAnuncioDisponivel,
 		Fotos: []anuncios.Foto{

@@ -57,7 +57,7 @@ func TestControladoresCadastroAnuncioCarrinho(t *testing.T) {
 
 	anuncio, err := anunciosCU.CriarAnuncio(ctx, vendedor.ID, casosdeuso.EntradaAnuncio{
 		Titulo: "Jaqueta jeans", Descricao: "Jaqueta jeans em excelente estado",
-		Categoria: "Jaqueta", Tamanho: "m", Cor: "Azul",
+		Categoria: anuncios.CategoriaCasacos, Tamanho: "m", Cor: "Azul",
 		EstadoConservacao: anuncios.EstadoSeminovo, PrecoCentavos: 12_000,
 		URLsFotos: []string{"https://exemplo.test/1.jpg", "https://exemplo.test/2.jpg"},
 	})
@@ -121,6 +121,38 @@ func TestAdicoesConcorrentesAoCarrinhoSaoPreservadas(t *testing.T) {
 	}
 	if len(carrinho.Anuncios) != len(anunciosDoTeste) {
 		t.Fatalf("quantidade de anuncios = %d; esperado %d", len(carrinho.Anuncios), len(anunciosDoTeste))
+	}
+}
+
+func TestCatalogoExcluiAnunciosPropriosEPerfilOsInclui(t *testing.T) {
+	store := newTestStore()
+	controlador := casosdeuso.NovoControladorAnuncio(
+		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+	)
+	store.anuncios["proprio"] = anuncios.Anuncio{
+		ID: "proprio", IDVendedor: "usuario-1", Status: anuncios.StatusAnuncioDisponivel,
+	}
+	store.anuncios["outro"] = anuncios.Anuncio{
+		ID: "outro", IDVendedor: "usuario-2", Status: anuncios.StatusAnuncioDisponivel,
+	}
+
+	catalogo, err := controlador.ListarAnuncios(context.Background(), casosdeuso.FiltroAnuncios{
+		ExcluirVendedor: "usuario-1",
+		Limite:          20,
+	})
+	if err != nil {
+		t.Fatalf("ListarAnuncios() erro = %v", err)
+	}
+	if len(catalogo) != 1 || catalogo[0].ID != "outro" {
+		t.Fatalf("catalogo inesperado: %+v", catalogo)
+	}
+
+	meusAnuncios, err := controlador.ListarAnunciosDoVendedor(context.Background(), "usuario-1")
+	if err != nil {
+		t.Fatalf("ListarAnunciosDoVendedor() erro = %v", err)
+	}
+	if len(meusAnuncios) != 1 || meusAnuncios[0].ID != "proprio" {
+		t.Fatalf("anuncios do perfil inesperados: %+v", meusAnuncios)
 	}
 }
 

@@ -27,6 +27,28 @@ const (
 	EstadoDesgastado EstadoConservacao = "desgastado"
 )
 
+const (
+	CategoriaVestidos    = "vestidos"
+	CategoriaCamisetas   = "camisetas"
+	CategoriaCalcas      = "calcas"
+	CategoriaSaiasShorts = "saias_e_shorts"
+	CategoriaCasacos     = "casacos"
+	CategoriaAcessorios  = "acessorios"
+	CategoriaCalcados    = "calcados"
+	CategoriaOutros      = "outros"
+)
+
+func CategoriaValida(categoria string) bool {
+	switch strings.ToLower(strings.TrimSpace(categoria)) {
+	case CategoriaVestidos, CategoriaCamisetas, CategoriaCalcas,
+		CategoriaSaiasShorts, CategoriaCasacos, CategoriaAcessorios,
+		CategoriaCalcados, CategoriaOutros:
+		return true
+	default:
+		return false
+	}
+}
+
 type Foto struct {
 	ID      string `json:"id"`
 	URL     string `json:"url"`
@@ -65,7 +87,7 @@ func (a *Anuncio) Normalizar() {
 
 func (a Anuncio) ValidarNovo() error {
 	if a.IDVendedor == "" || len(a.Titulo) < 3 || len(a.Descricao) < 10 ||
-		a.Categoria == "" || a.Tamanho == "" || a.Cor == "" ||
+		!CategoriaValida(a.Categoria) || a.Tamanho == "" || a.Cor == "" ||
 		a.PrecoCentavos <= 0 || !a.EstadoConservacao.Valido() ||
 		len(a.Fotos) < 2 || len(a.Fotos) > 5 {
 		return common.ErrDadosInvalidos

@@ -44,10 +44,21 @@ func TestAnuncioIndisponivelNaoPodeIrAoCarrinho(t *testing.T) {
 	}
 }
 
+func TestCategoriaDoAnuncioDeveSerCanonica(t *testing.T) {
+	t.Parallel()
+
+	anuncio := anuncioValido()
+	anuncio.Categoria = "categoria inventada"
+
+	if !errors.Is(anuncio.ValidarNovo(), common.ErrDadosInvalidos) {
+		t.Fatal("categoria livre deveria ser rejeitada")
+	}
+}
+
 func anuncioValido() Anuncio {
 	return Anuncio{
 		ID: "anuncio-1", IDVendedor: "vendedor-1", Titulo: "Jaqueta jeans",
-		Descricao: "Jaqueta jeans em excelente estado", Categoria: "jaqueta",
+		Descricao: "Jaqueta jeans em excelente estado", Categoria: CategoriaCasacos,
 		Tamanho: "M", Cor: "azul", EstadoConservacao: EstadoSeminovo,
 		PrecoCentavos: 12_000, Status: StatusAnuncioDisponivel,
 		Fotos: []Foto{

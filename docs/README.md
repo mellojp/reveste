@@ -44,3 +44,35 @@ TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disa
 O `compose.yaml` aplica as migracoes `up` em ordem apenas na criacao inicial do
 volume PostgreSQL. Em ambiente ja inicializado, novas migracoes precisam ser
 executadas explicitamente.
+
+## Execucao local
+
+Crie um arquivo `.env` na raiz:
+
+```text
+DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable
+HTTP_ADDRESS=:8080
+```
+
+Inicie o banco e a API:
+
+```text
+docker compose up -d
+go run ./apps/api/cmd/api
+```
+
+O frontend fica disponivel em `http://localhost:8080`.
+
+Para aplicar a migracao de categorias em um volume criado antes dela:
+
+```text
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 \
+  -U reveste -d reveste -f /dev/stdin < db/migrations/003_categorias_anuncio.up.sql
+```
+
+Para executar todos os testes, incluindo a integracao PostgreSQL:
+
+```text
+TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable \
+  go test ./...
+```

@@ -38,21 +38,49 @@ func (u *Usuario) Normalizar() {
 	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
 	u.Telefone = strings.TrimSpace(u.Telefone)
 	u.EnderecoPrincipal.CEP = somenteDigitos(u.EnderecoPrincipal.CEP)
+	u.EnderecoPrincipal.Logradouro = strings.TrimSpace(u.EnderecoPrincipal.Logradouro)
+	u.EnderecoPrincipal.Numero = strings.TrimSpace(u.EnderecoPrincipal.Numero)
+	u.EnderecoPrincipal.Complemento = strings.TrimSpace(u.EnderecoPrincipal.Complemento)
+	u.EnderecoPrincipal.Bairro = strings.TrimSpace(u.EnderecoPrincipal.Bairro)
+	u.EnderecoPrincipal.Cidade = strings.TrimSpace(u.EnderecoPrincipal.Cidade)
 	u.EnderecoPrincipal.Estado = strings.ToUpper(strings.TrimSpace(u.EnderecoPrincipal.Estado))
 }
 
 func (u Usuario) Validar() error {
-	if len(u.Nome) < 3 || !CPFValido(u.CPF) {
-		return common.ErrDadosInvalidos
+	campos := make(map[string]string)
+	if len(u.Nome) < 3 {
+		campos["nome"] = "Informe o nome completo com pelo menos 3 caracteres."
 	}
-	if _, err := mail.ParseAddress(u.Email); err != nil {
-		return common.ErrDadosInvalidos
+	if !CPFValido(u.CPF) {
+		campos["cpf"] = "Informe um CPF válido."
 	}
-	if len(u.HashSenha) == 0 || len(u.EnderecoPrincipal.CEP) != 8 ||
-		u.EnderecoPrincipal.Logradouro == "" || u.EnderecoPrincipal.Numero == "" ||
-		u.EnderecoPrincipal.Bairro == "" || u.EnderecoPrincipal.Cidade == "" ||
-		len(u.EnderecoPrincipal.Estado) != 2 {
-		return common.ErrDadosInvalidos
+	enderecoEmail, err := mail.ParseAddress(u.Email)
+	if err != nil || enderecoEmail.Address != u.Email {
+		campos["email"] = "Informe um e-mail válido."
+	}
+	if len(u.HashSenha) == 0 {
+		campos["senha"] = "Informe uma senha válida."
+	}
+	if len(u.EnderecoPrincipal.CEP) != 8 {
+		campos["endereco.cep"] = "O CEP deve conter 8 dígitos."
+	}
+	if u.EnderecoPrincipal.Logradouro == "" {
+		campos["endereco.logradouro"] = "Informe o logradouro."
+	}
+	if u.EnderecoPrincipal.Numero == "" {
+		campos["endereco.numero"] = "Informe o número."
+	}
+	if u.EnderecoPrincipal.Bairro == "" {
+		campos["endereco.bairro"] = "Informe o bairro."
+	}
+	if u.EnderecoPrincipal.Cidade == "" {
+		campos["endereco.cidade"] = "Informe a cidade."
+	}
+	if len(u.EnderecoPrincipal.Estado) != 2 {
+		campos["endereco.estado"] = "Use a sigla do estado com 2 letras."
+	}
+	if len(campos) > 0 {
+		return common.NovaValidacao(campos)
 	}
 	return nil
 }

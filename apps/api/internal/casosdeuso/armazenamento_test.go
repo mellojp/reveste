@@ -143,7 +143,13 @@ func (r *Store) ListarAnuncios(
 }
 
 func correspondeAoFiltro(anuncio anuncios.Anuncio, filtro casosdeuso.FiltroAnuncios) bool {
-	if anuncio.Status != anuncios.StatusAnuncioDisponivel {
+	if !filtro.IncluirTodosStatus && anuncio.Status != anuncios.StatusAnuncioDisponivel {
+		return false
+	}
+	if filtro.IDVendedor != "" && anuncio.IDVendedor != filtro.IDVendedor {
+		return false
+	}
+	if filtro.ExcluirVendedor != "" && anuncio.IDVendedor == filtro.ExcluirVendedor {
 		return false
 	}
 	palavra := strings.ToLower(strings.TrimSpace(filtro.Palavra))

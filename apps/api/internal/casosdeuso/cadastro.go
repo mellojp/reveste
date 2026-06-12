@@ -50,7 +50,9 @@ func (c *ControladorCadastro) CadastrarUsuario(
 	entrada EntradaCadastro,
 ) (dominiocadastros.Usuario, error) {
 	if len(entrada.Senha) < 8 {
-		return dominiocadastros.Usuario{}, common.ErrDadosInvalidos
+		return dominiocadastros.Usuario{}, common.NovaValidacao(map[string]string{
+			"senha": "A senha deve conter pelo menos 8 caracteres.",
+		})
 	}
 	hash, err := c.senhas.Gerar(entrada.Senha)
 	if err != nil {
@@ -105,4 +107,11 @@ func (c *ControladorCadastro) IdentificarUsuario(ctx context.Context, token stri
 
 func (c *ControladorCadastro) EncerrarSessao(ctx context.Context, token string) error {
 	return c.sessoes.RemoverSessao(ctx, token)
+}
+
+func (c *ControladorCadastro) ObterPerfil(
+	ctx context.Context,
+	idUsuario string,
+) (dominiocadastros.Usuario, error) {
+	return c.usuarios.BuscarUsuarioPorID(ctx, idUsuario)
 }

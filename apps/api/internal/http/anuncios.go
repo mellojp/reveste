@@ -13,6 +13,7 @@ import (
 func (a *API) registrarRotasAnuncios(mux *nethttp.ServeMux) {
 	mux.HandleFunc("GET /v1/anuncios", a.listarAnuncios)
 	mux.HandleFunc("POST /v1/anuncios", a.autenticado(a.criarAnuncio))
+	mux.HandleFunc("GET /v1/me/anuncios", a.autenticado(a.listarMeusAnuncios))
 }
 
 func (a *API) criarAnuncio(w nethttp.ResponseWriter, r *nethttp.Request, idUsuario, _ string) {
@@ -50,7 +51,32 @@ func (a *API) listarAnuncios(w nethttp.ResponseWriter, r *nethttp.Request) {
 		})
 		return
 	}
+	if token := extrairToken(r.Header.Get("Authorization")); token != "" {
+		idUsuario, err := a.cadastros.IdentificarUsuario(r.Context(), token)
+		if err != nil {
+			a.escreverErro(w, err)
+			return
+		}
+		filtro.ExcluirVendedor = idUsuario
+	}
 	lista, err := a.anuncios.ListarAnuncios(r.Context(), filtro)
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	if lista == nil {
+		lista = []anuncios.Anuncio{}
+	}
+	escreverJSON(w, nethttp.StatusOK, map[string]any{"dados": lista, "quantidade": len(lista)})
+}
+
+func (a *API) listarMeusAnuncios(
+	w nethttp.ResponseWriter,
+	r *nethttp.Request,
+	idUsuario,
+	_ string,
+) {
+	lista, err := a.anuncios.ListarAnunciosDoVendedor(r.Context(), idUsuario)
 	if err != nil {
 		a.escreverErro(w, err)
 		return
@@ -82,8 +108,12 @@ func filtroAnuncios(consulta url.Values) (casosdeuso.FiltroAnuncios, error) {
 	if estado != "" && !estado.Valido() {
 		return casosdeuso.FiltroAnuncios{}, common.ErrDadosInvalidos
 	}
+	categoria := consulta.Get("categoria")
+	if categoria != "" && !anuncios.CategoriaValida(categoria) {
+		return casosdeuso.FiltroAnuncios{}, common.ErrDadosInvalidos
+	}
 	return casosdeuso.FiltroAnuncios{
-		Palavra: consulta.Get("q"), Categoria: consulta.Get("categoria"),
+		Palavra: consulta.Get("q"), Categoria: categoria,
 		Tamanho:           consulta.Get("tamanho"),
 		EstadoConservacao: estado,
 		PrecoMinCentavos:  precoMinimo,
