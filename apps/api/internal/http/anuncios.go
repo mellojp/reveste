@@ -12,6 +12,7 @@ import (
 
 func (a *API) registrarRotasAnuncios(mux *nethttp.ServeMux) {
 	mux.HandleFunc("GET /v1/anuncios", a.listarAnuncios)
+	mux.HandleFunc("GET /v1/anuncios/{idAnuncio}", a.obterAnuncio)
 	mux.HandleFunc("POST /v1/anuncios", a.autenticado(a.criarAnuncio))
 	mux.HandleFunc("GET /v1/me/anuncios", a.autenticado(a.listarMeusAnuncios))
 }
@@ -68,6 +69,15 @@ func (a *API) listarAnuncios(w nethttp.ResponseWriter, r *nethttp.Request) {
 		lista = []anuncios.Anuncio{}
 	}
 	escreverJSON(w, nethttp.StatusOK, map[string]any{"dados": lista, "quantidade": len(lista)})
+}
+
+func (a *API) obterAnuncio(w nethttp.ResponseWriter, r *nethttp.Request) {
+	anuncio, err := a.anuncios.ObterAnuncio(r.Context(), r.PathValue("idAnuncio"))
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	escreverJSON(w, nethttp.StatusOK, anuncio)
 }
 
 func (a *API) listarMeusAnuncios(

@@ -35,6 +35,20 @@ func TestFrontendEEntreguePelaAPI(t *testing.T) {
 	}
 }
 
+func TestRotaDoFrontendRecebeIndexParaNavegacaoDireta(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/perfil", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusOK {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusOK)
+	}
+	if !strings.Contains(resposta.Body.String(), `id="page"`) {
+		t.Fatalf("frontend inesperado: %s", resposta.Body.String())
+	}
+}
+
 func TestCatalogoPermanecePublico(t *testing.T) {
 	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/anuncios", nil)
 	resposta := httptest.NewRecorder()
@@ -45,6 +59,20 @@ func TestCatalogoPermanecePublico(t *testing.T) {
 		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusOK)
 	}
 	if !strings.Contains(resposta.Body.String(), `"quantidade":0`) {
+		t.Fatalf("resposta inesperada: %s", resposta.Body.String())
+	}
+}
+
+func TestDetalheDoAnuncioPermanecePublico(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/anuncios/anuncio-publico", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusOK {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusOK)
+	}
+	if !strings.Contains(resposta.Body.String(), `"titulo":"Casaco de lã"`) {
 		t.Fatalf("resposta inesperada: %s", resposta.Body.String())
 	}
 }

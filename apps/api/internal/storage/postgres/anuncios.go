@@ -63,7 +63,7 @@ func (s *Store) BuscarAnuncioPorID(ctx context.Context, id string) (anuncios.Anu
 		return anuncios.Anuncio{}, common.ErrNaoEncontrado
 	}
 	if err != nil {
-		return anuncios.Anuncio{}, err
+		return anuncios.Anuncio{}, mapDatabaseError(err)
 	}
 	anuncio.Fotos, err = s.buscarFotosAnuncio(ctx, anuncio.ID)
 	return anuncio, err

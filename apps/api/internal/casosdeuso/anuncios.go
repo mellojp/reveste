@@ -81,6 +81,16 @@ func (c *ControladorAnuncio) ListarAnuncios(
 	return c.anuncios.ListarAnuncios(ctx, filtro)
 }
 
+func (c *ControladorAnuncio) ObterAnuncio(
+	ctx context.Context,
+	idAnuncio string,
+) (dominioanuncios.Anuncio, error) {
+	if idAnuncio == "" {
+		return dominioanuncios.Anuncio{}, common.ErrNaoEncontrado
+	}
+	return c.anuncios.BuscarAnuncioPorID(ctx, idAnuncio)
+}
+
 func (c *ControladorAnuncio) ListarAnunciosDoVendedor(
 	ctx context.Context,
 	idVendedor string,

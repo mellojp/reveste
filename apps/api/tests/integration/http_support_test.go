@@ -44,7 +44,19 @@ func (operacoesHTTP) CriarAnuncio(context.Context, anuncios.Anuncio) error {
 	return nil
 }
 
-func (operacoesHTTP) BuscarAnuncioPorID(context.Context, string) (anuncios.Anuncio, error) {
+func (operacoesHTTP) BuscarAnuncioPorID(_ context.Context, id string) (anuncios.Anuncio, error) {
+	if id == "anuncio-publico" {
+		return anuncios.Anuncio{
+			ID: id, IDVendedor: "vendedor-1", Titulo: "Casaco de lã",
+			Descricao: "Casaco em ótimo estado.", Categoria: anuncios.CategoriaCasacos,
+			Tamanho: "M", Cor: "verde", EstadoConservacao: anuncios.EstadoSeminovo,
+			PrecoCentavos: 12_000, Status: anuncios.StatusAnuncioDisponivel,
+			Fotos: []anuncios.Foto{
+				{ID: "foto-1", URL: "https://example.com/casaco-1.jpg", Ordem: 0},
+				{ID: "foto-2", URL: "https://example.com/casaco-2.jpg", Ordem: 1},
+			},
+		}, nil
+	}
 	return anuncios.Anuncio{}, common.ErrNaoEncontrado
 }
 

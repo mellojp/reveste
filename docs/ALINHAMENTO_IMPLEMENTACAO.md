@@ -39,15 +39,31 @@ O frontend inicial fica em `apps/front` e e servido pela propria API na rota `/`
 Ele foi mantido como HTML, CSS e JavaScript sem etapa de build enquanto a equipe
 nao define a toolchain React/TypeScript prevista na arquitetura.
 
+O `index.html` contem somente o shell da aplicacao. As telas ficam em
+`apps/front/js/pages`, componentes reutilizaveis em `apps/front/js/components`,
+estado, chamadas HTTP e roteamento em `apps/front/js/core`, e os estilos sao
+separados por responsabilidade em `apps/front/css`.
+
 Telas e fluxos disponiveis:
 
-- landing page e catalogo responsivo;
+- landing page em `/` e catalogo responsivo em `/catalogo`;
+- detalhe publico de anuncio em `/anuncios/:id`, com galeria e inclusao na sacola;
 - busca por texto, categoria e estado de conservacao;
-- cadastro com mensagens de validacao junto aos campos;
-- login, logout e sessao mantida em `sessionStorage`;
-- publicacao de anuncio com upload de 2 a 5 fotos;
-- perfil com dados pessoais, endereco e painel de anuncios;
-- carrinho com inclusao e remocao de pecas.
+- cadastro em `/cadastro`, com mensagens de validacao junto aos campos;
+- login em `/entrar`, logout e sessao mantida em `sessionStorage`;
+- publicacao em `/vender`, com upload de 2 a 5 fotos;
+- perfil em `/perfil`, com dados pessoais e endereco;
+- painel do vendedor em `/meus-anuncios`;
+- carrinho em `/carrinho`, com inclusao e remocao de pecas.
+
+O frontend usa a History API para navegacao sem recarregamento. O servidor
+estatico entrega `index.html` como fallback para rotas de tela, permitindo abrir
+ou atualizar diretamente URLs como `/perfil`. Rotas autenticadas redirecionam
+para `/entrar` e preservam o destino para retorno depois do login.
+
+Checkout, edicao de perfil e edicao ou exclusao de anuncios nao sao simulados na
+interface: as telas indicam essas limitacoes ate os respectivos contratos HTTP
+serem implementados.
 
 O uso de `sessionStorage` e provisório e acompanha o contrato Bearer atual. A decisao
 de autenticacao por cookie `HttpOnly`, protecao CSRF e deploy continua pendente antes
@@ -56,6 +72,7 @@ de producao.
 ## Contratos HTTP adicionados
 
 - `GET /v1/me`: retorna o usuario da sessao atual;
+- `GET /v1/anuncios/{idAnuncio}`: retorna os detalhes publicos de um anuncio;
 - `GET /v1/me/anuncios`: retorna os anuncios publicados pelo usuario;
 - `GET /v1/anuncios`: quando recebe um Bearer valido, omite anuncios do proprio
   usuario; sem autenticacao, continua publico;
