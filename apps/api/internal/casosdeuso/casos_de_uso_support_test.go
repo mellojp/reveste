@@ -58,6 +58,23 @@ func (r *Store) CriarUsuario(ctx context.Context, usuario cadastros.Usuario) err
 	return nil
 }
 
+func (r *Store) AtualizarUsuario(ctx context.Context, usuario cadastros.Usuario) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	anterior, existe := r.usuarios[usuario.ID]
+	if !existe {
+		return common.ErrNaoEncontrado
+	}
+	delete(r.usuarioPorEmail, anterior.Email)
+	r.usuarios[usuario.ID] = usuario
+	r.usuarioPorEmail[usuario.Email] = usuario.ID
+	r.usuarioPorCPF[usuario.CPF] = usuario.ID
+	return nil
+}
+
 func (r *Store) BuscarUsuarioPorID(ctx context.Context, id string) (cadastros.Usuario, error) {
 	if err := ctx.Err(); err != nil {
 		return cadastros.Usuario{}, err
@@ -102,6 +119,44 @@ func (r *Store) CriarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) erro
 	return nil
 }
 
+func (r *Store) AtualizarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, existe := r.anuncios[anuncio.ID]; !existe {
+		return common.ErrNaoEncontrado
+	}
+	r.anuncios[anuncio.ID] = copiarAnuncio(anuncio)
+	return nil
+}
+
+func (r *Store) ExcluirAnuncio(
+	ctx context.Context,
+	idAnuncio,
+	idVendedor string,
+	agora time.Time,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	anuncio, existe := r.anuncios[idAnuncio]
+	if !existe {
+		return common.ErrNaoEncontrado
+	}
+	if anuncio.IDVendedor != idVendedor {
+		return common.ErrNaoPermitido
+	}
+	anuncio.Status = anuncios.StatusAnuncioExcluido
+	anuncio.ExcluidoEm = &agora
+	anuncio.AtualizadoEm = agora
+	r.anuncios[idAnuncio] = anuncio
+	return nil
+}
+
 func (r *Store) BuscarAnuncioPorID(ctx context.Context, id string) (anuncios.Anuncio, error) {
 	if err := ctx.Err(); err != nil {
 		return anuncios.Anuncio{}, err
@@ -143,6 +198,12 @@ func (r *Store) ListarAnuncios(
 }
 
 func correspondeAoFiltro(anuncio anuncios.Anuncio, filtro casosdeuso.FiltroAnuncios) bool {
+	if anuncio.ExcluidoEm != nil {
+		return false
+	}
+	if len(filtro.IDsAnuncios) > 0 && !contemID(filtro.IDsAnuncios, anuncio.ID) {
+		return false
+	}
 	if !filtro.IncluirTodosStatus && anuncio.Status != anuncios.StatusAnuncioDisponivel {
 		return false
 	}
@@ -169,6 +230,15 @@ func correspondeAoFiltro(anuncio anuncios.Anuncio, filtro casosdeuso.FiltroAnunc
 		return false
 	}
 	return filtro.PrecoMaxCentavos <= 0 || anuncio.PrecoCentavos <= filtro.PrecoMaxCentavos
+}
+
+func contemID(ids []string, procurado string) bool {
+	for _, id := range ids {
+		if id == procurado {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *Store) ObterOuCriarCarrinho(ctx context.Context, novoID, idUsuario string, agora time.Time) (compras.Carrinho, error) {

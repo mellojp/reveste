@@ -15,9 +15,11 @@ func (a *API) registrarRotasFrontend(mux *nethttp.ServeMux) {
 				caminhoRelativo := strings.TrimPrefix(filepath.Clean(r.URL.Path), string(filepath.Separator))
 				caminhoLocal := filepath.Join(diretorio, filepath.FromSlash(caminhoRelativo))
 				if info, err := os.Stat(caminhoLocal); err == nil && !info.IsDir() {
+					w.Header().Set("Cache-Control", "public, max-age=3600")
 					arquivos.ServeHTTP(w, r)
 					return
 				}
+				w.Header().Set("Cache-Control", "no-cache")
 				nethttp.ServeFile(w, r, filepath.Join(diretorio, "index.html"))
 			})
 			return

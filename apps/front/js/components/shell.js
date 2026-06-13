@@ -37,15 +37,17 @@ export function renderShell() {
 export function renderHeader() {
   const header = document.querySelector("#site-header");
   const firstName = state.user?.nome?.split(" ")[0];
+  const currentPath = window.location.pathname;
+  const current = (path) => currentPath === path || (path !== "/" && currentPath.startsWith(path));
   header.className = "site-header";
   header.innerHTML = `
     <a class="brand" href="/" data-link aria-label="Página inicial ReVeste">
       <img src="/assets/logo.svg" alt="ReVeste">
     </a>
     <nav class="main-nav" aria-label="Navegação principal">
-      <a href="/catalogo" data-link>Explorar</a>
-      <a href="/vender" data-link>Vender</a>
-      ${state.token ? `<a href="/meus-anuncios" data-link>Meus anúncios</a>` : ""}
+      <a href="/catalogo" data-link ${current("/catalogo") || current("/anuncios/") ? 'aria-current="page"' : ""}>Explorar</a>
+      <a href="/vender" data-link ${current("/vender") ? 'aria-current="page"' : ""}>Vender</a>
+      ${state.token ? `<a href="/meus-anuncios" data-link ${current("/meus-anuncios") ? 'aria-current="page"' : ""}>Meus anúncios</a>` : ""}
     </nav>
     <div class="header-actions">
       <a class="icon-button cart-button" href="/carrinho" data-link aria-label="Abrir sacola">
@@ -53,7 +55,7 @@ export function renderHeader() {
         <span class="badge">${state.cart.anuncios?.length || 0}</span>
       </a>
       <a class="button button-dark" href="${state.token ? "/perfil" : "/entrar"}" data-link>
-        ${firstName || "Entrar"}
+        <span>${firstName || "Entrar"}</span>
       </a>
     </div>
   `;

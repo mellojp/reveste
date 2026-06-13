@@ -2,11 +2,14 @@ import { request } from "../core/api.js";
 import { clearFormErrors, showFormErrors } from "../core/forms.js";
 import { toast } from "../core/notifications.js";
 import { navigate } from "../core/router.js";
+import { uploadPhoto } from "../core/uploads.js";
+import { setButtonLoading } from "../core/feedback.js";
 import { categories, conditions } from "../core/utils.js";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function sellPage(root) {
+  let selectedFiles = [];
   root.innerHTML = `
     <section class="form-page page-section compact-section">
       <div class="page-intro">
@@ -58,11 +61,22 @@ export async function sellPage(root) {
 
   const form = root.querySelector("#sell-form");
   const input = root.querySelector("#photo-input");
-  input.addEventListener("change", () => renderPhotoPreview(input.files, root.querySelector("#photo-preview")));
-  form.addEventListener("submit", (event) => submitAd(event, root));
+  const updatePreview = () => {
+    renderPhotoPreview(selectedFiles, root.querySelector("#photo-preview"), (action, index) => {
+      if (action === "remove") selectedFiles.splice(index, 1);
+      if (action === "left" && index > 0) [selectedFiles[index - 1], selectedFiles[index]] = [selectedFiles[index], selectedFiles[index - 1]];
+      if (action === "right" && index < selectedFiles.length - 1) [selectedFiles[index + 1], selectedFiles[index]] = [selectedFiles[index], selectedFiles[index + 1]];
+      updatePreview();
+    });
+  };
+  input.addEventListener("change", () => {
+    selectedFiles = [...input.files].slice(0, 5);
+    updatePreview();
+  });
+  form.addEventListener("submit", (event) => submitAd(event, root, () => selectedFiles));
 }
 
-function renderPhotoPreview(fileList, preview) {
+function renderPhotoPreview(fileList, preview, onAction) {
   preview.innerHTML = "";
   [...fileList].forEach((file, index) => {
     const item = document.createElement("div");
@@ -71,8 +85,19 @@ function renderPhotoPreview(fileList, preview) {
     image.alt = `Prévia da foto ${index + 1}`;
     image.src = URL.createObjectURL(file);
     image.addEventListener("load", () => URL.revokeObjectURL(image.src), { once: true });
-    item.innerHTML = `<span>${index + 1}</span>`;
+    const controls = document.createElement("div");
+    controls.className = "photo-preview-controls";
+    controls.innerHTML = `
+      <button type="button" data-photo-action="left" aria-label="Mover foto para a esquerda" ${index === 0 ? "disabled" : ""}>←</button>
+      <button type="button" data-photo-action="right" aria-label="Mover foto para a direita" ${index === fileList.length - 1 ? "disabled" : ""}>→</button>
+      <button type="button" data-photo-action="remove" aria-label="Remover foto">×</button>`;
+    controls.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-photo-action]");
+      if (button) onAction(button.dataset.photoAction, index);
+    });
+    item.innerHTML = `<span>${index === 0 ? "Capa" : index + 1}</span>`;
     item.prepend(image);
+    item.append(controls);
     preview.append(item);
   });
 }
@@ -84,11 +109,11 @@ function validatePhotos(files) {
   return "";
 }
 
-async function submitAd(event, root) {
+async function submitAd(event, root, getFiles) {
   event.preventDefault();
   const form = event.currentTarget;
   const values = Object.fromEntries(new FormData(form));
-  const files = [...root.querySelector("#photo-input").files];
+  const files = getFiles();
   const status = root.querySelector("#upload-status");
   const button = form.querySelector("button[type=submit]");
   clearFormErrors(form);
@@ -104,7 +129,7 @@ async function submitAd(event, root) {
     showFormErrors(form, { preco: "Informe um preço válido." });
     return;
   }
-  button.disabled = true;
+  setButtonLoading(button, true, "Publicando...");
   status.classList.remove("hidden");
   try {
     const urls = [];
@@ -133,41 +158,8 @@ async function submitAd(event, root) {
     showFormErrors(form, error.fields);
     toast(error.message);
   } finally {
-    button.disabled = false;
+    setButtonLoading(button, false);
   }
-}
-
-async function uploadPhoto(file) {
-  const authorization = await request("/v1/uploads/imagens/autorizacoes", {
-    method: "POST",
-    body: JSON.stringify({ nome_arquivo: file.name, tipo: file.type, tamanho: file.size }),
-  });
-  const storeID = authorization.token.split("_")[3];
-  const uploadURL = new URL(authorization.url_upload);
-  uploadURL.searchParams.set("pathname", authorization.pathname);
-  let response;
-  try {
-    response = await fetch(uploadURL, {
-      method: "PUT",
-      body: file,
-      headers: {
-        Authorization: `Bearer ${authorization.token}`,
-        "x-api-version": "12",
-        "x-api-blob-request-id": `${storeID}:${Date.now()}:${crypto.randomUUID()}`,
-        "x-api-blob-request-attempt": "0",
-        "x-vercel-blob-store-id": storeID,
-        "x-vercel-blob-access": "public",
-        "x-content-type": file.type,
-      },
-    });
-  } catch {
-    throw new Error("O upload foi recusado. Confirme a configuração do Blob store público.");
-  }
-  const blob = await response.json().catch(() => null);
-  if (!response.ok || !blob?.url) {
-    throw new Error(blob?.error?.message || `Não foi possível enviar ${file.name}.`);
-  }
-  return blob.url;
 }
 
 sellPage.title = "Vender";

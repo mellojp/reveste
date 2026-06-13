@@ -4,5 +4,8 @@ export function toast(message) {
   notification.className = "toast";
   notification.textContent = message;
   region.append(notification);
-  setTimeout(() => notification.remove(), 4000);
+  setTimeout(() => {
+    notification.classList.add("is-leaving");
+    notification.addEventListener("animationend", () => notification.remove(), { once: true });
+  }, 3800);
 }

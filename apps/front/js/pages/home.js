@@ -5,6 +5,7 @@ import { navigate } from "../core/router.js";
 import { state } from "../core/state.js";
 import { categories } from "../core/utils.js";
 import { emptyState, productCard } from "../components/products.js";
+import { gridSkeleton, revealContent } from "../core/feedback.js";
 
 export async function homePage(root) {
   root.innerHTML = `
@@ -19,7 +20,7 @@ export async function homePage(root) {
             <a class="hero-link" href="/vender" data-link>Desapegar agora <span>↗</span></a>
           </div>
           <div class="hero-proof">
-            <span><strong>Compra simples</strong> em poucos passos</span>
+            <span><strong>Curadoria pessoal</strong> para escolhas únicas</span>
             <span><strong>Peças únicas</strong> de outras pessoas</span>
           </div>
         </div>
@@ -61,7 +62,7 @@ export async function homePage(root) {
         <div><span class="eyebrow">Recém-publicadas</span><h2>Novas histórias por aqui</h2></div>
         <a class="text-link" href="/catalogo" data-link>Ver todas</a>
       </div>
-      <div class="product-grid" id="home-products"><div class="page-loading">Buscando peças...</div></div>
+      <div class="product-grid" id="home-products">${gridSkeleton(4)}</div>
     </section>
 
     <section class="page-section circular-banner">
@@ -77,6 +78,7 @@ export async function homePage(root) {
     grid.innerHTML = ads.length
       ? ads.map((ad) => productCard(ad)).join("")
       : emptyState("O catálogo está começando", "Seja a primeira pessoa a publicar uma peça.", '<a class="button button-dark" href="/vender" data-link>Publicar peça</a>');
+    revealContent(grid);
     bindCartButtons(grid);
   } catch (error) {
     grid.innerHTML = emptyState("Não foi possível carregar as peças", error.message);
@@ -92,11 +94,18 @@ function bindCartButtons(root) {
         return;
       }
       button.disabled = true;
+      button.classList.add("is-loading");
+      button.setAttribute("aria-busy", "true");
       try {
         await addToCart(button.dataset.addCart);
+        button.classList.remove("is-loading");
+        button.removeAttribute("aria-busy");
+        button.classList.add("is-added");
+        button.setAttribute("aria-label", "Peça já está na sacola");
       } catch (error) {
         toast(error.message);
-      } finally {
+        button.classList.remove("is-loading");
+        button.removeAttribute("aria-busy");
         button.disabled = false;
       }
     });

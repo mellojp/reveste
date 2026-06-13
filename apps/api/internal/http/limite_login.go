@@ -36,6 +36,13 @@ func (a *API) registrarFalhaLogin(r *nethttp.Request) {
 
 	a.loginMu.Lock()
 	defer a.loginMu.Unlock()
+	if len(a.logins) >= 1_000 {
+		for chave, tentativa := range a.logins {
+			if agora.Sub(tentativa.inicio) >= janelaLogin {
+				delete(a.logins, chave)
+			}
+		}
+	}
 	tentativas, existe := a.logins[chave]
 	if !existe || agora.Sub(tentativas.inicio) >= janelaLogin {
 		tentativas = tentativasLogin{inicio: agora}

@@ -5,9 +5,10 @@ import { navigate } from "../core/router.js";
 import { state } from "../core/state.js";
 import { escapeHTML, isPublicImageURL, money, placeholderSVG } from "../core/utils.js";
 import { emptyState } from "../components/products.js";
+import { pageSkeleton, revealContent, setButtonLoading } from "../core/feedback.js";
 
 export async function adDetailPage(root, { idAnuncio }) {
-  root.innerHTML = `<section class="ad-detail-page page-section"><div class="page-loading">Carregando anúncio...</div></section>`;
+  root.innerHTML = pageSkeleton("Carregando anúncio");
   const cachedAd = findCachedAd(idAnuncio);
   try {
     const ad = await request(`/v1/anuncios/${encodeURIComponent(idAnuncio)}`);
@@ -43,6 +44,8 @@ function renderDetail(root, ad) {
   const photos = [...(ad.fotos || [])].sort((first, second) => first.ordem - second.ordem);
   const isOwnAd = state.user?.id === ad.id_vendedor;
   const isAvailable = ad.status === "disponivel";
+  const seller = ad.vendedor;
+  const sellerInitials = seller?.nome?.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "R";
   root.innerHTML = `
     <section class="ad-detail-page page-section">
       <nav class="breadcrumbs" aria-label="Navegação estrutural">
@@ -88,8 +91,13 @@ function renderDetail(root, ad) {
           <p>${escapeHTML(ad.descricao)}</p>
         </section>
         <aside class="seller-card">
-          <span class="seller-avatar">${isOwnAd ? "Você" : "R"}</span>
-          <div><span class="eyebrow">${isOwnAd ? "Seu anúncio" : "Publicado na ReVeste"}</span><h3>${isOwnAd ? "Esta peça é sua" : "Venda de pessoa para pessoa"}</h3><p>${isOwnAd ? "Acompanhe o status pelo seu painel." : "Os dados públicos do vendedor serão adicionados com o perfil público."}</p></div>
+          <span class="seller-avatar">${isOwnAd ? "Você" : escapeHTML(sellerInitials)}</span>
+          <div>
+            <span class="eyebrow">${isOwnAd ? "Seu anúncio" : "Vendido por"}</span>
+            <h3>${escapeHTML(isOwnAd ? "Esta peça é sua" : seller?.nome || "Vendedor ReVeste")}</h3>
+            <p>${isOwnAd ? "Acompanhe ou edite a peça pelo seu painel." : `${escapeHTML(seller?.cidade || "")}${seller?.estado ? `, ${escapeHTML(seller.estado)}` : ""} · membro desde ${seller?.membro_desde ? new Date(seller.membro_desde).getFullYear() : "2026"}`}</p>
+            ${isOwnAd ? '<a class="text-link" href="/meus-anuncios" data-link>Gerenciar anúncio</a>' : `<a class="text-link" href="/vendedores/${encodeURIComponent(ad.id_vendedor)}" data-link>Ver perfil e outras peças</a>`}
+          </div>
         </aside>
       </div>
     </section>`;
@@ -102,13 +110,16 @@ function renderDetail(root, ad) {
       return;
     }
     const button = event.currentTarget;
-    button.disabled = true;
+    setButtonLoading(button, true, "Adicionando...");
     try {
       await addToCart(ad.id);
+      setButtonLoading(button, false);
       button.textContent = "Peça adicionada";
+      button.disabled = true;
+      button.classList.add("is-success");
     } catch (error) {
       toast(error.message);
-      button.disabled = false;
+      setButtonLoading(button, false);
     }
   });
 }
@@ -127,7 +138,9 @@ function purchaseAction(ad, isOwnAd, isAvailable) {
 function bindGallery(root, photos, title) {
   root.querySelectorAll("[data-photo]").forEach((button) => {
     button.addEventListener("click", () => {
-      root.querySelector("#ad-main-photo").innerHTML = photoMarkup(photos[Number(button.dataset.photo)], title);
+      const mainPhoto = root.querySelector("#ad-main-photo");
+      mainPhoto.innerHTML = photoMarkup(photos[Number(button.dataset.photo)], title);
+      revealContent(mainPhoto);
       root.querySelectorAll("[data-photo]").forEach((item) => item.classList.toggle("active", item === button));
     });
   });

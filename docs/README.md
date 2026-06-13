@@ -1,5 +1,13 @@
 # Estrutura da aplicacao
 
+## Documentos relacionados
+
+- `MODELO_CANONICO.md`: vocabulario e regras canonicas do dominio;
+- `ALINHAMENTO_IMPLEMENTACAO.md`: correspondencia entre a modelagem e o codigo;
+- `PLANO_IMPLEMENTACAO_INICIAL.md`: plano que orientou o primeiro incremento;
+- `INCREMENTO_FLUXO_INICIAL.md`: registro consolidado das correcoes de backend,
+  conclusao dos fluxos de perfil e anuncios e refinamentos do frontend.
+
 O fluxo principal da API e:
 
 ```text
@@ -75,6 +83,15 @@ go run ./apps/api/cmd/api
 ```
 
 O frontend fica disponivel em `http://localhost:8080`.
+
+O incremento web atual permite editar o perfil, editar ou excluir logicamente anuncios
+disponiveis e consultar perfis publicos de vendedores sem expor e-mail, telefone, CPF
+ou endereco detalhado.
+
+Endpoints de monitoramento:
+
+- `GET /saude`: liveness do processo;
+- `GET /saude/prontidao`: readiness com verificacao da conexao PostgreSQL.
 
 Para aplicar a migracao de categorias em um volume criado antes dela:
 

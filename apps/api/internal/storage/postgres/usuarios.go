@@ -51,6 +51,42 @@ func (s *Store) CriarUsuario(ctx context.Context, usuario cadastros.Usuario) err
 	return tx.Commit(ctx)
 }
 
+func (s *Store) AtualizarUsuario(ctx context.Context, usuario cadastros.Usuario) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	resultado, err := tx.Exec(ctx, `
+		UPDATE usuario
+		SET nome = $2, email = $3, telefone = NULLIF($4, ''), atualizado_em = $5
+		WHERE id = $1 AND excluido_em IS NULL
+	`, usuario.ID, usuario.Nome, usuario.Email, usuario.Telefone, usuario.AtualizadoEm)
+	if err != nil {
+		return mapDatabaseError(err)
+	}
+	if resultado.RowsAffected() == 0 {
+		return common.ErrNaoEncontrado
+	}
+	endereco := usuario.EnderecoPrincipal
+	resultado, err = tx.Exec(ctx, `
+		UPDATE endereco
+		SET cep = $2, logradouro = $3, numero = $4, complemento = NULLIF($5, ''),
+		    bairro = $6, cidade = $7, estado = $8, atualizado_em = $9
+		WHERE id_usuario = $1 AND principal = TRUE AND excluido_em IS NULL
+	`, usuario.ID, endereco.CEP, endereco.Logradouro, endereco.Numero,
+		endereco.Complemento, endereco.Bairro, endereco.Cidade, endereco.Estado,
+		usuario.AtualizadoEm)
+	if err != nil {
+		return mapDatabaseError(err)
+	}
+	if resultado.RowsAffected() == 0 {
+		return common.ErrNaoEncontrado
+	}
+	return tx.Commit(ctx)
+}
+
 func (s *Store) BuscarUsuarioPorID(ctx context.Context, id string) (cadastros.Usuario, error) {
 	return s.buscarUsuario(ctx, `u.id = $1`, id)
 }

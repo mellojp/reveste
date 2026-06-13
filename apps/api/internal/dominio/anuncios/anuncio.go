@@ -1,6 +1,7 @@
 package anuncios
 
 import (
+	"net/url"
 	"strings"
 	"time"
 
@@ -93,11 +94,16 @@ func (a Anuncio) ValidarNovo() error {
 		return common.ErrDadosInvalidos
 	}
 	for _, foto := range a.Fotos {
-		if foto.URL == "" {
+		if !URLFotoValida(foto.URL) {
 			return common.ErrDadosInvalidos
 		}
 	}
 	return nil
+}
+
+func URLFotoValida(valor string) bool {
+	endereco, err := url.ParseRequestURI(strings.TrimSpace(valor))
+	return err == nil && endereco.Scheme == "https" && endereco.Host != ""
 }
 
 func (e EstadoConservacao) Valido() bool {
@@ -115,6 +121,16 @@ func (a Anuncio) PodeSerAdicionadoAoCarrinho(idComprador string) error {
 	}
 	if a.IDVendedor == idComprador {
 		return common.ErrAnuncioDoProprioAutor
+	}
+	return nil
+}
+
+func (a Anuncio) PodeSerGerenciadoPor(idVendedor string) error {
+	if a.IDVendedor != idVendedor {
+		return common.ErrNaoPermitido
+	}
+	if a.Status != StatusAnuncioDisponivel {
+		return common.ErrTransicaoInvalida
 	}
 	return nil
 }

@@ -37,10 +37,14 @@ func (a *API) escreverErro(w nethttp.ResponseWriter, err error) {
 		status, codigo, mensagem = nethttp.StatusConflict, "CONFLITO", "Ja existe um recurso com os dados informados."
 	case errors.Is(err, common.ErrNaoAutorizado):
 		status, codigo, mensagem = nethttp.StatusUnauthorized, "NAO_AUTORIZADO", "Autenticacao obrigatoria ou invalida."
+	case errors.Is(err, common.ErrNaoPermitido):
+		status, codigo, mensagem = nethttp.StatusForbidden, "NAO_PERMITIDO", "Você não pode realizar esta operação."
 	case errors.Is(err, common.ErrAnuncioIndisponivel):
 		status, codigo, mensagem = nethttp.StatusConflict, "ANUNCIO_INDISPONIVEL", err.Error()
 	case errors.Is(err, common.ErrAnuncioDoProprioAutor):
 		status, codigo, mensagem = nethttp.StatusUnprocessableEntity, "ANUNCIO_PROPRIO", err.Error()
+	case errors.Is(err, common.ErrVendedorBloqueado):
+		status, codigo, mensagem = nethttp.StatusForbidden, "VENDEDOR_BLOQUEADO", err.Error()
 	case errors.Is(err, common.ErrTransicaoInvalida):
 		status, codigo, mensagem = nethttp.StatusConflict, "TRANSICAO_INVALIDA", err.Error()
 	case errors.Is(err, common.ErrServicoIndisponivel):

@@ -55,6 +55,15 @@ func TestCategoriaDoAnuncioDeveSerCanonica(t *testing.T) {
 	}
 }
 
+func TestAnuncioRejeitaURLDeFotoInsegura(t *testing.T) {
+	anuncio := anuncioValido()
+	anuncio.Fotos[0].URL = "javascript:alert(1)"
+
+	if err := anuncio.ValidarNovo(); err == nil {
+		t.Fatal("ValidarNovo() deveria rejeitar URL de foto insegura")
+	}
+}
+
 func anuncioValido() Anuncio {
 	return Anuncio{
 		ID: "anuncio-1", IDVendedor: "vendedor-1", Titulo: "Jaqueta jeans",

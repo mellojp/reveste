@@ -32,7 +32,19 @@ func (operacoesHTTP) CriarUsuario(context.Context, cadastros.Usuario) error {
 	return nil
 }
 
-func (operacoesHTTP) BuscarUsuarioPorID(context.Context, string) (cadastros.Usuario, error) {
+func (operacoesHTTP) AtualizarUsuario(context.Context, cadastros.Usuario) error {
+	return nil
+}
+
+func (operacoesHTTP) BuscarUsuarioPorID(_ context.Context, id string) (cadastros.Usuario, error) {
+	if id == "vendedor-1" {
+		return cadastros.Usuario{
+			ID: id, Nome: "Vendedora Teste", Email: "privado@teste.local",
+			Telefone:          "79999999999",
+			EnderecoPrincipal: cadastros.Endereco{Cidade: "Aracaju", Estado: "SE"},
+			CriadoEm:          time.Date(2025, 1, 10, 12, 0, 0, 0, time.UTC),
+		}, nil
+	}
 	return cadastros.Usuario{}, common.ErrNaoEncontrado
 }
 
@@ -41,6 +53,14 @@ func (operacoesHTTP) BuscarUsuarioPorEmailOuCPF(context.Context, string) (cadast
 }
 
 func (operacoesHTTP) CriarAnuncio(context.Context, anuncios.Anuncio) error {
+	return nil
+}
+
+func (operacoesHTTP) AtualizarAnuncio(context.Context, anuncios.Anuncio) error {
+	return nil
+}
+
+func (operacoesHTTP) ExcluirAnuncio(context.Context, string, string, time.Time) error {
 	return nil
 }
 
@@ -100,6 +120,10 @@ func (operacoesHTTP) RemoverSessao(context.Context, string) error {
 	return nil
 }
 
+func (operacoesHTTP) Ping(context.Context) error {
+	return nil
+}
+
 type idHTTP struct{}
 
 func (idHTTP) Novo() string {
@@ -135,5 +159,5 @@ func novoHandler() nethttp.Handler {
 	)
 	uploadsCU := casosdeuso.NovoControladorUpload(operacoes, idHTTP{}, relogioHTTP{})
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return httptransport.NovaAPI(cadastrosCU, anunciosCU, comprasCU, uploadsCU, logger)
+	return httptransport.NovaAPI(cadastrosCU, anunciosCU, comprasCU, uploadsCU, operacoes, logger)
 }

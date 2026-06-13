@@ -10,6 +10,7 @@ import (
 	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
+	"reveste/apps/api/internal/dominio/compras"
 )
 
 type geradorSequencial struct {
@@ -124,6 +125,32 @@ func TestAdicoesConcorrentesAoCarrinhoSaoPreservadas(t *testing.T) {
 	}
 }
 
+func TestCarrinhoMantemItemIndisponivelSemSomarAoTotal(t *testing.T) {
+	store := newTestStore()
+	store.anuncios["anuncio-indisponivel"] = anuncios.Anuncio{
+		ID: "anuncio-indisponivel", IDVendedor: "vendedor-1",
+		Status: anuncios.StatusAnuncioVendido, PrecoCentavos: 9_000,
+	}
+	store.carrinhoPorUsuario["comprador-1"] = compras.Carrinho{
+		ID: "carrinho-1", IDUsuario: "comprador-1",
+		IDsAnuncios: []string{"anuncio-indisponivel"},
+	}
+	controlador := casosdeuso.NovoControladorCarrinho(
+		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+	)
+
+	carrinho, err := controlador.ObterCarrinho(context.Background(), "comprador-1")
+	if err != nil {
+		t.Fatalf("ObterCarrinho() erro = %v", err)
+	}
+	if len(carrinho.Anuncios) != 1 {
+		t.Fatalf("anuncios = %d; esperado 1", len(carrinho.Anuncios))
+	}
+	if carrinho.TotalCentavos != 0 {
+		t.Fatalf("total = %d; esperado 0", carrinho.TotalCentavos)
+	}
+}
+
 func TestCatalogoExcluiAnunciosPropriosEPerfilOsInclui(t *testing.T) {
 	store := newTestStore()
 	controlador := casosdeuso.NovoControladorAnuncio(
@@ -156,10 +183,158 @@ func TestCatalogoExcluiAnunciosPropriosEPerfilOsInclui(t *testing.T) {
 	}
 }
 
+func TestVendedorBloqueadoNaoPodeCriarAnuncio(t *testing.T) {
+	store := newTestStore()
+	store.usuarios["vendedor-bloqueado"] = cadastros.Usuario{
+		ID: "vendedor-bloqueado", BloqueadoParaVendas: true,
+	}
+	controlador := casosdeuso.NovoControladorAnuncio(
+		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+	)
+
+	_, err := controlador.CriarAnuncio(
+		context.Background(),
+		"vendedor-bloqueado",
+		casosdeuso.EntradaAnuncio{
+			Titulo: "Peça válida", Descricao: "Descrição suficientemente detalhada",
+			Categoria: anuncios.CategoriaCasacos, Tamanho: "M", Cor: "verde",
+			EstadoConservacao: anuncios.EstadoSeminovo, PrecoCentavos: 10_000,
+			URLsFotos: []string{
+				"https://example.com/1.jpg",
+				"https://example.com/2.jpg",
+			},
+		},
+	)
+
+	if err != common.ErrVendedorBloqueado {
+		t.Fatalf("CriarAnuncio() erro = %v; esperado %v", err, common.ErrVendedorBloqueado)
+	}
+}
+
+func TestAtualizarPerfilPreservaDadosPrivadosEAtualizaEndereco(t *testing.T) {
+	store := newTestStore()
+	ids := &geradorSequencial{}
+	controlador := casosdeuso.NovoControladorCadastro(
+		store, store, ids, common.ProcessadorPBKDF2{Iteracoes: 100_000},
+		relogioFixo{agora: time.Date(2026, 6, 12, 12, 0, 0, 0, time.UTC)},
+	)
+	usuario := cadastrarUsuario(
+		t, context.Background(), controlador,
+		"Nome Original", "52998224725", "original@teste.local",
+	)
+
+	atualizado, err := controlador.AtualizarPerfil(
+		context.Background(),
+		usuario.ID,
+		casosdeuso.EntradaAtualizacaoPerfil{
+			Nome: "  Nome Atualizado  ", Email: "NOVO@TESTE.LOCAL", Telefone: " 79999999999 ",
+			Endereco: cadastros.Endereco{
+				CEP: "49010-000", Logradouro: "Rua Nova", Numero: "20",
+				Complemento: "Apto 3", Bairro: "Centro", Cidade: "Aracaju", Estado: "se",
+			},
+		},
+	)
+	if err != nil {
+		t.Fatalf("AtualizarPerfil() erro = %v", err)
+	}
+	if atualizado.Nome != "Nome Atualizado" || atualizado.Email != "novo@teste.local" {
+		t.Fatalf("perfil nao normalizado: %+v", atualizado)
+	}
+	if atualizado.CPF != usuario.CPF || atualizado.HashSenha != usuario.HashSenha {
+		t.Fatal("CPF ou hash da senha foram alterados")
+	}
+	if atualizado.EnderecoPrincipal.CEP != "49010000" || atualizado.EnderecoPrincipal.Estado != "SE" {
+		t.Fatalf("endereco nao normalizado: %+v", atualizado.EnderecoPrincipal)
+	}
+}
+
+func TestGerenciamentoDeAnuncioExigeProprietarioEDisponibilidade(t *testing.T) {
+	store := newTestStore()
+	store.usuarios["vendedor-1"] = cadastros.Usuario{
+		ID: "vendedor-1", Nome: "Vendedor", CriadoEm: time.Now(),
+		EnderecoPrincipal: cadastros.Endereco{Cidade: "Aracaju", Estado: "SE"},
+	}
+	store.anuncios["anuncio-1"] = anuncios.Anuncio{
+		ID: "anuncio-1", IDVendedor: "vendedor-1", Titulo: "Titulo antigo",
+		Descricao: "Descricao antiga valida", Categoria: anuncios.CategoriaCasacos,
+		Tamanho: "M", Cor: "azul", EstadoConservacao: anuncios.EstadoSeminovo,
+		PrecoCentavos: 10_000, Status: anuncios.StatusAnuncioDisponivel,
+		Fotos: []anuncios.Foto{
+			{ID: "foto-1", URL: "https://example.com/1.jpg"},
+			{ID: "foto-2", URL: "https://example.com/2.jpg"},
+		},
+	}
+	controlador := casosdeuso.NovoControladorAnuncio(
+		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+	)
+	entrada := casosdeuso.EntradaAnuncio{
+		Titulo: "Titulo atualizado", Descricao: "Descricao atualizada e valida",
+		Categoria: anuncios.CategoriaCamisetas, Tamanho: "g", Cor: "Branco",
+		EstadoConservacao: anuncios.EstadoUsado, PrecoCentavos: 12_000,
+		URLsFotos: []string{"https://example.com/3.jpg", "https://example.com/4.jpg"},
+	}
+
+	if _, err := controlador.AtualizarAnuncio(
+		context.Background(), "outro-vendedor", "anuncio-1", entrada,
+	); err != common.ErrNaoPermitido {
+		t.Fatalf("edicao por terceiro erro = %v; esperado ErrNaoPermitido", err)
+	}
+	atualizado, err := controlador.AtualizarAnuncio(
+		context.Background(), "vendedor-1", "anuncio-1", entrada,
+	)
+	if err != nil {
+		t.Fatalf("AtualizarAnuncio() erro = %v", err)
+	}
+	if atualizado.Titulo != "Titulo atualizado" || atualizado.Tamanho != "G" {
+		t.Fatalf("anuncio nao atualizado: %+v", atualizado)
+	}
+	if err := controlador.ExcluirAnuncio(
+		context.Background(), "vendedor-1", "anuncio-1",
+	); err != nil {
+		t.Fatalf("ExcluirAnuncio() erro = %v", err)
+	}
+	lista, err := controlador.ListarAnunciosDoVendedor(context.Background(), "vendedor-1")
+	if err != nil {
+		t.Fatalf("ListarAnunciosDoVendedor() erro = %v", err)
+	}
+	if len(lista) != 0 {
+		t.Fatalf("anuncio excluido ainda listado: %+v", lista)
+	}
+}
+
+func TestPerfilPublicoVendedorNaoExpoeDadosPrivados(t *testing.T) {
+	store := newTestStore()
+	store.usuarios["vendedor-1"] = cadastros.Usuario{
+		ID: "vendedor-1", Nome: "Vendedora Teste", Email: "privado@teste.local",
+		Telefone: "79999999999", CPF: "52998224725",
+		EnderecoPrincipal: cadastros.Endereco{
+			Logradouro: "Rua Privada", Numero: "10", Cidade: "Aracaju", Estado: "SE",
+		},
+		CriadoEm: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	controlador := casosdeuso.NovoControladorAnuncio(
+		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+	)
+
+	perfil, err := controlador.ObterPerfilPublicoVendedor(context.Background(), "vendedor-1")
+	if err != nil {
+		t.Fatalf("ObterPerfilPublicoVendedor() erro = %v", err)
+	}
+	if perfil.Vendedor.Nome != "Vendedora Teste" ||
+		perfil.Vendedor.Cidade != "Aracaju" ||
+		perfil.Vendedor.Estado != "SE" {
+		t.Fatalf("perfil publico inesperado: %+v", perfil.Vendedor)
+	}
+}
+
 type usuariosInexistentes struct{}
 
 func (usuariosInexistentes) CriarUsuario(context.Context, cadastros.Usuario) error {
 	return nil
+}
+
+func (usuariosInexistentes) AtualizarUsuario(context.Context, cadastros.Usuario) error {
+	return common.ErrNaoEncontrado
 }
 
 func (usuariosInexistentes) BuscarUsuarioPorID(context.Context, string) (cadastros.Usuario, error) {

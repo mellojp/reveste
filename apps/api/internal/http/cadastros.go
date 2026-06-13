@@ -12,6 +12,37 @@ func (a *API) registrarRotasCadastros(mux *nethttp.ServeMux) {
 	mux.HandleFunc("POST /v1/sessoes", a.autenticar)
 	mux.HandleFunc("DELETE /v1/sessoes/atual", a.autenticado(a.encerrarSessao))
 	mux.HandleFunc("GET /v1/me", a.autenticado(a.obterPerfil))
+	mux.HandleFunc("PATCH /v1/me", a.autenticado(a.atualizarPerfil))
+}
+
+func (a *API) atualizarPerfil(
+	w nethttp.ResponseWriter,
+	r *nethttp.Request,
+	idUsuario,
+	_ string,
+) {
+	var entrada struct {
+		Nome     string             `json:"nome"`
+		Email    string             `json:"email"`
+		Telefone string             `json:"telefone"`
+		Endereco cadastros.Endereco `json:"endereco"`
+	}
+	if !decodificarJSON(w, r, &entrada) {
+		return
+	}
+	usuario, err := a.cadastros.AtualizarPerfil(
+		r.Context(),
+		idUsuario,
+		casosdeuso.EntradaAtualizacaoPerfil{
+			Nome: entrada.Nome, Email: entrada.Email,
+			Telefone: entrada.Telefone, Endereco: entrada.Endereco,
+		},
+	)
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	escreverJSON(w, nethttp.StatusOK, usuario)
 }
 
 func (a *API) cadastrarUsuario(w nethttp.ResponseWriter, r *nethttp.Request) {

@@ -1,7 +1,9 @@
 import { adImage, escapeHTML, money } from "../core/utils.js";
+import { state } from "../core/state.js";
 
 export function productCard(ad, { allowCart = true } = {}) {
   const detailURL = `/anuncios/${encodeURIComponent(ad.id)}`;
+  const inCart = state.cart.anuncios?.some((item) => item.id === ad.id);
   return `
     <article class="product-card">
       <div class="product-image">
@@ -10,7 +12,7 @@ export function productCard(ad, { allowCart = true } = {}) {
           <span class="condition-tag">${escapeHTML(ad.estado_conservacao.replaceAll("_", " "))}</span>
         </a>
         ${allowCart ? `
-          <button class="add-cart" data-add-cart="${escapeHTML(ad.id)}" aria-label="Adicionar ${escapeHTML(ad.titulo)} à sacola">
+          <button class="add-cart ${inCart ? "is-added" : ""}" data-add-cart="${escapeHTML(ad.id)}" aria-label="${inCart ? "Peça já está na sacola" : `Adicionar ${escapeHTML(ad.titulo)} à sacola`}" ${inCart ? "disabled" : ""}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 13H5L6 8Zm3 2V6a3 3 0 0 1 6 0v4"/></svg>
           </button>` : ""}
       </div>
@@ -26,5 +28,5 @@ export function productCard(ad, { allowCart = true } = {}) {
 }
 
 export function emptyState(title, description, action = "") {
-  return `<div class="empty-state"><h3>${title}</h3><p>${description}</p>${action}</div>`;
+  return `<div class="empty-state"><span class="empty-state-mark" aria-hidden="true">R</span><h3>${title}</h3><p>${description}</p>${action}</div>`;
 }

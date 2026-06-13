@@ -5,6 +5,7 @@ import { navigate } from "../core/router.js";
 import { loadCart, saveSession, state } from "../core/session.js";
 import { renderHeader } from "../components/shell.js";
 import { escapeHTML } from "../core/utils.js";
+import { setButtonLoading } from "../core/feedback.js";
 
 function authLayout(kind, content) {
   const isLogin = kind === "login";
@@ -50,7 +51,7 @@ export async function loginPage(root) {
     event.preventDefault();
     const button = form.querySelector("button[type=submit]");
     clearFormErrors(form);
-    button.disabled = true;
+    setButtonLoading(button, true, "Entrando...");
     try {
       const session = await request("/v1/sessoes", {
         method: "POST",
@@ -65,7 +66,7 @@ export async function loginPage(root) {
       showFormErrors(form, error.fields);
       toast(error.message);
     } finally {
-      button.disabled = false;
+      setButtonLoading(button, false);
     }
   });
 }
@@ -118,7 +119,7 @@ export async function registerPage(root) {
     const values = Object.fromEntries(new FormData(form));
     const button = form.querySelector("button[type=submit]");
     clearFormErrors(form);
-    button.disabled = true;
+    setButtonLoading(button, true, "Criando conta...");
     const payload = {
       nome: values.nome,
       cpf: values.cpf,
@@ -143,7 +144,7 @@ export async function registerPage(root) {
       showFormErrors(form, error.fields);
       toast(error.message);
     } finally {
-      button.disabled = false;
+      setButtonLoading(button, false);
     }
   });
 }

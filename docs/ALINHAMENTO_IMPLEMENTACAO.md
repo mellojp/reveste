@@ -29,6 +29,9 @@
 - criar anuncio;
 - listar e filtrar anuncios;
 - consultar os anuncios do usuario autenticado;
+- editar dados pessoais e endereco principal;
+- editar e excluir logicamente anuncios disponiveis do proprio vendedor;
+- consultar dados publicos e anuncios disponiveis de outros vendedores;
 - adicionar e remover anuncio do carrinho;
 - validar CPF, anuncio, quantidade de fotos, categoria e disponibilidade;
 - apresentar um fluxo web navegavel de conta, catalogo, publicacao, perfil e carrinho.
@@ -48,22 +51,31 @@ Telas e fluxos disponiveis:
 
 - landing page em `/` e catalogo responsivo em `/catalogo`;
 - detalhe publico de anuncio em `/anuncios/:id`, com galeria e inclusao na sacola;
-- busca por texto, categoria e estado de conservacao;
+- busca por texto, categoria, tamanho, faixa de preco e estado de conservacao;
+- carregamento progressivo do catalogo em paginas de 24 anuncios;
 - cadastro em `/cadastro`, com mensagens de validacao junto aos campos;
 - login em `/entrar`, logout e sessao mantida em `sessionStorage`;
 - publicacao em `/vender`, com upload de 2 a 5 fotos;
 - perfil em `/perfil`, com dados pessoais e endereco;
-- painel do vendedor em `/meus-anuncios`;
+- edicao de dados pessoais e endereco em `/perfil`;
+- painel do vendedor em `/meus-anuncios`, com edicao e exclusao logica;
+- perfil publico de vendedor em `/vendedores/:id`;
 - carrinho em `/carrinho`, com inclusao e remocao de pecas.
+
+As alteracoes deste incremento, incluindo contratos, regras, decisoes de
+frontend, verificacoes e limitacoes, estao detalhadas em
+`docs/INCREMENTO_FLUXO_INICIAL.md`.
+
+O carrinho nao reserva estoque. Anuncios que se tornam indisponiveis continuam visiveis
+para que o usuario entenda a alteracao, mas deixam de compor o total.
 
 O frontend usa a History API para navegacao sem recarregamento. O servidor
 estatico entrega `index.html` como fallback para rotas de tela, permitindo abrir
 ou atualizar diretamente URLs como `/perfil`. Rotas autenticadas redirecionam
 para `/entrar` e preservam o destino para retorno depois do login.
 
-Checkout, edicao de perfil e edicao ou exclusao de anuncios nao sao simulados na
-interface: as telas indicam essas limitacoes ate os respectivos contratos HTTP
-serem implementados.
+Checkout ainda nao e simulado na interface. Edicao de perfil, edicao de anuncios
+disponiveis e exclusao logica ja possuem contratos HTTP e fluxos web.
 
 O uso de `sessionStorage` e provisório e acompanha o contrato Bearer atual. A decisao
 de autenticacao por cookie `HttpOnly`, protecao CSRF e deploy continua pendente antes
@@ -74,8 +86,13 @@ de producao.
 - `GET /v1/me`: retorna o usuario da sessao atual;
 - `GET /v1/anuncios/{idAnuncio}`: retorna os detalhes publicos de um anuncio;
 - `GET /v1/me/anuncios`: retorna os anuncios publicados pelo usuario;
+- `PATCH /v1/me`: atualiza dados pessoais e endereco principal;
+- `PATCH /v1/me/anuncios/{idAnuncio}`: edita anuncio disponivel do usuario;
+- `DELETE /v1/me/anuncios/{idAnuncio}`: exclui logicamente anuncio disponivel;
+- `GET /v1/vendedores/{idVendedor}`: retorna perfil publico e anuncios disponiveis;
 - `GET /v1/anuncios`: quando recebe um Bearer valido, omite anuncios do proprio
   usuario; sem autenticacao, continua publico;
+- `GET /saude/prontidao`: verifica a conexao PostgreSQL com timeout;
 - erros de cadastro podem preencher `campos` com mensagens especificas por input.
 
 ## Armazenamento de imagens
@@ -152,6 +169,10 @@ livres existentes antes de criar a constraint.
 
 - testes unitarios dos dominios e casos de uso;
 - testes dos handlers HTTP;
+- testes de autorizacao para edicao e exclusao de anuncios;
+- testes de privacidade do perfil publico do vendedor;
+- testes de carrinho com itens indisponiveis;
+- testes do endpoint de prontidao e dos headers de seguranca;
 - teste de integracao PostgreSQL com migracoes em schema isolado;
 - fluxo manual contra PostgreSQL real: cadastro, login, publicacao, perfil,
   exclusao de anuncio proprio do catalogo e listagem em "Meus anuncios".
@@ -176,7 +197,6 @@ as portas usadas pelos controladores.
 
 ## Comportamentos modelados, ainda nao executaveis
 
-- editar e excluir logicamente anuncios pela interface;
 - checkout e criacao de pedidos por vendedor;
 - pagamento, reembolso e repasse;
 - rastreio e confirmacao de recebimento;

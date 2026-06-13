@@ -45,6 +45,13 @@ type EntradaCadastro struct {
 	Endereco dominiocadastros.Endereco
 }
 
+type EntradaAtualizacaoPerfil struct {
+	Nome     string
+	Email    string
+	Telefone string
+	Endereco dominiocadastros.Endereco
+}
+
 func (c *ControladorCadastro) CadastrarUsuario(
 	ctx context.Context,
 	entrada EntradaCadastro,
@@ -114,4 +121,28 @@ func (c *ControladorCadastro) ObterPerfil(
 	idUsuario string,
 ) (dominiocadastros.Usuario, error) {
 	return c.usuarios.BuscarUsuarioPorID(ctx, idUsuario)
+}
+
+func (c *ControladorCadastro) AtualizarPerfil(
+	ctx context.Context,
+	idUsuario string,
+	entrada EntradaAtualizacaoPerfil,
+) (dominiocadastros.Usuario, error) {
+	usuario, err := c.usuarios.BuscarUsuarioPorID(ctx, idUsuario)
+	if err != nil {
+		return dominiocadastros.Usuario{}, err
+	}
+	usuario.Nome = entrada.Nome
+	usuario.Email = entrada.Email
+	usuario.Telefone = entrada.Telefone
+	usuario.EnderecoPrincipal = entrada.Endereco
+	usuario.AtualizadoEm = c.relogio.Agora()
+	usuario.Normalizar()
+	if err := usuario.Validar(); err != nil {
+		return dominiocadastros.Usuario{}, err
+	}
+	if err := c.usuarios.AtualizarUsuario(ctx, usuario); err != nil {
+		return dominiocadastros.Usuario{}, err
+	}
+	return usuario, nil
 }

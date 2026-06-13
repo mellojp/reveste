@@ -2,9 +2,7 @@ package casosdeuso
 
 import (
 	"context"
-	"errors"
 
-	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	dominiocompras "reveste/apps/api/internal/dominio/compras"
 )
@@ -85,16 +83,30 @@ func (c *ControladorCarrinho) detalharCarrinho(
 	resultado := CarrinhoDetalhado{
 		ID: carrinho.ID, IDUsuario: carrinho.IDUsuario, Anuncios: []anuncios.Anuncio{},
 	}
+	if len(carrinho.IDsAnuncios) == 0 {
+		return resultado, nil
+	}
+	lista, err := c.anuncios.ListarAnuncios(ctx, FiltroAnuncios{
+		IDsAnuncios:        carrinho.IDsAnuncios,
+		IncluirTodosStatus: true,
+		Limite:             len(carrinho.IDsAnuncios),
+	})
+	if err != nil {
+		return CarrinhoDetalhado{}, err
+	}
+	porID := make(map[string]anuncios.Anuncio, len(lista))
+	for _, anuncio := range lista {
+		porID[anuncio.ID] = anuncio
+	}
 	for _, idAnuncio := range carrinho.IDsAnuncios {
-		anuncio, err := c.anuncios.BuscarAnuncioPorID(ctx, idAnuncio)
-		if errors.Is(err, common.ErrNaoEncontrado) {
+		anuncio, existe := porID[idAnuncio]
+		if !existe {
 			continue
 		}
-		if err != nil {
-			return CarrinhoDetalhado{}, err
-		}
 		resultado.Anuncios = append(resultado.Anuncios, anuncio)
-		resultado.TotalCentavos += anuncio.PrecoCentavos
+		if anuncio.Status == anuncios.StatusAnuncioDisponivel {
+			resultado.TotalCentavos += anuncio.PrecoCentavos
+		}
 	}
 	return resultado, nil
 }

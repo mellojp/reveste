@@ -72,6 +72,7 @@ func executar(logger *slog.Logger) error {
 			controladorAnuncios,
 			controladorCarrinho,
 			controladorUpload,
+			database,
 			logger,
 		),
 		ReadHeaderTimeout: 5 * time.Second,

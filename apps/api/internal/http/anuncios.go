@@ -15,9 +15,74 @@ func (a *API) registrarRotasAnuncios(mux *nethttp.ServeMux) {
 	mux.HandleFunc("GET /v1/anuncios/{idAnuncio}", a.obterAnuncio)
 	mux.HandleFunc("POST /v1/anuncios", a.autenticado(a.criarAnuncio))
 	mux.HandleFunc("GET /v1/me/anuncios", a.autenticado(a.listarMeusAnuncios))
+	mux.HandleFunc("PATCH /v1/me/anuncios/{idAnuncio}", a.autenticado(a.atualizarAnuncio))
+	mux.HandleFunc("DELETE /v1/me/anuncios/{idAnuncio}", a.autenticado(a.excluirAnuncio))
+	mux.HandleFunc("GET /v1/vendedores/{idVendedor}", a.obterPerfilPublicoVendedor)
+}
+
+func (a *API) atualizarAnuncio(
+	w nethttp.ResponseWriter,
+	r *nethttp.Request,
+	idUsuario,
+	_ string,
+) {
+	entrada, ok := decodificarEntradaAnuncio(w, r)
+	if !ok {
+		return
+	}
+	anuncio, err := a.anuncios.AtualizarAnuncio(
+		r.Context(), idUsuario, r.PathValue("idAnuncio"), entrada,
+	)
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	escreverJSON(w, nethttp.StatusOK, anuncio)
+}
+
+func (a *API) excluirAnuncio(
+	w nethttp.ResponseWriter,
+	r *nethttp.Request,
+	idUsuario,
+	_ string,
+) {
+	if err := a.anuncios.ExcluirAnuncio(
+		r.Context(), idUsuario, r.PathValue("idAnuncio"),
+	); err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	w.WriteHeader(nethttp.StatusNoContent)
+}
+
+func (a *API) obterPerfilPublicoVendedor(w nethttp.ResponseWriter, r *nethttp.Request) {
+	perfil, err := a.anuncios.ObterPerfilPublicoVendedor(
+		r.Context(), r.PathValue("idVendedor"),
+	)
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	escreverJSON(w, nethttp.StatusOK, perfil)
 }
 
 func (a *API) criarAnuncio(w nethttp.ResponseWriter, r *nethttp.Request, idUsuario, _ string) {
+	entrada, ok := decodificarEntradaAnuncio(w, r)
+	if !ok {
+		return
+	}
+	anuncio, err := a.anuncios.CriarAnuncio(r.Context(), idUsuario, entrada)
+	if err != nil {
+		a.escreverErro(w, err)
+		return
+	}
+	escreverJSON(w, nethttp.StatusCreated, anuncio)
+}
+
+func decodificarEntradaAnuncio(
+	w nethttp.ResponseWriter,
+	r *nethttp.Request,
+) (casosdeuso.EntradaAnuncio, bool) {
 	var entrada struct {
 		Titulo            string                     `json:"titulo"`
 		Descricao         string                     `json:"descricao"`
@@ -29,18 +94,13 @@ func (a *API) criarAnuncio(w nethttp.ResponseWriter, r *nethttp.Request, idUsuar
 		URLsFotos         []string                   `json:"urls_fotos"`
 	}
 	if !decodificarJSON(w, r, &entrada) {
-		return
+		return casosdeuso.EntradaAnuncio{}, false
 	}
-	anuncio, err := a.anuncios.CriarAnuncio(r.Context(), idUsuario, casosdeuso.EntradaAnuncio{
+	return casosdeuso.EntradaAnuncio{
 		Titulo: entrada.Titulo, Descricao: entrada.Descricao, Categoria: entrada.Categoria,
 		Tamanho: entrada.Tamanho, Cor: entrada.Cor, EstadoConservacao: entrada.EstadoConservacao,
 		PrecoCentavos: entrada.PrecoCentavos, URLsFotos: entrada.URLsFotos,
-	})
-	if err != nil {
-		a.escreverErro(w, err)
-		return
-	}
-	escreverJSON(w, nethttp.StatusCreated, anuncio)
+	}, true
 }
 
 func (a *API) listarAnuncios(w nethttp.ResponseWriter, r *nethttp.Request) {

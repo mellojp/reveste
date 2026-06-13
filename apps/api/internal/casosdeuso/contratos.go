@@ -11,6 +11,7 @@ import (
 
 type OperacoesUsuarios interface {
 	CriarUsuario(context.Context, cadastros.Usuario) error
+	AtualizarUsuario(context.Context, cadastros.Usuario) error
 	BuscarUsuarioPorID(context.Context, string) (cadastros.Usuario, error)
 	BuscarUsuarioPorEmailOuCPF(context.Context, string) (cadastros.Usuario, error)
 }
@@ -28,6 +29,7 @@ type FiltroAnuncios struct {
 	EstadoConservacao  anuncios.EstadoConservacao
 	PrecoMinCentavos   int64
 	PrecoMaxCentavos   int64
+	IDsAnuncios        []string
 	IDVendedor         string
 	ExcluirVendedor    string
 	IncluirTodosStatus bool
@@ -37,6 +39,8 @@ type FiltroAnuncios struct {
 
 type OperacoesAnuncios interface {
 	CriarAnuncio(context.Context, anuncios.Anuncio) error
+	AtualizarAnuncio(context.Context, anuncios.Anuncio) error
+	ExcluirAnuncio(context.Context, string, string, time.Time) error
 	BuscarAnuncioPorID(context.Context, string) (anuncios.Anuncio, error)
 	ListarAnuncios(context.Context, FiltroAnuncios) ([]anuncios.Anuncio, error)
 }
