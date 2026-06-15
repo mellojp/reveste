@@ -18,7 +18,7 @@ func TestAnuncioExigeEntreDuasECincoFotos(t *testing.T) {
 
 	anuncio = anuncioValido()
 	for len(anuncio.Fotos) < 6 {
-		anuncio.Fotos = append(anuncio.Fotos, Foto{URL: "https://exemplo.test/foto.jpg"})
+		anuncio.Fotos = append(anuncio.Fotos, Foto{URL: "https://reveste-test.public.blob.vercel-storage.com/foto.jpg"})
 	}
 	if !errors.Is(anuncio.ValidarNovo(), common.ErrDadosInvalidos) {
 		t.Fatal("anuncio com seis fotos deveria ser invalido")
@@ -64,6 +64,23 @@ func TestAnuncioRejeitaURLDeFotoInsegura(t *testing.T) {
 	}
 }
 
+func TestURLFotoDevePertencerAoHostConfigurado(t *testing.T) {
+	const host = "reveste-test.public.blob.vercel-storage.com"
+
+	if !URLFotoValidaParaHost("https://"+host+"/foto.jpg", host) {
+		t.Fatal("URL do store configurado deveria ser aceita")
+	}
+	for _, endereco := range []string{
+		"https://outro-store.public.blob.vercel-storage.com/foto.jpg",
+		"https://" + host + "/foto.jpg?token=segredo",
+		"https://usuario@" + host + "/foto.jpg",
+	} {
+		if URLFotoValidaParaHost(endereco, host) {
+			t.Fatalf("URL deveria ser rejeitada: %s", endereco)
+		}
+	}
+}
+
 func anuncioValido() Anuncio {
 	return Anuncio{
 		ID: "anuncio-1", IDVendedor: "vendedor-1", Titulo: "Jaqueta jeans",
@@ -71,8 +88,8 @@ func anuncioValido() Anuncio {
 		Tamanho: "M", Cor: "azul", EstadoConservacao: EstadoSeminovo,
 		PrecoCentavos: 12_000, Status: StatusAnuncioDisponivel,
 		Fotos: []Foto{
-			{ID: "foto-1", URL: "https://exemplo.test/1.jpg"},
-			{ID: "foto-2", URL: "https://exemplo.test/2.jpg"},
+			{ID: "foto-1", URL: "https://reveste-test.public.blob.vercel-storage.com/1.jpg"},
+			{ID: "foto-2", URL: "https://reveste-test.public.blob.vercel-storage.com/2.jpg"},
 		},
 	}
 }

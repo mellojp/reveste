@@ -20,6 +20,7 @@ type API struct {
 	uploads   *casosdeuso.ControladorUpload
 	prontidao verificadorProntidao
 	logger    *slog.Logger
+	hostBlob  string
 	loginMu   sync.Mutex
 	logins    map[string]tentativasLogin
 }
@@ -31,6 +32,8 @@ func NovaAPI(
 	uploads *casosdeuso.ControladorUpload,
 	prontidao verificadorProntidao,
 	logger *slog.Logger,
+	hostBlob string,
+	paginasHTML nethttp.Handler,
 ) nethttp.Handler {
 	api := &API{
 		cadastros: cadastros,
@@ -39,6 +42,7 @@ func NovaAPI(
 		uploads:   uploads,
 		prontidao: prontidao,
 		logger:    logger,
+		hostBlob:  hostBlob,
 		logins:    make(map[string]tentativasLogin),
 	}
 	mux := nethttp.NewServeMux()
@@ -48,7 +52,7 @@ func NovaAPI(
 	api.registrarRotasAnuncios(mux)
 	api.registrarRotasCarrinho(mux)
 	api.registrarRotasUploads(mux)
-	api.registrarRotasFrontend(mux)
+	api.registrarRotasFrontend(mux, paginasHTML)
 
-	return api.comRecuperacao(api.comSeguranca(api.comJSON(mux)))
+	return api.comRecuperacao(api.comSeguranca(api.comJSON(api.comProtecaoCSRF(mux))))
 }

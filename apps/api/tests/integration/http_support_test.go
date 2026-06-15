@@ -13,9 +13,12 @@ import (
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
 	httptransport "reveste/apps/api/internal/http"
+	"reveste/apps/api/internal/web"
 )
 
 type operacoesHTTP struct{}
+
+const hostBlobTeste = "reveste-test.public.blob.vercel-storage.com"
 
 func (operacoesHTTP) AutorizarUpload(
 	context.Context,
@@ -48,8 +51,21 @@ func (operacoesHTTP) BuscarUsuarioPorID(_ context.Context, id string) (cadastros
 	return cadastros.Usuario{}, common.ErrNaoEncontrado
 }
 
-func (operacoesHTTP) BuscarUsuarioPorEmailOuCPF(context.Context, string) (cadastros.Usuario, error) {
-	return cadastros.Usuario{}, common.ErrNaoEncontrado
+func (operacoesHTTP) BuscarUsuarioPorEmailOuCPF(
+	_ context.Context,
+	identificador string,
+) (cadastros.Usuario, error) {
+	if identificador != "vendedora@teste.local" {
+		return cadastros.Usuario{}, common.ErrNaoEncontrado
+	}
+	return cadastros.Usuario{
+		ID: "vendedor-1", Nome: "Vendedora Teste", Email: identificador, HashSenha: "hash",
+		EnderecoPrincipal: cadastros.Endereco{
+			CEP: "49000000", Logradouro: "Rua Teste", Numero: "10",
+			Bairro: "Centro", Cidade: "Aracaju", Estado: "SE",
+		},
+		CriadoEm: time.Date(2025, 1, 10, 12, 0, 0, 0, time.UTC),
+	}, nil
 }
 
 func (operacoesHTTP) CriarAnuncio(context.Context, anuncios.Anuncio) error {
@@ -72,8 +88,8 @@ func (operacoesHTTP) BuscarAnuncioPorID(_ context.Context, id string) (anuncios.
 			Tamanho: "M", Cor: "verde", EstadoConservacao: anuncios.EstadoSeminovo,
 			PrecoCentavos: 12_000, Status: anuncios.StatusAnuncioDisponivel,
 			Fotos: []anuncios.Foto{
-				{ID: "foto-1", URL: "https://example.com/casaco-1.jpg", Ordem: 0},
-				{ID: "foto-2", URL: "https://example.com/casaco-2.jpg", Ordem: 1},
+				{ID: "foto-1", URL: "https://reveste-test.public.blob.vercel-storage.com/casaco-1.jpg", Ordem: 0},
+				{ID: "foto-2", URL: "https://reveste-test.public.blob.vercel-storage.com/casaco-2.jpg", Ordem: 1},
 			},
 		}, nil
 	}
@@ -112,7 +128,10 @@ func (operacoesHTTP) CriarSessao(context.Context, string, string, time.Time) err
 	return nil
 }
 
-func (operacoesHTTP) BuscarUsuarioDaSessao(context.Context, string, time.Time) (string, error) {
+func (operacoesHTTP) BuscarUsuarioDaSessao(_ context.Context, token string, _ time.Time) (string, error) {
+	if token == "sessao-valida" {
+		return "vendedor-1", nil
+	}
 	return "", common.ErrNaoAutorizado
 }
 
@@ -143,7 +162,7 @@ func (senhaHTTP) Comparar(string, string) bool {
 type relogioHTTP struct{}
 
 func (relogioHTTP) Agora() time.Time {
-	return time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)
+	return time.Date(2030, 6, 10, 12, 0, 0, 0, time.UTC)
 }
 
 func novoHandler() nethttp.Handler {
@@ -153,11 +172,18 @@ func novoHandler() nethttp.Handler {
 	)
 	anunciosCU := casosdeuso.NovoControladorAnuncio(
 		operacoes, operacoes, idHTTP{}, relogioHTTP{},
+		hostBlobTeste,
 	)
 	comprasCU := casosdeuso.NovoControladorCarrinho(
 		operacoes, operacoes, idHTTP{}, relogioHTTP{},
 	)
 	uploadsCU := casosdeuso.NovoControladorUpload(operacoes, idHTTP{}, relogioHTTP{})
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return httptransport.NovaAPI(cadastrosCU, anunciosCU, comprasCU, uploadsCU, operacoes, logger)
+	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, logger)
+	if err != nil {
+		panic(err)
+	}
+	return httptransport.NovaAPI(
+		cadastrosCU, anunciosCU, comprasCU, uploadsCU, operacoes, logger, hostBlobTeste, paginasHTML,
+	)
 }

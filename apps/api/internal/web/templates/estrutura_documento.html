@@ -1,0 +1,78 @@
+{{define "documento"}}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ReVeste: moda circular de pessoa para pessoa.">
+  <meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"includeIndicatorStyles":false,"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"401","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
+  <title>ReVeste | {{.Titulo}}</title>
+  <link rel="icon" href="/assets/brand-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/js/htmx.min.js" defer></script>
+  <script type="module" src="/js/web.js"></script>
+</head>
+<body hx-boost="true" hx-target="body" hx-swap="outerHTML transition:true" hx-push-url="true">
+  <div id="app">
+    {{template "cabecalho" .}}
+    <main id="page" tabindex="-1" class="route-enter">
+      {{if eq .Conteudo "inicio"}}{{template "inicio" .}}
+      {{else if eq .Conteudo "catalogo"}}{{template "catalogo" .}}
+      {{else if eq .Conteudo "detalhe-anuncio"}}{{template "detalhe-anuncio" .}}
+      {{else if eq .Conteudo "vendedor"}}{{template "vendedor" .}}
+      {{else if eq .Conteudo "entrar"}}{{template "entrar" .}}
+      {{else if eq .Conteudo "cadastro"}}{{template "cadastro" .}}
+      {{else if eq .Conteudo "perfil"}}{{template "perfil" .}}
+      {{else if eq .Conteudo "meus-anuncios"}}{{template "meus-anuncios" .}}
+      {{else if eq .Conteudo "formulario-anuncio"}}{{template "formulario-anuncio" .}}
+      {{else if eq .Conteudo "carrinho"}}{{template "carrinho" .}}
+      {{else}}{{template "nao-encontrado" .}}{{end}}
+    </main>
+    {{template "rodape" .}}
+  </div>
+  <div class="toast-region" id="toast-region" aria-live="polite">{{if .MensagemTemporaria}}<div class="toast">{{.MensagemTemporaria}}</div>{{end}}</div>
+</body>
+</html>{{end}}
+
+{{define "cabecalho"}}<header id="site-header" class="site-header">
+  <a class="brand" href="/" aria-label="Página inicial ReVeste"><img src="/assets/logo.svg" alt="ReVeste"></a>
+  <nav class="main-nav" aria-label="Navegação principal">
+    <a href="/catalogo" {{if or (eq .RotaAtual "/catalogo") (eq .Conteudo "detalhe-anuncio")}}aria-current="page"{{end}}>Explorar</a>
+    <a href="/vender" {{if eq .RotaAtual "/vender"}}aria-current="page"{{end}}>Vender</a>
+    {{if .UsuarioAutenticado}}<a href="/meus-anuncios" {{if eq .RotaAtual "/meus-anuncios"}}aria-current="page"{{end}}>Meus anúncios</a>{{end}}
+  </nav>
+  <div class="header-actions">
+    <a class="icon-button cart-button" href="/carrinho" aria-label="Abrir sacola">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8Zm3 2V6a3 3 0 0 1 6 0v4"/></svg>
+      <span class="badge">{{len .CarrinhoAutenticado.Anuncios}}</span>
+    </a>
+    <a class="button button-dark" href="{{if .UsuarioAutenticado}}/perfil{{else}}/entrar{{end}}"><span>{{if .UsuarioAutenticado}}{{primeiroNome .UsuarioAutenticado.Nome}}{{else}}Entrar{{end}}</span></a>
+  </div>
+</header>{{end}}
+
+{{define "rodape"}}<footer id="site-footer">
+  <div class="footer-main">
+    <div class="footer-intro"><div class="footer-brand"><img src="/assets/logo-light.svg" alt="ReVeste"></div><p>Moda de pessoa para pessoa. Peças especiais continuam circulando e ganhando novas histórias.</p></div>
+    <div class="footer-message"><span class="eyebrow">Escolhas que circulam</span><p>Menos peças paradas. Mais estilo em movimento.</p></div>
+  </div>
+  <div class="footer-bottom"><p>© 2026 ReVeste</p><p>Projeto MVP · Moda circular</p></div>
+</footer>{{end}}
+
+{{define "placeholder"}}<svg class="product-placeholder" viewBox="0 0 180 190" aria-hidden="true"><path d="M58 30 76 18h28l18 12 34 19-19 35-17-9v89H60V75l-17 9-19-35 34-19Z"/><path d="M76 18c0 18 28 18 28 0"/></svg>{{end}}
+
+{{define "imagem-anuncio"}}{{if fotoCapa .}}<img src="{{fotoCapa .}}" alt="" loading="lazy" referrerpolicy="no-referrer">{{else}}{{template "placeholder" .}}{{end}}{{end}}
+
+{{define "produto"}}<article class="product-card">
+  <div class="product-image">
+    <a class="product-image-link" href="/anuncios/{{.Anuncio.ID}}" aria-label="Ver detalhes de {{.Anuncio.Titulo}}">{{template "imagem-anuncio" .Anuncio}}<span class="condition-tag">{{formatarRotulo .Anuncio.EstadoConservacao}}</span></a>
+    {{if ne .IDUsuarioAutenticado .Anuncio.IDVendedor}}
+      {{if .IDUsuarioAutenticado}}
+      <form method="post" action="/carrinho/itens"><input type="hidden" name="id_anuncio" value="{{.Anuncio.ID}}"><input type="hidden" name="retorno" value="{{.URLRetorno}}"><button class="add-cart {{if .EstaNoCarrinho}}is-added{{end}}" aria-label="{{if .EstaNoCarrinho}}Peça já está na sacola{{else}}Adicionar {{.Anuncio.Titulo}} à sacola{{end}}" {{if .EstaNoCarrinho}}disabled{{end}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 13H5L6 8Zm3 2V6a3 3 0 0 1 6 0v4"/></svg></button></form>
+      {{else}}<a class="add-cart" href="/entrar?retorno={{urlquery .URLRetorno}}" aria-label="Adicionar {{.Anuncio.Titulo}} à sacola"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 13H5L6 8Zm3 2V6a3 3 0 0 1 6 0v4"/></svg></a>{{end}}
+    {{end}}
+  </div>
+  <div class="product-info"><a href="/anuncios/{{.Anuncio.ID}}"><span class="product-meta">{{formatarRotulo .Anuncio.Categoria}} · Tam. {{.Anuncio.Tamanho}}</span><h3>{{.Anuncio.Titulo}}</h3><strong>{{formatarDinheiro .Anuncio.PrecoCentavos}}</strong></a></div>
+</article>{{end}}
+
+{{define "erro-formulario"}}{{if .}}<div class="inline-alert" role="alert">{{.}}</div>{{end}}{{end}}
+{{define "erro-campo"}}{{with mensagemErroCampo .ErrosValidacao .NomeCampo}}<small class="field-error" id="{{$.IDMensagem}}" role="alert">{{.}}</small>{{end}}{{end}}
+{{define "nao-encontrado"}}<section class="page-section compact-section"><div class="empty-state"><span class="empty-state-mark" aria-hidden="true">R</span><h3>{{.Titulo}}</h3><p>A página pode ter sido removida ou o endereço está incorreto.</p><a class="button button-dark" href="/catalogo">Voltar ao catálogo</a></div></section>{{end}}

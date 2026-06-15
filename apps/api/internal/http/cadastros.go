@@ -2,6 +2,7 @@ package http
 
 import (
 	nethttp "net/http"
+	"strings"
 
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/dominio/cadastros"
@@ -99,7 +100,15 @@ func (a *API) autenticar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 	a.limparFalhasLogin(r)
-	escreverJSON(w, nethttp.StatusCreated, sessao)
+	if strings.EqualFold(r.Header.Get("X-Reveste-Session-Transport"), "bearer") {
+		escreverJSON(w, nethttp.StatusCreated, sessao)
+		return
+	}
+	definirCookieSessao(w, r, sessao.Token, sessao.ExpiraEm)
+	escreverJSON(w, nethttp.StatusCreated, map[string]any{
+		"expira_em": sessao.ExpiraEm,
+		"usuario":   sessao.Usuario,
+	})
 }
 
 func (a *API) encerrarSessao(w nethttp.ResponseWriter, r *nethttp.Request, _ string, token string) {
@@ -107,5 +116,6 @@ func (a *API) encerrarSessao(w nethttp.ResponseWriter, r *nethttp.Request, _ str
 		a.escreverErro(w, err)
 		return
 	}
+	removerCookieSessao(w, r)
 	w.WriteHeader(nethttp.StatusNoContent)
 }

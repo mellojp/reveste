@@ -147,8 +147,8 @@ func novoAnuncioIntegracao(id, idVendedor string, agora time.Time) anuncios.Anun
 		Tamanho: "M", Cor: "azul", EstadoConservacao: anuncios.EstadoSeminovo,
 		PrecoCentavos: 10_000, Status: anuncios.StatusAnuncioDisponivel,
 		Fotos: []anuncios.Foto{
-			{ID: id[:len(id)-1] + "1", URL: "https://exemplo.test/1.jpg", Ordem: 0},
-			{ID: id[:len(id)-1] + "2", URL: "https://exemplo.test/2.jpg", Ordem: 1},
+			{ID: id[:len(id)-1] + "1", URL: "https://reveste-test.public.blob.vercel-storage.com/1.jpg", Ordem: 0},
+			{ID: id[:len(id)-1] + "2", URL: "https://reveste-test.public.blob.vercel-storage.com/2.jpg", Ordem: 1},
 		},
 		CriadoEm: agora, AtualizadoEm: agora,
 	}

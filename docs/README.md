@@ -7,6 +7,7 @@
 - `PLANO_IMPLEMENTACAO_INICIAL.md`: plano que orientou o primeiro incremento;
 - `INCREMENTO_FLUXO_INICIAL.md`: registro consolidado das correcoes de backend,
   conclusao dos fluxos de perfil e anuncios e refinamentos do frontend.
+- `MIGRACAO_HTMX_SSR.md`: arquitetura, fronteiras e regras da migracao SSR.
 
 O fluxo principal da API e:
 
@@ -64,11 +65,13 @@ Crie um arquivo `.env` na raiz:
 DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable
 HTTP_ADDRESS=:8080
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_SEU_STORE_ID_SEU_TOKEN
+BLOB_PUBLIC_HOST=SEU_STORE_ID.public.blob.vercel-storage.com
 ```
 
 O token e obtido ao criar/conectar um Blob store **publico** no projeto da Vercel.
-Stores privados nao podem ser usados diretamente nas imagens do catalogo. A variavel
-`REVESTE_STORE_ID` nao e necessaria quando `BLOB_READ_WRITE_TOKEN` esta configurada.
+Stores privados nao podem ser usados diretamente nas imagens do catalogo.
+`BLOB_PUBLIC_HOST` restringe imagens e a CSP ao store oficial; quando omitida, a API
+deriva o hostname do identificador presente em `BLOB_READ_WRITE_TOKEN`.
 Sem o token, a aplicacao inicia normalmente, mas o endpoint de upload retorna `503`.
 
 O store publico deve ser exclusivo para fotos publicas dos anuncios. Conteudo
@@ -84,9 +87,11 @@ go run ./apps/api/cmd/api
 
 O frontend fica disponivel em `http://localhost:8080`.
 
-O incremento web atual permite editar o perfil, editar ou excluir logicamente anuncios
-disponiveis e consultar perfis publicos de vendedores sem expor e-mail, telefone, CPF
-ou endereco detalhado.
+As paginas sao renderizadas no servidor pelo adaptador `internal/web` e
+aprimoradas com uma copia local do HTMX, sem bundler ou runtime SPA. O CSS e os
+assets continuam em `apps/front`; JavaScript proprio e usado apenas para galeria,
+edicao de fotos e upload. Os fluxos permitem editar o perfil, editar ou excluir
+anuncios disponiveis e consultar vendedores sem expor dados privados.
 
 Endpoints de monitoramento:
 
@@ -105,6 +110,7 @@ Para executar todos os testes, incluindo a integracao PostgreSQL:
 ```text
 TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable \
   go test ./...
+node --test apps/front/tests/*.test.mjs
 ```
 
 ## Organizacao dos testes

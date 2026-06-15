@@ -2,6 +2,7 @@ package casosdeuso_test
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
 )
+
+const hostBlobTeste = "reveste-test.public.blob.vercel-storage.com"
 
 type geradorSequencial struct {
 	mu      sync.Mutex
@@ -46,6 +49,7 @@ func TestControladoresCadastroAnuncioCarrinho(t *testing.T) {
 	anunciosCU := casosdeuso.NovoControladorAnuncio(
 		store, store, ids,
 		relogioFixo{agora: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)},
+		hostBlobTeste,
 	)
 	comprasCU := casosdeuso.NovoControladorCarrinho(
 		store, store, ids,
@@ -60,7 +64,7 @@ func TestControladoresCadastroAnuncioCarrinho(t *testing.T) {
 		Titulo: "Jaqueta jeans", Descricao: "Jaqueta jeans em excelente estado",
 		Categoria: anuncios.CategoriaCasacos, Tamanho: "m", Cor: "Azul",
 		EstadoConservacao: anuncios.EstadoSeminovo, PrecoCentavos: 12_000,
-		URLsFotos: []string{"https://exemplo.test/1.jpg", "https://exemplo.test/2.jpg"},
+		URLsFotos: []string{"https://reveste-test.public.blob.vercel-storage.com/1.jpg", "https://reveste-test.public.blob.vercel-storage.com/2.jpg"},
 	})
 	if err != nil {
 		t.Fatalf("CriarAnuncio() erro = %v", err)
@@ -155,6 +159,7 @@ func TestCatalogoExcluiAnunciosPropriosEPerfilOsInclui(t *testing.T) {
 	store := newTestStore()
 	controlador := casosdeuso.NovoControladorAnuncio(
 		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+		hostBlobTeste,
 	)
 	store.anuncios["proprio"] = anuncios.Anuncio{
 		ID: "proprio", IDVendedor: "usuario-1", Status: anuncios.StatusAnuncioDisponivel,
@@ -190,6 +195,7 @@ func TestVendedorBloqueadoNaoPodeCriarAnuncio(t *testing.T) {
 	}
 	controlador := casosdeuso.NovoControladorAnuncio(
 		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+		hostBlobTeste,
 	)
 
 	_, err := controlador.CriarAnuncio(
@@ -200,14 +206,37 @@ func TestVendedorBloqueadoNaoPodeCriarAnuncio(t *testing.T) {
 			Categoria: anuncios.CategoriaCasacos, Tamanho: "M", Cor: "verde",
 			EstadoConservacao: anuncios.EstadoSeminovo, PrecoCentavos: 10_000,
 			URLsFotos: []string{
-				"https://example.com/1.jpg",
-				"https://example.com/2.jpg",
+				"https://reveste-test.public.blob.vercel-storage.com/1.jpg",
+				"https://reveste-test.public.blob.vercel-storage.com/2.jpg",
 			},
 		},
 	)
 
 	if err != common.ErrVendedorBloqueado {
 		t.Fatalf("CriarAnuncio() erro = %v; esperado %v", err, common.ErrVendedorBloqueado)
+	}
+}
+
+func TestCriacaoRejeitaFotoDeOutroBlobStore(t *testing.T) {
+	store := newTestStore()
+	store.usuarios["vendedor-1"] = cadastros.Usuario{ID: "vendedor-1"}
+	controlador := casosdeuso.NovoControladorAnuncio(
+		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+		hostBlobTeste,
+	)
+
+	_, err := controlador.CriarAnuncio(context.Background(), "vendedor-1", casosdeuso.EntradaAnuncio{
+		Titulo: "Peça válida", Descricao: "Descrição suficientemente detalhada",
+		Categoria: anuncios.CategoriaCasacos, Tamanho: "M", Cor: "verde",
+		EstadoConservacao: anuncios.EstadoSeminovo, PrecoCentavos: 10_000,
+		URLsFotos: []string{
+			"https://outro-store.public.blob.vercel-storage.com/1.jpg",
+			"https://outro-store.public.blob.vercel-storage.com/2.jpg",
+		},
+	})
+	var validacao common.ErroValidacao
+	if !errors.As(err, &validacao) || validacao.Campos["fotos"] == "" {
+		t.Fatalf("erro = %v; esperada validacao de fotos", err)
 	}
 }
 
@@ -260,18 +289,19 @@ func TestGerenciamentoDeAnuncioExigeProprietarioEDisponibilidade(t *testing.T) {
 		Tamanho: "M", Cor: "azul", EstadoConservacao: anuncios.EstadoSeminovo,
 		PrecoCentavos: 10_000, Status: anuncios.StatusAnuncioDisponivel,
 		Fotos: []anuncios.Foto{
-			{ID: "foto-1", URL: "https://example.com/1.jpg"},
-			{ID: "foto-2", URL: "https://example.com/2.jpg"},
+			{ID: "foto-1", URL: "https://reveste-test.public.blob.vercel-storage.com/1.jpg"},
+			{ID: "foto-2", URL: "https://reveste-test.public.blob.vercel-storage.com/2.jpg"},
 		},
 	}
 	controlador := casosdeuso.NovoControladorAnuncio(
 		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+		hostBlobTeste,
 	)
 	entrada := casosdeuso.EntradaAnuncio{
 		Titulo: "Titulo atualizado", Descricao: "Descricao atualizada e valida",
 		Categoria: anuncios.CategoriaCamisetas, Tamanho: "g", Cor: "Branco",
 		EstadoConservacao: anuncios.EstadoUsado, PrecoCentavos: 12_000,
-		URLsFotos: []string{"https://example.com/3.jpg", "https://example.com/4.jpg"},
+		URLsFotos: []string{"https://reveste-test.public.blob.vercel-storage.com/3.jpg", "https://reveste-test.public.blob.vercel-storage.com/4.jpg"},
 	}
 
 	if _, err := controlador.AtualizarAnuncio(
@@ -314,6 +344,7 @@ func TestPerfilPublicoVendedorNaoExpoeDadosPrivados(t *testing.T) {
 	}
 	controlador := casosdeuso.NovoControladorAnuncio(
 		store, store, &geradorSequencial{}, relogioFixo{agora: time.Now()},
+		hostBlobTeste,
 	)
 
 	perfil, err := controlador.ObterPerfilPublicoVendedor(context.Background(), "vendedor-1")

@@ -112,9 +112,12 @@ func (a *API) listarAnuncios(w nethttp.ResponseWriter, r *nethttp.Request) {
 		})
 		return
 	}
-	if token := extrairToken(r.Header.Get("Authorization")); token != "" {
+	if token, porCookie := tokenDaRequisicao(r); token != "" {
 		idUsuario, err := a.cadastros.IdentificarUsuario(r.Context(), token)
 		if err != nil {
+			if porCookie {
+				removerCookieSessao(w, r)
+			}
 			a.escreverErro(w, err)
 			return
 		}

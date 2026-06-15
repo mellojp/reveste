@@ -36,16 +36,19 @@
 - validar CPF, anuncio, quantidade de fotos, categoria e disponibilidade;
 - apresentar um fluxo web navegavel de conta, catalogo, publicacao, perfil e carrinho.
 
-## Incremento web inicial
+## Frontend SSR com HTMX
 
-O frontend inicial fica em `apps/front` e e servido pela propria API na rota `/`.
-Ele foi mantido como HTML, CSS e JavaScript sem etapa de build enquanto a equipe
-nao define a toolchain React/TypeScript prevista na arquitetura.
+O frontend continua sem etapa de build e e servido pela propria API. O pacote
+`internal/web` e o adaptador de paginas, separado do adaptador JSON: consultas
+GET e comandos POST chamam os mesmos controladores de casos de uso, preenchem um
+`contextoDocumento` e respondem templates Go com escape contextual de HTML.
 
-O `index.html` contem somente o shell da aplicacao. As telas ficam em
-`apps/front/js/pages`, componentes reutilizaveis em `apps/front/js/components`,
-estado, chamadas HTTP e roteamento em `apps/front/js/core`, e os estilos sao
-separados por responsabilidade em `apps/front/css`.
+Os templates ficam em `apps/api/internal/web/templates`, os estilos e assets em
+`apps/front`, e o HTMX 2.0.8 e versionado localmente em
+`apps/front/js/htmx.min.js`. Navegacao, filtros, autenticacao, perfil, anuncios e
+carrinho usam HTML do servidor. O modulo `apps/front/js/web.js` cobre somente
+galeria, controles de fotos, confirmacao de exclusao e feedback visual; o
+processamento seguro e upload de imagens fica em `js/uploads.js`.
 
 Telas e fluxos disponiveis:
 
@@ -54,7 +57,7 @@ Telas e fluxos disponiveis:
 - busca por texto, categoria, tamanho, faixa de preco e estado de conservacao;
 - carregamento progressivo do catalogo em paginas de 24 anuncios;
 - cadastro em `/cadastro`, com mensagens de validacao junto aos campos;
-- login em `/entrar`, logout e sessao mantida em `sessionStorage`;
+- login em `/entrar`, logout e sessao mantida em cookie `HttpOnly`;
 - publicacao em `/vender`, com upload de 2 a 5 fotos;
 - perfil em `/perfil`, com dados pessoais e endereco;
 - edicao de dados pessoais e endereco em `/perfil`;
@@ -69,17 +72,19 @@ frontend, verificacoes e limitacoes, estao detalhadas em
 O carrinho nao reserva estoque. Anuncios que se tornam indisponiveis continuam visiveis
 para que o usuario entenda a alteracao, mas deixam de compor o total.
 
-O frontend usa a History API para navegacao sem recarregamento. O servidor
-estatico entrega `index.html` como fallback para rotas de tela, permitindo abrir
-ou atualizar diretamente URLs como `/perfil`. Rotas autenticadas redirecionam
-para `/entrar` e preservam o destino para retorno depois do login.
+Cada rota de tela e atendida diretamente pelo backend e funciona com navegacao
+HTML convencional. O `hx-boost` melhora progressivamente a navegacao e os
+formularios, sem alterar URLs ou depender de um estado global no navegador.
+Rotas autenticadas redirecionam para `/entrar` e preservam o destino.
 
 Checkout ainda nao e simulado na interface. Edicao de perfil, edicao de anuncios
 disponiveis e exclusao logica ja possuem contratos HTTP e fluxos web.
 
-O uso de `sessionStorage` e provisório e acompanha o contrato Bearer atual. A decisao
-de autenticacao por cookie `HttpOnly`, protecao CSRF e deploy continua pendente antes
-de producao.
+O navegador autentica por cookie `HttpOnly`, `SameSite=Lax` e `Secure` em HTTPS.
+Todos os formularios web mutaveis e operacoes autenticadas por cookie exigem uma
+origem da propria aplicacao, reduzindo o risco de CSRF. O token de sessao nao e
+exposto ao JavaScript nem persistido em Web Storage. Clientes de API podem solicitar explicitamente a resposta Bearer com
+`X-Reveste-Session-Transport: bearer`.
 
 ## Contratos HTTP adicionados
 
@@ -145,8 +150,14 @@ Controles obrigatorios para as fotos publicas:
   pelas regras de auditoria.
 
 No estado atual, pathname, autenticacao, token temporario, quantidade, tamanho e MIME
-sao verificados. Validacao binaria, remocao de EXIF, moderacao, rate limiting e coleta
-de orfaos permanecem no backlog de seguranca do upload.
+sao verificados. Antes do upload, o navegador valida a assinatura binaria, decodifica
+e reencoda a imagem como WebP, removendo EXIF, GPS, animacoes e conteudo extra. A API
+aceita somente URLs do hostname exato do Blob store configurado, e a CSP aplica a mesma
+restricao. Moderacao, rate limiting e coleta de orfaos permanecem no backlog.
+
+Essa reencodificacao melhora privacidade e robustez, mas JavaScript nao e uma fronteira
+de seguranca contra clientes modificados. Uma validacao autoritativa de bytes exigiria
+processamento no backend ou uma etapa confiavel pos-upload.
 
 ## Categorias canonicas
 

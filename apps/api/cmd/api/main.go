@@ -16,6 +16,7 @@ import (
 	httptransport "reveste/apps/api/internal/http"
 	"reveste/apps/api/internal/storage/postgres"
 	"reveste/apps/api/internal/storage/vercel"
+	"reveste/apps/api/internal/web"
 )
 
 func main() {
@@ -52,6 +53,7 @@ func executar(logger *slog.Logger) error {
 		database,
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
+		cfg.BlobPublicHost,
 	)
 	controladorCarrinho := casosdeuso.NovoControladorCarrinho(
 		database,
@@ -64,6 +66,15 @@ func executar(logger *slog.Logger) error {
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 	)
+	paginasHTML, err := web.NovoAdaptadorPaginas(
+		controladorCadastros,
+		controladorAnuncios,
+		controladorCarrinho,
+		logger,
+	)
+	if err != nil {
+		return fmt.Errorf("iniciar frontend: %w", err)
+	}
 
 	servidor := &http.Server{
 		Addr: cfg.HTTPAddress,
@@ -74,6 +85,8 @@ func executar(logger *slog.Logger) error {
 			controladorUpload,
 			database,
 			logger,
+			cfg.BlobPublicHost,
+			paginasHTML,
 		),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,

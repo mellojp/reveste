@@ -103,7 +103,21 @@ func (a Anuncio) ValidarNovo() error {
 
 func URLFotoValida(valor string) bool {
 	endereco, err := url.ParseRequestURI(strings.TrimSpace(valor))
-	return err == nil && endereco.Scheme == "https" && endereco.Host != ""
+	if err != nil || endereco.Scheme != "https" || endereco.User != nil ||
+		endereco.RawQuery != "" || endereco.Fragment != "" {
+		return false
+	}
+	host := strings.ToLower(endereco.Hostname())
+	return strings.HasSuffix(host, ".public.blob.vercel-storage.com") &&
+		host != ".public.blob.vercel-storage.com"
+}
+
+func URLFotoValidaParaHost(valor, hostPermitido string) bool {
+	if !URLFotoValida(valor) || strings.TrimSpace(hostPermitido) == "" {
+		return false
+	}
+	endereco, _ := url.ParseRequestURI(strings.TrimSpace(valor))
+	return strings.EqualFold(endereco.Hostname(), strings.TrimSpace(hostPermitido))
 }
 
 func (e EstadoConservacao) Valido() bool {

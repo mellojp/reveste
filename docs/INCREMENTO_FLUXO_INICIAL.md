@@ -114,8 +114,8 @@ As respostas passaram a incluir:
 - `X-Frame-Options`;
 - `Permissions-Policy`.
 
-Arquivos estaticos recebem cache publico de uma hora. O `index.html` usado como
-fallback da SPA recebe `no-cache`, evitando manter um shell antigo apos deploys.
+Arquivos estaticos usam `no-cache`, permitindo revalidacao pelo navegador. O HTML
+e renderizado por rota no servidor e nao depende mais de um shell SPA.
 
 O limitador de tentativas de login remove entradas expiradas quando o mapa
 interno cresce, reduzindo o risco de crescimento indefinido em processos longos.
@@ -125,20 +125,17 @@ segundos e retorna `503` quando o banco nao esta disponivel.
 
 ## Frontend
 
-### Rotas e navegacao
+### Rotas e navegacao SSR
 
 Foram adicionadas as rotas:
 
 - `/meus-anuncios/:id/editar`, autenticada;
 - `/vendedores/:id`, publica.
 
-O roteador passou a proteger tambem rotas dinamicas. A navegacao entre login e
-cadastro usa uma transicao curta de opacidade, sem o deslocamento aplicado entre
-paginas comuns.
-
-Atualizacoes de filtro na mesma pagina preservam a posicao do scroll. O roteador
-mantem temporariamente a altura da pagina durante a renderizacao para reduzir
-saltos de layout.
+As rotas de tela sao registradas no adaptador `internal/web`, que aplica
+autenticacao antes de renderizar paginas privadas. O HTMX melhora
+progressivamente navegacao, formularios e carregamento adicional do catalogo,
+mantendo a navegacao HTML convencional como base.
 
 O cabecalho indica a secao atual com `aria-current="page"` e fornece feedback
 visual imediato ao clicar em links.
@@ -147,7 +144,7 @@ visual imediato ao clicar em links.
 
 A pagina `/perfil` possui modos de visualizacao e edicao. O formulario permite
 alterar dados pessoais e endereco, mostra erros junto aos campos e atualiza o
-usuario armazenado em `sessionStorage` e o cabecalho depois do salvamento.
+HTML completo da pagina depois do salvamento.
 
 ### Painel e edicao de anuncios
 
@@ -165,7 +162,7 @@ A pagina de edicao:
 - envia apenas novas imagens ao Blob e reutiliza as URLs existentes;
 - redireciona para o detalhe do anuncio apos salvar.
 
-O upload direto para o Vercel Blob foi extraido para `core/uploads.js`, evitando
+O upload direto para o Vercel Blob fica em `js/uploads.js`, evitando
 duplicacao entre publicacao e edicao.
 
 ### Vendedores
@@ -198,16 +195,9 @@ calcula o resumo somente com itens disponiveis.
 
 ### Feedback visual e acessibilidade
 
-O modulo `core/feedback.js` concentra:
-
-- estado de carregamento de botoes;
-- spinner e `aria-busy`;
-- skeleton de pagina;
-- skeleton de grades de produtos;
-- revelacao suave de conteudo carregado.
-
-Esses estados foram aplicados a login, cadastro, logout, filtros, paginacao,
-perfil, publicacao, edicao, exclusao, carrinho e inclusao de produtos na sacola.
+O HTMX aplica estado de requisicao aos formularios e botoes. O modulo `web.js`
+mantem toasts, confirmacao de exclusao, galeria e feedback do upload sem montar
+HTML recebido de dados da aplicacao.
 
 Outros refinamentos:
 
@@ -252,11 +242,16 @@ Todas passaram.
 ## Limitacoes conhecidas
 
 - checkout, pagamento, entrega e pedidos ainda nao estao implementados;
-- a autenticacao continua baseada em Bearer token no `sessionStorage`;
+- a sessao do navegador usa cookie `HttpOnly`, `SameSite=Lax` e `Secure` em HTTPS;
+- formularios web e operacoes mutaveis autenticadas por cookie validam `Origin`
+  e `Sec-Fetch-Site`;
+- o frontend nao persiste token ou dados do perfil em Web Storage;
+- imagens sao reencodadas antes do upload para remover EXIF e rejeitar arquivos
+  disfarçados, corrompidos ou com dimensoes excessivas;
+- a CSP permite imagens apenas do Blob store exato configurado e nao depende mais de
+  fontes remotas;
 - ainda nao ha testes automatizados de navegador para as transicoes e fluxos web;
 - imagens removidas de um anuncio ou abandonadas durante upload ainda podem ficar
   orfas no Blob;
-- validacao binaria, remocao de EXIF e moderacao de imagens continuam pendentes;
+- validacao autoritativa dos bytes no backend e moderacao de imagens continuam pendentes;
 - a paginacao do catalogo informa a quantidade carregada, nao o total global;
-- a CSP permite imagens HTTPS externas por causa das URLs publicas do Blob.
-

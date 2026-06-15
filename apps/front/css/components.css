@@ -98,25 +98,6 @@
 .toast.is-leaving { animation: toast-out .18s ease-in both; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 @keyframes toast-out { to { opacity: 0; transform: translateY(6px) scale(.98); } }
-.page-skeleton { display: grid; min-height: 500px; width: min(1180px, calc(100% - 2rem)); margin: auto; padding-block: clamp(4.5rem, 8vw, 8rem); align-content: start; gap: 1rem; }
-.skeleton-line, .skeleton-image, .skeleton-panel {
-  display: block;
-  overflow: hidden;
-  border-radius: 10px;
-  background: #e9e6de;
-  background-image: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
-  background-size: 220% 100%;
-  animation: skeleton-shimmer 1.25s ease-in-out infinite;
-}
-.skeleton-eyebrow { width: 130px; height: 12px; }
-.skeleton-title { width: min(520px, 75%); height: 58px; }
-.skeleton-copy { width: min(420px, 60%); height: 18px; }
-.skeleton-panel { height: 260px; margin-top: 2rem; border-radius: var(--radius); }
-.product-skeleton { display: grid; gap: .75rem; }
-.product-skeleton .skeleton-image { aspect-ratio: .83; border-radius: 18px; }
-.product-skeleton .skeleton-line { width: 90%; height: 14px; }
-.product-skeleton .skeleton-line.short { width: 48%; }
-@keyframes skeleton-shimmer { to { background-position: -220% 0; } }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
 .span-2 { grid-column: 1 / -1; }
 .stack-form { display: grid; gap: 1.15rem; }

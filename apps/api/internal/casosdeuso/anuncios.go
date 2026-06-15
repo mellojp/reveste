@@ -14,6 +14,7 @@ type ControladorAnuncio struct {
 	anuncios OperacoesAnuncios
 	ids      GeradorID
 	relogio  Relogio
+	hostBlob string
 }
 
 func NovoControladorAnuncio(
@@ -21,8 +22,12 @@ func NovoControladorAnuncio(
 	anuncios OperacoesAnuncios,
 	ids GeradorID,
 	relogio Relogio,
+	hostBlob string,
 ) *ControladorAnuncio {
-	return &ControladorAnuncio{usuarios: usuarios, anuncios: anuncios, ids: ids, relogio: relogio}
+	return &ControladorAnuncio{
+		usuarios: usuarios, anuncios: anuncios, ids: ids, relogio: relogio,
+		hostBlob: hostBlob,
+	}
 }
 
 type EntradaAnuncio struct {
@@ -63,6 +68,11 @@ func (c *ControladorAnuncio) CriarAnuncio(
 	if !dominioanuncios.CategoriaValida(entrada.Categoria) {
 		return dominioanuncios.Anuncio{}, common.NovaValidacao(map[string]string{
 			"categoria": "Selecione uma categoria válida.",
+		})
+	}
+	if !urlsFotosPermitidas(entrada.URLsFotos, c.hostBlob) {
+		return dominioanuncios.Anuncio{}, common.NovaValidacao(map[string]string{
+			"fotos": "As fotos devem pertencer ao armazenamento oficial da ReVeste.",
 		})
 	}
 	vendedor, err := c.usuarios.BuscarUsuarioPorID(ctx, idVendedor)
@@ -147,6 +157,11 @@ func (c *ControladorAnuncio) AtualizarAnuncio(
 	if err := atual.PodeSerGerenciadoPor(idVendedor); err != nil {
 		return dominioanuncios.Anuncio{}, err
 	}
+	if !urlsFotosPermitidas(entrada.URLsFotos, c.hostBlob) {
+		return dominioanuncios.Anuncio{}, common.NovaValidacao(map[string]string{
+			"fotos": "As fotos devem pertencer ao armazenamento oficial da ReVeste.",
+		})
+	}
 	atual.Titulo = entrada.Titulo
 	atual.Descricao = entrada.Descricao
 	atual.Categoria = entrada.Categoria
@@ -169,6 +184,15 @@ func (c *ControladorAnuncio) AtualizarAnuncio(
 		return dominioanuncios.Anuncio{}, err
 	}
 	return atual, nil
+}
+
+func urlsFotosPermitidas(urls []string, host string) bool {
+	for _, endereco := range urls {
+		if !dominioanuncios.URLFotoValidaParaHost(endereco, host) {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *ControladorAnuncio) ExcluirAnuncio(
