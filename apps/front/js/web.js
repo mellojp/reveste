@@ -7,8 +7,33 @@ const brazilianStates = new Set([
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
   "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ]);
+let authSwitchInProgress = false;
 
 document.addEventListener("click", (event) => {
+  const authSwitch = event.target.closest("[data-auth-switch]");
+  if (!authSwitch || !document.querySelector(".auth-page")) return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  switchAuthForm(authSwitch.href, authSwitch.dataset.authSwitch);
+}, true);
+
+document.addEventListener("click", (event) => {
+  const menuToggle = event.target.closest("[data-menu-toggle]");
+  if (menuToggle) {
+    toggleMainMenu(menuToggle);
+    return;
+  }
+
+  const openMenu = document.querySelector(".main-nav.is-open");
+  if (openMenu) {
+    const clickedInsideMenu = event.target.closest(".main-nav");
+    const clickedHeaderControl = event.target.closest(".site-header");
+    if (event.target.closest(".main-nav a") || (!clickedInsideMenu && !clickedHeaderControl)) {
+      closeMainMenu();
+    }
+  }
+
   const filter = event.target.closest("#filter-toggle");
   if (filter) {
     const panel = document.querySelector("#filter-panel");
@@ -44,6 +69,10 @@ document.addEventListener("click", (event) => {
       }
     }, 5000);
   }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMainMenu();
 });
 
 document.addEventListener("submit", async (event) => {
@@ -181,6 +210,173 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-register-form]").forEach(initializeRegistrationForm);
   scheduleToasts();
 });
+
+window.addEventListener("popstate", () => {
+  if (!document.querySelector(".auth-page")) return;
+  if (!["/entrar", "/cadastro"].includes(window.location.pathname)) return;
+  const direction = window.location.pathname === "/cadastro" ? "cadastro" : "entrar";
+  switchAuthForm(window.location.href, direction, { push: false });
+});
+
+function toggleMainMenu(button) {
+  const nav = document.getElementById(button.getAttribute("aria-controls"));
+  if (!nav) return;
+  const open = !nav.classList.contains("is-open");
+  nav.classList.toggle("is-open", open);
+  button.classList.toggle("is-open", open);
+  button.setAttribute("aria-expanded", String(open));
+  button.setAttribute("aria-label", open ? "Fechar navegação" : "Abrir navegação");
+}
+
+function closeMainMenu() {
+  const button = document.querySelector("[data-menu-toggle]");
+  const nav = document.getElementById(button?.getAttribute("aria-controls"));
+  if (!button || !nav) return;
+  nav.classList.remove("is-open");
+  button.classList.remove("is-open");
+  button.setAttribute("aria-expanded", "false");
+  button.setAttribute("aria-label", "Abrir navegação");
+}
+
+async function switchAuthForm(url, direction, options = {}) {
+  if (authSwitchInProgress) return;
+  const content = document.querySelector(".auth-content");
+  const current = content?.querySelector(".auth-form-panel");
+  if (!content || !current) {
+    window.location.href = url;
+    return;
+  }
+
+  authSwitchInProgress = true;
+  const toCadastro = direction === "cadastro";
+  const leavingClass = toCadastro ? "is-leaving-left" : "is-leaving-right";
+  const enteringClass = toCadastro ? "is-entering-right" : "is-entering-left";
+
+  try {
+    const response = await fetch(url, {
+      headers: { "Accept": "text/html" },
+      credentials: "same-origin",
+    });
+    if (!response.ok) throw new Error("Falha ao carregar formulário.");
+    const html = await response.text();
+    const nextDocument = new DOMParser().parseFromString(html, "text/html");
+    const nextPanel = nextDocument.querySelector(".auth-form-panel");
+    if (!nextPanel) throw new Error("Formulário não encontrado.");
+
+    const scrollTask = scrollAuthPageToTop({ animate: true });
+    const currentHeight = content.getBoundingClientRect().height;
+    content.style.height = `${currentHeight}px`;
+    content.classList.add("is-resizing");
+    current.classList.add(leavingClass);
+    await Promise.all([scrollTask, waitForAnimation(current)]);
+
+    nextPanel.classList.add(enteringClass);
+    content.replaceChildren(nextPanel);
+    nextPanel.querySelectorAll("[data-register-form]").forEach(initializeRegistrationForm);
+    document.title = nextDocument.title || document.title;
+    if (options.push !== false) history.pushState({ auth: true }, "", url);
+
+    const nextHeight = measureAuthContentHeight(content, nextPanel);
+    requestAnimationFrame(() => {
+      content.style.height = `${nextHeight}px`;
+    });
+
+    await waitForAnimation(nextPanel);
+    nextPanel.classList.remove(enteringClass);
+    await waitForTransition(content);
+  } catch {
+    window.location.href = url;
+  } finally {
+    current.classList.remove(leavingClass);
+    content.classList.remove("is-resizing");
+    content.style.height = "";
+    authSwitchInProgress = false;
+  }
+}
+
+function waitForAnimation(element) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      element.removeEventListener("animationend", finish);
+      resolve();
+    };
+    element.addEventListener("animationend", finish, { once: true });
+    window.setTimeout(finish, 450);
+  });
+}
+
+function scrollAuthPageToTop(options = {}) {
+  const page = document.querySelector(".auth-page");
+  const header = document.querySelector(".site-header");
+  if (!page) return Promise.resolve();
+  const headerHeight = header?.getBoundingClientRect().height || 0;
+  const top = Math.max(0, page.getBoundingClientRect().top + window.scrollY - headerHeight);
+  if (options.animate) {
+    return animateScrollTo(top, 380);
+  }
+  window.scrollTo({ top, behavior: "auto" });
+  return Promise.resolve();
+}
+
+function animateScrollTo(targetTop, duration) {
+  return new Promise((resolve) => {
+    const html = document.documentElement;
+    const originalStyle = html.style.scrollBehavior;
+    html.style.scrollBehavior = "auto";
+
+    const startTop = window.scrollY;
+    const distance = targetTop - startTop;
+    if (Math.abs(distance) < 2) {
+      html.style.scrollBehavior = originalStyle;
+      resolve();
+      return;
+    }
+    const startedAt = performance.now();
+    // Aproximação de cubic-bezier(0.3, 0, 0.2, 1) para suavidade extra
+    const ease = (p) => p < 0.5
+      ? 4 * p * p * p
+      : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+    const step = (now) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      window.scrollTo(0, startTop + distance * ease(progress));
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        html.style.scrollBehavior = originalStyle;
+        resolve();
+      }
+    };
+
+    requestAnimationFrame(step);
+  });
+}
+
+function measureAuthContentHeight(content, panel) {
+  const styles = window.getComputedStyle(content);
+  const padding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+  const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height || 0;
+  const viewportHeight = Math.max(0, window.innerHeight - headerHeight);
+  return Math.max(panel.scrollHeight + padding, viewportHeight);
+}
+
+function waitForTransition(element) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (event) => {
+      if (event && event.target !== element) return;
+      if (done) return;
+      done = true;
+      element.removeEventListener("transitionend", finish);
+      resolve();
+    };
+    element.addEventListener("transitionend", finish);
+    window.setTimeout(finish, 500);
+  });
+}
 
 function initializeRegistrationForm(form) {
   if (registrationForms.has(form)) return;

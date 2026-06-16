@@ -1,25 +1,12 @@
-{{define "auth-visual"}}<div class="auth-visual"><a class="brand brand-light" href="/"><img src="/assets/logo-light.svg" alt="ReVeste"></a><div><span class="eyebrow">Moda de pessoa para pessoa</span><h1>{{.}}</h1></div><p>Peças únicas. Novas possibilidades.</p></div>{{end}}
+{{define "auth-visual"}}<div class="auth-visual"><div><span class="eyebrow">Moda de pessoa para pessoa</span><h1>Sua próxima descoberta continua aqui.</h1></div><p>Peças únicas. Novas possibilidades.</p></div>{{end}}
 
-{{define "entrar"}}<section class="auth-page">{{template "auth-visual" "Sua próxima descoberta continua aqui."}}<div class="auth-content"><div class="auth-card"><span class="eyebrow">Boas-vindas</span><h2>Entre na sua conta</h2><p class="muted">Acesse seus anúncios e sua sacola.</p>{{template "erro-formulario" .MensagemErro}}<form class="stack-form" method="post" action="/entrar"><input type="hidden" name="retorno" value="{{.URLRetorno}}"><label>E-mail ou CPF<input name="identificador" value="{{valorFormulario .ValoresFormulario "identificador"}}" autocomplete="username" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "identificador")}}</label><label>Senha<input name="senha" type="password" autocomplete="current-password" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "senha")}}</label><button class="button button-dark button-large" type="submit">Entrar</button></form><p class="auth-switch">Ainda não tem conta? <a href="/cadastro?retorno={{urlquery .URLRetorno}}">Cadastre-se</a></p></div></div></section>{{end}}
+{{define "entrar"}}<section class="auth-page">{{template "auth-visual" .}}<div class="auth-content"><div class="auth-card auth-form-panel"><span class="eyebrow">Boas-vindas</span><h2>Entre na sua conta</h2><p class="muted">Acesse seus anúncios e sua sacola.</p>{{template "erro-formulario" .MensagemErro}}<form class="stack-form" method="post" action="/entrar"><input type="hidden" name="retorno" value="{{.URLRetorno}}"><label>E-mail ou CPF<input name="identificador" value="{{valorFormulario .ValoresFormulario "identificador"}}" autocomplete="username" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "identificador")}}</label><label>Senha<input name="senha" type="password" autocomplete="current-password" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "senha")}}</label><button class="button button-dark button-large" type="submit">Entrar</button></form><p class="auth-switch">Ainda não tem conta? <a data-auth-switch="cadastro" href="/cadastro?retorno={{urlquery .URLRetorno}}">Cadastre-se</a></p></div></div></section>{{end}}
 
-{{define "cadastro"}}<section class="registration-page">
-  <aside class="registration-intro">
-    <a class="brand brand-light" href="/" aria-label="Página inicial ReVeste"><img src="/assets/logo-light.svg" alt="ReVeste"></a>
-    <div class="registration-intro-copy">
-      <span class="eyebrow">Moda de pessoa para pessoa</span>
-      <h1>Comece uma nova história.</h1>
-      <p>Uma conta para encontrar peças únicas, vender o que merece continuar circulando e acompanhar tudo em um só lugar.</p>
-    </div>
-    <ol class="registration-steps" aria-label="Etapas do cadastro">
-      <li data-registration-step="identity" class="is-current"><span>01</span><div><strong>Sua identidade</strong><small>Dados pessoais e acesso</small></div></li>
-      <li data-registration-step="address"><span>02</span><div><strong>Seu endereço</strong><small>Informações para futuras entregas</small></div></li>
-      <li data-registration-step="finish"><span>03</span><div><strong>Tudo pronto</strong><small>Revise e crie sua conta</small></div></li>
-    </ol>
-    <p class="registration-privacy">Seus dados são usados somente para operar sua conta e viabilizar as transações da plataforma.</p>
-  </aside>
+{{define "cadastro"}}<section class="auth-page registration-page">
+  {{template "auth-visual" .}}
 
-  <div class="registration-content">
-    <div class="registration-card">
+  <div class="auth-content registration-content">
+    <div class="auth-card registration-card auth-form-panel">
       <header class="registration-heading">
         <span class="eyebrow">Comece por aqui</span>
         <h2>Crie sua conta</h2>
@@ -65,7 +52,7 @@
           <button class="button button-dark button-large" type="submit"><span data-submit-label>Criar minha conta</span><span class="button-loader" aria-hidden="true"></span></button>
         </div>
       </form>
-      <p class="auth-switch">Já tem uma conta? <a href="/entrar?retorno={{urlquery .URLRetorno}}">Entrar</a></p>
+      <p class="auth-switch">Já tem uma conta? <a data-auth-switch="entrar" href="/entrar?retorno={{urlquery .URLRetorno}}">Entrar</a></p>
     </div>
   </div>
 </section>{{end}}

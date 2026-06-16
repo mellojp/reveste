@@ -35,12 +35,15 @@
 
 {{define "cabecalho"}}<header id="site-header" class="site-header">
   <a class="brand" href="/" aria-label="Página inicial ReVeste"><img src="/assets/logo.svg" alt="ReVeste"></a>
-  <nav class="main-nav" aria-label="Navegação principal">
+  <nav class="main-nav" id="main-nav" aria-label="Navegação principal">
     <a href="/catalogo" {{if or (eq .RotaAtual "/catalogo") (eq .Conteudo "detalhe-anuncio")}}aria-current="page"{{end}}>Explorar</a>
     <a href="/vender" {{if eq .RotaAtual "/vender"}}aria-current="page"{{end}}>Vender</a>
     {{if .UsuarioAutenticado}}<a href="/meus-anuncios" {{if eq .RotaAtual "/meus-anuncios"}}aria-current="page"{{end}}>Meus anúncios</a>{{end}}
   </nav>
   <div class="header-actions">
+    <button class="icon-button menu-toggle" type="button" aria-label="Abrir navegação" aria-controls="main-nav" aria-expanded="false" data-menu-toggle>
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
     <a class="icon-button cart-button" href="/carrinho" aria-label="Abrir sacola">
       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8Zm3 2V6a3 3 0 0 1 6 0v4"/></svg>
       <span class="badge">{{len .CarrinhoAutenticado.Anuncios}}</span>
