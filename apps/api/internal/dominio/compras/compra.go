@@ -84,6 +84,11 @@ type Pedido struct {
 	FinalizadoEm                 *time.Time         `json:"finalizado_em,omitempty"`
 }
 
+// TotalCompradorCentavos e o quanto o comprador paga por este pedido: itens mais frete.
+func (p Pedido) TotalCompradorCentavos() int64 {
+	return p.ValorTotalItensCentavos + p.ValorFreteCentavos
+}
+
 func (p *Pedido) AlterarStatus(status StatusPedido) error {
 	if !transicaoPedidoValida(p.Status, status) {
 		return common.ErrTransicaoInvalida
@@ -143,10 +148,10 @@ func (i ItemPedido) CalcularTotal() int64 {
 }
 
 func (i *ItemPedido) AlterarStatus(status StatusItemPedido) error {
-	valida := i.Status == StatusItemAguardandoEnvio &&
-		(status == StatusItemEnviado || status == StatusItemNaoEnviado) ||
-		i.Status == StatusItemEnviado && status == StatusItemRecebido ||
-		i.Status == StatusItemNaoEnviado && status == StatusItemSuspenso
+	valida := (i.Status == StatusItemAguardandoEnvio &&
+		(status == StatusItemEnviado || status == StatusItemNaoEnviado)) ||
+		(i.Status == StatusItemEnviado && status == StatusItemRecebido) ||
+		(i.Status == StatusItemNaoEnviado && status == StatusItemSuspenso)
 	if !valida {
 		return common.ErrTransicaoInvalida
 	}
@@ -176,11 +181,11 @@ type Pagamento struct {
 }
 
 func (p *Pagamento) AlterarStatus(status StatusPagamento) error {
-	valida := p.Status == StatusPagamentoPendente &&
-		(status == StatusPagamentoAprovado || status == StatusPagamentoRecusado) ||
-		p.Status == StatusPagamentoAprovado &&
-			(status == StatusPagamentoReembolsadoParcial || status == StatusPagamentoReembolsado) ||
-		p.Status == StatusPagamentoReembolsadoParcial && status == StatusPagamentoReembolsado
+	valida := (p.Status == StatusPagamentoPendente &&
+		(status == StatusPagamentoAprovado || status == StatusPagamentoRecusado)) ||
+		(p.Status == StatusPagamentoAprovado &&
+			(status == StatusPagamentoReembolsadoParcial || status == StatusPagamentoReembolsado)) ||
+		(p.Status == StatusPagamentoReembolsadoParcial && status == StatusPagamentoReembolsado)
 	if !valida {
 		return common.ErrTransicaoInvalida
 	}
@@ -239,11 +244,11 @@ type Entrega struct {
 }
 
 func (e *Entrega) AlterarStatus(status StatusEntrega) error {
-	valida := e.Status == StatusEntregaAguardandoPostagem && status == StatusEntregaPostado ||
-		e.Status == StatusEntregaPostado &&
-			(status == StatusEntregaEmTransito || status == StatusEntregaEntregue || status == StatusEntregaFalhou) ||
-		e.Status == StatusEntregaEmTransito &&
-			(status == StatusEntregaEntregue || status == StatusEntregaFalhou)
+	valida := (e.Status == StatusEntregaAguardandoPostagem && status == StatusEntregaPostado) ||
+		(e.Status == StatusEntregaPostado &&
+			(status == StatusEntregaEmTransito || status == StatusEntregaEntregue || status == StatusEntregaFalhou)) ||
+		(e.Status == StatusEntregaEmTransito &&
+			(status == StatusEntregaEntregue || status == StatusEntregaFalhou))
 	if !valida {
 		return common.ErrTransicaoInvalida
 	}

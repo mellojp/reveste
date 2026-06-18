@@ -17,6 +17,7 @@ services:
       - ./db/migrations/001_modelo_inicial.up.sql:/docker-entrypoint-initdb.d/001_modelo_inicial.sql:ro
       - ./db/migrations/002_anuncio_unico_por_item.up.sql:/docker-entrypoint-initdb.d/002_anuncio_unico_por_item.sql:ro
       - ./db/migrations/003_categorias_anuncio.up.sql:/docker-entrypoint-initdb.d/003_categorias_anuncio.sql:ro
+      - ./db/migrations/004_tentativas_login.up.sql:/docker-entrypoint-initdb.d/004_tentativas_login.sql:ro
 
 volumes:
   dados_postgres:

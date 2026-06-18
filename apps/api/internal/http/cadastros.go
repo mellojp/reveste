@@ -104,7 +104,7 @@ func (a *API) autenticar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		escreverJSON(w, nethttp.StatusCreated, sessao)
 		return
 	}
-	definirCookieSessao(w, r, sessao.Token, sessao.ExpiraEm)
+	a.definirCookieSessao(w, r, sessao.Token, sessao.ExpiraEm)
 	escreverJSON(w, nethttp.StatusCreated, map[string]any{
 		"expira_em": sessao.ExpiraEm,
 		"usuario":   sessao.Usuario,
@@ -116,6 +116,6 @@ func (a *API) encerrarSessao(w nethttp.ResponseWriter, r *nethttp.Request, _ str
 		a.escreverErro(w, err)
 		return
 	}
-	removerCookieSessao(w, r)
+	a.removerCookieSessao(w, r)
 	w.WriteHeader(nethttp.StatusNoContent)
 }

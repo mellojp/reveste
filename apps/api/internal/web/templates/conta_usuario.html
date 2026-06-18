@@ -57,11 +57,11 @@
   </div>
 </section>{{end}}
 
-{{define "navegacao-conta"}}<nav class="account-nav" aria-label="Navegação da conta"><a class="{{if eq .RotaAtual "/perfil"}}active{{end}}" href="/perfil">Dados pessoais</a><a class="{{if eq .RotaAtual "/meus-anuncios"}}active{{end}}" href="/meus-anuncios">Meus anúncios</a><a class="{{if eq .RotaAtual "/carrinho"}}active{{end}}" href="/carrinho">Minha sacola</a><form method="post" action="/sair"><button type="submit">Sair da conta</button></form></nav>{{end}}
+{{define "navegacao-conta"}}<nav class="account-nav" aria-label="Navegação da conta"><a class="{{if eq .RotaAtual "/perfil"}}active{{end}}" href="/perfil">Dados pessoais</a><a class="{{if eq .RotaAtual "/perfil/enderecos"}}active{{end}}" href="/perfil/enderecos">Endereços</a><a class="{{if eq .RotaAtual "/meus-anuncios"}}active{{end}}" href="/meus-anuncios">Meus anúncios</a><a class="{{if eq .RotaAtual "/minhas-vendas"}}active{{end}}" href="/minhas-vendas">Minhas vendas</a><a class="{{if eq .RotaAtual "/carrinho"}}active{{end}}" href="/carrinho">Minha sacola</a><a class="{{if eq .RotaAtual "/meus-pedidos"}}active{{end}}" href="/meus-pedidos">Meus pedidos</a><form method="post" action="/sair"><button type="submit">Sair da conta</button></form></nav>{{end}}
 
-{{define "perfil"}}<section class="profile-page page-section compact-section"><div class="profile-heading"><div class="profile-avatar">{{iniciais .UsuarioAutenticado.Nome}}</div><div><span class="eyebrow">Minha conta</span><h1>{{.UsuarioAutenticado.Nome}}</h1><p>{{.UsuarioAutenticado.Email}}</p></div></div><div class="profile-layout">{{template "navegacao-conta" .}}<div class="profile-content">{{if .EditandoPerfil}}{{template "perfil-formulario" .}}{{else}}{{template "perfil-detalhes" .}}{{end}}</div></div></section>{{end}}
+{{define "perfil"}}<section class="profile-page page-section compact-section"><div class="profile-heading"><div class="profile-avatar">{{iniciais .UsuarioAutenticado.Nome}}</div><div><span class="eyebrow">Minha conta</span><h1>{{.UsuarioAutenticado.Nome}}</h1><p>{{.UsuarioAutenticado.Email}}</p>{{if .AvaliacaoVendedor.Quantidade}}<p class="seller-rating">★ {{printf "%.1f" .AvaliacaoVendedor.Media}} · {{.AvaliacaoVendedor.Quantidade}} {{if eq .AvaliacaoVendedor.Quantidade 1}}avaliação{{else}}avaliações{{end}} como vendedor</p>{{end}}</div></div><div class="profile-layout">{{template "navegacao-conta" .}}<div class="profile-content">{{if .EditandoPerfil}}{{template "perfil-formulario" .}}{{else}}{{template "perfil-detalhes" .}}{{end}}</div></div></section>{{end}}
 
-{{define "perfil-detalhes"}}<section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Cadastro</span><h2>Dados pessoais</h2></div><a class="button button-outline" href="/perfil/editar">Editar perfil</a></div><dl class="detail-grid"><div><dt>Nome</dt><dd>{{.UsuarioAutenticado.Nome}}</dd></div><div><dt>E-mail</dt><dd>{{.UsuarioAutenticado.Email}}</dd></div><div><dt>Telefone</dt><dd>{{if .UsuarioAutenticado.Telefone}}{{.UsuarioAutenticado.Telefone}}{{else}}Não informado{{end}}</dd></div><div><dt>Conta criada em</dt><dd>{{formatarData .UsuarioAutenticado.CriadoEm}}</dd></div></dl></section><section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Entregas</span><h2>Endereço principal</h2></div></div><dl class="detail-grid"><div class="span-2"><dt>Endereço</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Logradouro}}, {{.UsuarioAutenticado.EnderecoPrincipal.Numero}}{{if .UsuarioAutenticado.EnderecoPrincipal.Complemento}} · {{.UsuarioAutenticado.EnderecoPrincipal.Complemento}}{{end}}</dd></div><div><dt>Bairro</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Bairro}}</dd></div><div><dt>CEP</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.CEP}}</dd></div><div><dt>Cidade</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Cidade}}</dd></div><div><dt>Estado</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Estado}}</dd></div></dl></section>{{end}}
+{{define "perfil-detalhes"}}<section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Cadastro</span><h2>Dados pessoais</h2></div><a class="button button-outline" href="/perfil/editar">Editar perfil</a></div><dl class="detail-grid"><div><dt>Nome</dt><dd>{{.UsuarioAutenticado.Nome}}</dd></div><div><dt>E-mail</dt><dd>{{.UsuarioAutenticado.Email}}</dd></div><div><dt>Telefone</dt><dd>{{if .UsuarioAutenticado.Telefone}}{{.UsuarioAutenticado.Telefone}}{{else}}Não informado{{end}}</dd></div><div><dt>Conta criada em</dt><dd>{{formatarData .UsuarioAutenticado.CriadoEm}}</dd></div></dl></section><section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Entregas</span><h2>Endereço principal</h2></div><a class="button button-outline" href="/perfil/enderecos">Gerenciar endereços</a></div><dl class="detail-grid"><div class="span-2"><dt>Endereço</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Logradouro}}, {{.UsuarioAutenticado.EnderecoPrincipal.Numero}}{{if .UsuarioAutenticado.EnderecoPrincipal.Complemento}} · {{.UsuarioAutenticado.EnderecoPrincipal.Complemento}}{{end}}</dd></div><div><dt>Bairro</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Bairro}}</dd></div><div><dt>CEP</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.CEP}}</dd></div><div><dt>Cidade</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Cidade}}</dd></div><div><dt>Estado</dt><dd>{{.UsuarioAutenticado.EnderecoPrincipal.Estado}}</dd></div></dl></section>{{end}}
 
 {{define "perfil-formulario"}}<section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Editar cadastro</span><h2>Seus dados</h2></div></div>{{template "erro-formulario" .MensagemErro}}<form class="stack-form" method="post" action="/perfil"><div class="form-grid">
 <label class="span-2">Nome completo<input name="nome" value="{{if .ValoresFormulario}}{{valorFormulario .ValoresFormulario "nome"}}{{else}}{{.UsuarioAutenticado.Nome}}{{end}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "nome")}}</label>
@@ -76,6 +76,224 @@
 <label>Cidade<input name="cidade" value="{{if .ValoresFormulario}}{{valorFormulario .ValoresFormulario "cidade"}}{{else}}{{.UsuarioAutenticado.EnderecoPrincipal.Cidade}}{{end}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "cidade")}}</label>
 </div><div class="form-submit"><a class="text-link" href="/perfil">Cancelar</a><button class="button button-dark" type="submit">Salvar perfil</button></div></form></section>{{end}}
 
-{{define "meus-anuncios"}}<section class="dashboard-page page-section compact-section"><div class="section-heading"><div><span class="eyebrow">Área de venda</span><h1>Meus anúncios</h1><p>{{len .AnunciosListados}} {{if eq (len .AnunciosListados) 1}}peça publicada{{else}}peças publicadas{{end}}</p></div><a class="button button-dark" href="/vender">Publicar nova peça</a></div><div class="seller-stats"><div><span>Publicados</span><strong>{{len .AnunciosListados}}</strong></div><div><span>Disponíveis</span><strong>{{contarDisponiveis .AnunciosListados}}</strong></div><div><span>Pendências de envio</span><strong>0</strong></div></div><div class="my-ads-grid">{{if .AnunciosListados}}{{range .AnunciosListados}}<article class="my-ad-card"><a class="my-ad-image" href="/anuncios/{{.ID}}">{{template "imagem-anuncio" .}}</a><div class="my-ad-content"><span class="status-badge">{{formatarRotulo .Status}}</span><h2><a href="/anuncios/{{.ID}}">{{.Titulo}}</a></h2><p>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</p><strong>{{formatarDinheiro .PrecoCentavos}}</strong><small>Publicado em {{formatarData .CriadoEm}}</small><div class="my-ad-actions"><a class="text-link" href="/anuncios/{{.ID}}">Visualizar</a>{{if eq .Status "disponivel"}}<a class="text-link" href="/meus-anuncios/{{.ID}}/editar">Editar</a><form method="post" action="/meus-anuncios/{{.ID}}/excluir"><button class="danger-link" type="submit" data-confirm-delete>Excluir</button></form>{{end}}</div></div></article>{{end}}{{else}}<div class="empty-state"><span class="empty-state-mark">R</span><h3>Nenhuma peça publicada</h3><p>Seu primeiro anúncio aparecerá aqui.</p><a class="button button-dark" href="/vender">Publicar primeira peça</a></div>{{end}}</div></section>{{end}}
+{{define "campos-endereco"}}<div class="form-grid">
+<label>CEP<input name="cep" value="{{valorFormulario .ValoresFormulario "cep"}}" inputmode="numeric" maxlength="9" data-mask="cep" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "cep")}}</label>
+<label>Estado<input name="estado" maxlength="2" autocapitalize="characters" value="{{valorFormulario .ValoresFormulario "estado"}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "estado")}}</label>
+<label class="span-2">Logradouro<input name="logradouro" maxlength="200" value="{{valorFormulario .ValoresFormulario "logradouro"}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "logradouro")}}</label>
+<label>Número<input name="numero" maxlength="20" value="{{valorFormulario .ValoresFormulario "numero"}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "numero")}}</label>
+<label>Complemento<input name="complemento" maxlength="100" value="{{valorFormulario .ValoresFormulario "complemento"}}">{{template "erro-campo" (contextoErroCampo .ErrosValidacao "complemento")}}</label>
+<label>Bairro<input name="bairro" maxlength="100" value="{{valorFormulario .ValoresFormulario "bairro"}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "bairro")}}</label>
+<label>Cidade<input name="cidade" maxlength="100" value="{{valorFormulario .ValoresFormulario "cidade"}}" required>{{template "erro-campo" (contextoErroCampo .ErrosValidacao "cidade")}}</label>
+</div>{{end}}
 
-{{define "carrinho"}}<section class="cart-page page-section compact-section"><div class="page-intro"><span class="eyebrow">Sua seleção</span><h1>Minha sacola</h1><p>{{len .CarrinhoAutenticado.Anuncios}} {{if eq (len .CarrinhoAutenticado.Anuncios) 1}}peça adicionada{{else}}peças adicionadas{{end}} para decidir. A disponibilidade é confirmada somente no checkout.</p></div>{{if contarIndisponiveis .CarrinhoAutenticado.Anuncios}}<div class="inline-alert" role="status">{{contarIndisponiveis .CarrinhoAutenticado.Anuncios}} peças ficaram indisponíveis e não entram no total.</div>{{end}}{{if .CarrinhoAutenticado.Anuncios}}<div class="cart-layout"><div class="cart-list">{{range .CarrinhoAutenticado.Anuncios}}<article class="cart-item"><a class="cart-thumb" href="/anuncios/{{.ID}}">{{template "imagem-anuncio" .}}</a><div class="cart-item-info"><span>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</span><h2><a href="/anuncios/{{.ID}}">{{.Titulo}}</a></h2><p>{{formatarRotulo .EstadoConservacao}}</p>{{if ne .Status "disponivel"}}<span class="unavailable-label">Indisponível</span>{{end}}<strong>{{formatarDinheiro .PrecoCentavos}}</strong></div><form method="post" action="/carrinho/itens/{{.ID}}/remover"><button class="remove-item" type="submit">Remover</button></form></article>{{end}}</div><aside class="cart-summary"><span class="eyebrow">Resumo</span><h2>Seu pedido</h2><div><span>Itens disponíveis ({{contarDisponiveis .CarrinhoAutenticado.Anuncios}})</span><strong>{{formatarDinheiro .CarrinhoAutenticado.TotalCentavos}}</strong></div><div><span>Frete</span><span>Calculado no checkout</span></div><div class="cart-total"><span>Total dos itens</span><strong>{{formatarDinheiro .CarrinhoAutenticado.TotalCentavos}}</strong></div><button class="button button-dark button-large" type="button" disabled>Checkout em breve</button><p>O fluxo de compra será liberado após a implementação de pedidos e pagamento na API.</p></aside></div>{{else}}<div class="empty-state"><span class="empty-state-mark">R</span><h3>Sua sacola está vazia</h3><p>Explore o catálogo e adicione as peças que combinam com você.</p><a class="button button-dark" href="/catalogo">Explorar catálogo</a></div>{{end}}</section>{{end}}
+{{define "enderecos"}}<section class="profile-page page-section compact-section">
+  <div class="profile-heading"><div><span class="eyebrow">Minha conta</span><h1>Meus endereços</h1><p>Gerencie onde você quer receber suas compras.</p></div></div>
+  <div class="profile-layout">{{template "navegacao-conta" .}}<div class="profile-content">
+    {{if .EnderecosUsuario}}
+    <div class="address-list">
+      {{range .EnderecosUsuario}}
+      <article class="address-card{{if .Principal}} is-principal{{end}}">
+        {{if .Principal}}<span class="status-badge">Principal</span>{{end}}
+        <p>{{.Logradouro}}, {{.Numero}}{{if .Complemento}} · {{.Complemento}}{{end}}<br>{{.Bairro}} · {{.Cidade}}/{{.Estado}} · CEP {{.CEP}}</p>
+        <div class="address-card-actions">
+          <a class="text-link" href="/perfil/enderecos/{{.ID}}/editar">Editar</a>
+          {{if not .Principal}}<form method="post" action="/perfil/enderecos/{{.ID}}/principal"><button class="link-button" type="submit">Tornar principal</button></form><form method="post" action="/perfil/enderecos/{{.ID}}/remover"><button class="danger-link" type="submit" data-confirm-delete>Remover</button></form>{{end}}
+        </div>
+      </article>
+      {{end}}
+    </div>
+    {{end}}
+    <section class="detail-panel">
+      <div class="panel-heading"><div><span class="eyebrow">Novo endereço</span><h2>Adicionar endereço</h2></div></div>
+      {{template "erro-formulario" .MensagemErro}}
+      <form class="stack-form" method="post" action="/perfil/enderecos">{{template "campos-endereco" .}}<div class="form-submit"><button class="button button-dark" type="submit">Adicionar endereço</button></div></form>
+    </section>
+  </div></div>
+</section>{{end}}
+
+{{define "formulario-endereco"}}<section class="form-page page-section compact-section">
+  <nav class="breadcrumbs"><a href="/perfil/enderecos">Meus endereços</a><span>/</span><span>Editar</span></nav>
+  <div class="page-intro"><span class="eyebrow">Endereço</span><h1>Editar endereço</h1><p>Atualize os dados de entrega deste endereço.</p></div>
+  {{template "erro-formulario" .MensagemErro}}
+  <section class="detail-panel"><form class="stack-form" method="post" action="/perfil/enderecos/{{.EnderecoEmEdicao.ID}}">{{template "campos-endereco" .}}<div class="form-submit"><a class="text-link" href="/perfil/enderecos">Cancelar</a><button class="button button-dark" type="submit">Salvar endereço</button></div></form></section>
+</section>{{end}}
+
+{{define "meus-anuncios"}}<section class="dashboard-page page-section compact-section"><div class="section-heading"><div><span class="eyebrow">Área de venda</span><h1>Meus anúncios</h1><p>{{len .AnunciosListados}} {{if eq (len .AnunciosListados) 1}}peça publicada{{else}}peças publicadas{{end}}</p></div><a class="button button-dark" href="/vender">Publicar nova peça</a></div><div class="seller-stats"><div><span>Publicados</span><strong>{{len .AnunciosListados}}</strong></div><div><span>Disponíveis</span><strong>{{contarDisponiveis .AnunciosListados}}</strong></div><div><span>Vendidos</span><strong>{{contarIndisponiveis .AnunciosListados}}</strong></div></div><div class="my-ads-grid">{{if .AnunciosListados}}{{range .AnunciosListados}}<article class="my-ad-card"><a class="my-ad-image" href="/anuncios/{{.ID}}">{{template "imagem-anuncio" .}}</a><div class="my-ad-content"><span class="status-badge">{{formatarRotulo .Status}}</span><h2><a href="/anuncios/{{.ID}}">{{.Titulo}}</a></h2><p>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</p><strong>{{formatarDinheiro .PrecoCentavos}}</strong><small>Publicado em {{formatarData .CriadoEm}}</small><div class="my-ad-actions"><a class="text-link" href="/anuncios/{{.ID}}">Visualizar</a>{{if eq .Status "disponivel"}}<a class="text-link" href="/meus-anuncios/{{.ID}}/editar">Editar</a><form method="post" action="/meus-anuncios/{{.ID}}/excluir"><button class="danger-link" type="submit" data-confirm-delete>Excluir</button></form>{{end}}</div></div></article>{{end}}{{else}}<div class="empty-state"><span class="empty-state-mark">R</span><h3>Nenhuma peça publicada</h3><p>Seu primeiro anúncio aparecerá aqui.</p><a class="button button-dark" href="/vender">Publicar primeira peça</a></div>{{end}}</div></section>{{end}}
+
+{{define "minhas-vendas"}}<section class="dashboard-page page-section compact-section">
+  <div class="profile-heading"><div><span class="eyebrow">Área de venda</span><h1>Minhas vendas</h1><p>{{len .PedidosListados}} {{if eq (len .PedidosListados) 1}}venda recebida{{else}}vendas recebidas{{end}}</p></div></div>
+  <div class="profile-layout">{{template "navegacao-conta" .}}<div class="profile-content">
+    {{template "erro-formulario" .MensagemErro}}
+    {{if .PedidosListados}}
+      {{range .PedidosListados}}
+      <a class="order-summary-card" href="/minhas-vendas/{{.ID}}">
+        <div class="order-summary-info"><span class="eyebrow">Venda de {{formatarData .CriadoEm}}</span><h2>{{len .Itens}} {{if eq (len .Itens) 1}}peça{{else}}peças{{end}}</h2><p>{{with index .Itens 0}}{{.Titulo}}{{end}}{{if gt (len .Itens) 1}} e mais{{end}}</p></div>
+        <div class="order-summary-meta"><span class="status-badge">{{formatarRotulo .Status}}</span><strong>{{formatarDinheiro .ValorLiquidoVendedorCentavos}}</strong><span class="text-link">Ver detalhes →</span></div>
+      </a>
+      {{end}}
+    {{else}}
+      <div class="empty-state"><span class="empty-state-mark">R</span><h3>Nenhuma venda ainda</h3><p>Quando alguém comprar uma peça sua, ela aparecerá aqui para você enviar.</p><a class="button button-dark" href="/vender">Publicar uma peça</a></div>
+    {{end}}
+  </div></div>
+</section>{{end}}
+
+{{define "detalhe-venda"}}{{$pedido := .PedidoDetalhe}}<section class="dashboard-page page-section compact-section">
+  <nav class="breadcrumbs" aria-label="Navegação estrutural"><a href="/minhas-vendas">Minhas vendas</a><span>/</span><span>Venda de {{formatarData $pedido.CriadoEm}}</span></nav>
+  <div class="profile-heading"><div><span class="eyebrow">Venda</span><h1>{{len $pedido.Itens}} {{if eq (len $pedido.Itens) 1}}peça{{else}}peças{{end}}</h1><p>Recebida em {{formatarData $pedido.CriadoEm}}</p></div><span class="status-badge">{{formatarRotulo $pedido.Status}}</span></div>
+  {{template "erro-formulario" .MensagemErro}}
+  <div class="order-detail-layout">
+    <div class="checkout-main">
+      <section class="detail-panel">
+        <ol class="order-timeline" aria-label="Progresso da venda">{{range linhaDoTempoPedido $pedido.Status}}<li class="order-step{{if .Concluido}} is-done{{end}}{{if .Atual}} is-current{{end}}"><span>{{.Rotulo}}</span></li>{{end}}</ol>
+        <ul class="order-items">
+          {{range $pedido.Itens}}
+          <li class="order-line"><div><span>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</span><h3>{{.Titulo}}</h3><span>{{formatarRotulo .Status}}{{if eq .Status "aguardando_envio"}} · envie até {{formatarData .PrazoEnvioEm}}{{end}}</span></div><strong>{{formatarDinheiro .ValorUnitarioCentavos}}</strong></li>
+          {{end}}
+        </ul>
+      </section>
+
+      {{if eq $pedido.Status "aguardando_envio"}}
+      <section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Envio</span><h2>Registrar postagem</h2></div></div><p class="muted">Informe o código de rastreio assim que despachar a peça. O comprador é avisado automaticamente.</p>
+        <form class="order-action order-shipping" method="post" action="/minhas-vendas/{{$pedido.ID}}/envio">
+          <label>Transportadora <small>opcional</small><input name="provedor" maxlength="50" placeholder="Correios"></label>
+          <label>Código de rastreio<input name="codigo_rastreio" maxlength="100" required></label>
+          <button class="button button-dark" type="submit">Marcar como enviado</button>
+        </form>
+      </section>
+      {{else if and $pedido.Entrega $pedido.Entrega.CodigoRastreio}}
+      <section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Envio registrado</span><h2>Rastreamento</h2></div></div><div class="order-tracking"><p>{{if $pedido.Entrega.Provedor}}{{$pedido.Entrega.Provedor}} · {{end}}<strong class="tracking-code">{{$pedido.Entrega.CodigoRastreio}}</strong>{{if $pedido.Entrega.PostadoEm}} · postado em {{formatarData $pedido.Entrega.PostadoEm}}{{end}}</p></div></section>
+      {{end}}
+    </div>
+
+    <aside class="detail-panel order-aside">
+      <span class="eyebrow">Resumo</span><h2>Repasse</h2>
+      <dl class="detail-grid">
+        <div><dt>Itens</dt><dd>{{formatarDinheiro $pedido.ValorTotalItensCentavos}}</dd></div>
+        <div><dt>Frete</dt><dd>{{formatarDinheiro $pedido.ValorFreteCentavos}}</dd></div>
+        <div><dt>Taxa de serviço</dt><dd>− {{formatarDinheiro $pedido.TaxaServicoCentavos}}</dd></div>
+        <div><dt>Repasse estimado</dt><dd>{{formatarDinheiro $pedido.ValorLiquidoVendedorCentavos}}</dd></div>
+      </dl>
+      <div class="order-aside-address"><span class="eyebrow">Enviar para</span><p>{{$pedido.NomeDestinatario}}<br>{{$pedido.EnderecoEntrega.Logradouro}}, {{$pedido.EnderecoEntrega.Numero}}{{if $pedido.EnderecoEntrega.Complemento}} · {{$pedido.EnderecoEntrega.Complemento}}{{end}}<br>{{$pedido.EnderecoEntrega.Bairro}} · {{$pedido.EnderecoEntrega.Cidade}}/{{$pedido.EnderecoEntrega.Estado}} · CEP {{$pedido.EnderecoEntrega.CEP}}</p></div>
+    </aside>
+  </div>
+</section>{{end}}
+
+{{define "meus-pedidos"}}<section class="dashboard-page page-section compact-section">
+  <div class="profile-heading"><div><span class="eyebrow">Minhas compras</span><h1>Meus pedidos</h1><p>{{len .PedidosListados}} {{if eq (len .PedidosListados) 1}}pedido realizado{{else}}pedidos realizados{{end}}</p></div></div>
+  {{if .CompraConfirmada}}<div class="order-confirmation" role="status"><span class="order-confirmation-mark" aria-hidden="true">✓</span><div><strong>Compra confirmada!</strong><p>Pagamento aprovado. Acompanhe o envio dos seus pedidos abaixo.</p></div></div>{{end}}
+  <div class="profile-layout">{{template "navegacao-conta" .}}<div class="profile-content">
+    {{template "erro-formulario" .MensagemErro}}
+    {{if .PedidosListados}}
+      {{range .PedidosListados}}
+      <a class="order-summary-card" href="/meus-pedidos/{{.ID}}">
+        <div class="order-summary-info"><span class="eyebrow">Pedido de {{formatarData .CriadoEm}}</span><h2>{{len .Itens}} {{if eq (len .Itens) 1}}peça{{else}}peças{{end}}</h2><p>{{with index .Itens 0}}{{.Titulo}}{{end}}{{if gt (len .Itens) 1}} e mais{{end}}</p></div>
+        <div class="order-summary-meta"><span class="status-badge">{{formatarRotulo .Status}}</span><strong>{{formatarDinheiro .TotalCompradorCentavos}}</strong><span class="text-link">Ver detalhes →</span></div>
+      </a>
+      {{end}}
+    {{else}}
+      <div class="empty-state"><span class="empty-state-mark">R</span><h3>Você ainda não comprou nada</h3><p>Quando finalizar uma compra, seus pedidos aparecerão aqui.</p><a class="button button-dark" href="/catalogo">Explorar catálogo</a></div>
+    {{end}}
+  </div></div>
+</section>{{end}}
+
+{{define "detalhe-pedido"}}{{$pedido := .PedidoDetalhe}}<section class="dashboard-page page-section compact-section">
+  <nav class="breadcrumbs" aria-label="Navegação estrutural"><a href="/meus-pedidos">Meus pedidos</a><span>/</span><span>Pedido de {{formatarData $pedido.CriadoEm}}</span></nav>
+  <div class="profile-heading"><div><span class="eyebrow">Pedido</span><h1>{{len $pedido.Itens}} {{if eq (len $pedido.Itens) 1}}peça{{else}}peças{{end}}</h1><p>Realizado em {{formatarData $pedido.CriadoEm}}</p></div><span class="status-badge">{{formatarRotulo $pedido.Status}}</span></div>
+  {{template "erro-formulario" .MensagemErro}}
+  <div class="order-detail-layout">
+    <div class="checkout-main">
+      <section class="detail-panel">
+        <ol class="order-timeline" aria-label="Progresso do pedido">{{range linhaDoTempoPedido $pedido.Status}}<li class="order-step{{if .Concluido}} is-done{{end}}{{if .Atual}} is-current{{end}}"><span>{{.Rotulo}}</span></li>{{end}}</ol>
+        {{if and $pedido.Entrega $pedido.Entrega.CodigoRastreio}}<div class="order-tracking"><span class="eyebrow">Rastreio</span><p>{{if $pedido.Entrega.Provedor}}{{$pedido.Entrega.Provedor}} · {{end}}<strong class="tracking-code">{{$pedido.Entrega.CodigoRastreio}}</strong>{{if $pedido.Entrega.PostadoEm}} · postado em {{formatarData $pedido.Entrega.PostadoEm}}{{end}}</p></div>{{end}}
+        <ul class="order-items">
+          {{range $pedido.Itens}}
+          <li class="order-line"><div><span>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</span><h3><a href="/anuncios/{{.IDAnuncio}}">{{.Titulo}}</a></h3><span>{{formatarRotulo .EstadoConservacao}} · {{formatarRotulo .Status}}{{if .RecebidoEm}} em {{formatarData .RecebidoEm}}{{else if .EnviadoEm}} em {{formatarData .EnviadoEm}}{{end}}</span></div><strong>{{formatarDinheiro .ValorUnitarioCentavos}}</strong></li>
+          {{end}}
+        </ul>
+      </section>
+
+      {{if eq $pedido.Status "aguardando_entrega"}}
+      <section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Recebimento</span><h2>Chegou até você?</h2></div></div><p class="muted">Confirme o recebimento somente quando a peça estiver em mãos. Isso libera o repasse ao vendedor.</p><form class="order-action" method="post" action="/meus-pedidos/{{$pedido.ID}}/recebimento"><button class="button button-dark" type="submit">Confirmar recebimento</button></form></section>
+      {{else if eq $pedido.Status "finalizado"}}
+      <section class="detail-panel"><div class="panel-heading"><div><span class="eyebrow">Avaliação</span><h2>{{if .AvaliacaoPedido}}Sua avaliação{{else}}Avalie o vendedor{{end}}</h2></div></div>
+        {{if .AvaliacaoPedido}}
+        <div class="review-summary"><span class="review-stars" aria-label="Nota {{.AvaliacaoPedido.Nota}} de 5">{{range linhaDeEstrelas .AvaliacaoPedido.Nota}}{{if .}}★{{else}}☆{{end}}{{end}}</span>{{if .AvaliacaoPedido.Comentario}}<p>“{{.AvaliacaoPedido.Comentario}}”</p>{{end}}<small>Enviada em {{formatarData .AvaliacaoPedido.CriadaEm}}</small></div>
+        {{else}}
+        <form class="order-action order-review" method="post" action="/meus-pedidos/{{$pedido.ID}}/avaliacao">
+          <label>Sua nota<select name="nota" required><option value="5">5 · Excelente</option><option value="4">4 · Boa</option><option value="3">3 · Regular</option><option value="2">2 · Ruim</option><option value="1">1 · Péssima</option></select></label>
+          <label>Comentário <small>opcional</small><textarea name="comentario" rows="2" maxlength="500" placeholder="Como foi sua experiência?"></textarea></label>
+          <button class="button button-dark" type="submit">Enviar avaliação</button>
+        </form>
+        {{end}}
+      </section>
+      {{end}}
+    </div>
+
+    <aside class="detail-panel order-aside">
+      <span class="eyebrow">Resumo</span><h2>Pagamento</h2>
+      <dl class="detail-grid">
+        <div><dt>Itens</dt><dd>{{formatarDinheiro $pedido.ValorTotalItensCentavos}}</dd></div>
+        <div><dt>Frete</dt><dd>{{formatarDinheiro $pedido.ValorFreteCentavos}}</dd></div>
+        <div class="span-2"><dt>Total pago</dt><dd>{{formatarDinheiro $pedido.TotalCompradorCentavos}}</dd></div>
+      </dl>
+      <div class="order-aside-address"><span class="eyebrow">Entrega para</span><p>{{$pedido.NomeDestinatario}}<br>{{$pedido.EnderecoEntrega.Logradouro}}, {{$pedido.EnderecoEntrega.Numero}}{{if $pedido.EnderecoEntrega.Complemento}} · {{$pedido.EnderecoEntrega.Complemento}}{{end}}<br>{{$pedido.EnderecoEntrega.Bairro}} · {{$pedido.EnderecoEntrega.Cidade}}/{{$pedido.EnderecoEntrega.Estado}} · CEP {{$pedido.EnderecoEntrega.CEP}}</p></div>
+    </aside>
+  </div>
+</section>{{end}}
+
+{{define "checkout"}}{{$compra := .ResumoCompra}}<section class="checkout-page page-section compact-section">
+  <nav class="breadcrumbs" aria-label="Navegação estrutural"><a href="/carrinho">Sacola</a><span>/</span><span>Pagamento</span></nav>
+  <div class="page-intro"><span class="eyebrow">Quase lá</span><h1>Revise e finalize</h1><p>Confira o endereço, as peças e o valor antes de concluir. A disponibilidade é confirmada agora.</p></div>
+  {{template "erro-formulario" .MensagemErro}}
+  <div class="checkout-layout">
+    <div class="checkout-main">
+      <section class="detail-panel">
+        <div class="panel-heading"><div><span class="eyebrow">Entrega</span><h2>Endereço de entrega</h2></div><a class="button button-outline" href="/perfil/enderecos">Gerenciar</a></div>
+        {{if .EnderecosUsuario}}
+        <div class="address-choices">
+          {{range .EnderecosUsuario}}
+          <label class="address-choice"><input type="radio" name="id_endereco" value="{{.ID}}" form="checkout-form" {{if .Principal}}checked{{end}}><span class="address-choice-body"><strong>{{.Logradouro}}, {{.Numero}}</strong>{{if .Complemento}} · {{.Complemento}}{{end}}<br>{{.Bairro}} · {{.Cidade}}/{{.Estado}} · CEP {{.CEP}}{{if .Principal}} <em>· Principal</em>{{end}}</span></label>
+          {{end}}
+        </div>
+        {{else}}
+        <div class="inline-alert" role="alert">Cadastre um endereço de entrega antes de finalizar. <a href="/perfil/enderecos">Adicionar endereço</a>.</div>
+        {{end}}
+      </section>
+
+      {{range $i, $pedido := $compra.Pedidos}}
+      <section class="detail-panel checkout-group">
+        <div class="panel-heading"><div><span class="eyebrow">Pacote {{incrementar $i}} de {{len $compra.Pedidos}}</span><h2>{{len $pedido.Itens}} {{if eq (len $pedido.Itens) 1}}peça{{else}}peças{{end}}</h2></div><span class="status-badge">Frete {{formatarDinheiro $pedido.ValorFreteCentavos}}</span></div>
+        <ul class="order-items">
+          {{range $pedido.Itens}}
+          <li class="order-line"><div><span>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</span><h3>{{.Titulo}}</h3><span>{{formatarRotulo .EstadoConservacao}}</span></div><strong>{{formatarDinheiro .ValorUnitarioCentavos}}</strong></li>
+          {{end}}
+        </ul>
+      </section>
+      {{end}}
+
+      <section class="detail-panel payment-panel">
+        <div class="panel-heading"><div><span class="eyebrow">Pagamento</span><h2>Cartão de crédito</h2></div><span class="payment-badge">Simulado</span></div>
+        <div class="payment-card" aria-hidden="true"><span class="payment-card-chip"></span><span class="payment-card-number">4242 4242 4242 4242</span><div class="payment-card-row"><span>NOME SOBRENOME</span><span>12/30</span></div></div>
+        <fieldset class="payment-fields" disabled>
+          <label class="span-2">Número do cartão<input value="4242 4242 4242 4242" autocomplete="off"></label>
+          <label>Validade<input value="12/30" autocomplete="off"></label>
+          <label>CVV<input value="123" autocomplete="off"></label>
+          <label class="span-2">Nome impresso<input value="{{.UsuarioAutenticado.Nome}}" autocomplete="off"></label>
+        </fieldset>
+        <p class="payment-note">Ambiente de demonstração — nenhum pagamento real é feito e nenhum dado de cartão é enviado.</p>
+      </section>
+    </div>
+
+    <aside class="cart-summary checkout-summary">
+      <span class="eyebrow">Resumo</span><h2>Seu pedido</h2>
+      <div><span>Itens ({{len $compra.IDsAnuncios}})</span><strong>{{formatarDinheiro $compra.ValorTotalItensCentavos}}</strong></div>
+      <div><span>Frete ({{len $compra.Pedidos}} {{if eq (len $compra.Pedidos) 1}}pacote{{else}}pacotes{{end}})</span><strong>{{formatarDinheiro $compra.ValorTotalFretesCentavos}}</strong></div>
+      <div class="cart-total"><span>Total</span><strong>{{formatarDinheiro $compra.ValorFinalPagoCentavos}}</strong></div>
+      <form id="checkout-form" method="post" action="/checkout"><button class="button button-dark button-large" type="submit">Pagar e finalizar</button></form>
+      <p>Ao confirmar, as peças disponíveis são reservadas e o pagamento simulado é aprovado na hora.</p>
+      <a class="text-link" href="/carrinho">Voltar à sacola</a>
+    </aside>
+  </div>
+</section>{{end}}
+
+{{define "carrinho"}}<section class="cart-page page-section compact-section"><div class="page-intro"><span class="eyebrow">Sua seleção</span><h1>Minha sacola</h1><p>{{len .CarrinhoAutenticado.Anuncios}} {{if eq (len .CarrinhoAutenticado.Anuncios) 1}}peça adicionada{{else}}peças adicionadas{{end}} para decidir. A disponibilidade é confirmada somente no checkout.</p></div>{{if contarIndisponiveis .CarrinhoAutenticado.Anuncios}}<div class="inline-alert" role="status">{{contarIndisponiveis .CarrinhoAutenticado.Anuncios}} peças ficaram indisponíveis e não entram no total.</div>{{end}}{{if .CarrinhoAutenticado.Anuncios}}<div class="cart-layout"><div class="cart-list">{{range .CarrinhoAutenticado.Anuncios}}<article class="cart-item"><a class="cart-thumb" href="/anuncios/{{.ID}}">{{template "imagem-anuncio" .}}</a><div class="cart-item-info"><span>{{formatarRotulo .Categoria}} · Tam. {{.Tamanho}}</span><h2><a href="/anuncios/{{.ID}}">{{.Titulo}}</a></h2><p>{{formatarRotulo .EstadoConservacao}}</p>{{if ne .Status "disponivel"}}<span class="unavailable-label">Indisponível</span>{{end}}<strong>{{formatarDinheiro .PrecoCentavos}}</strong></div><form method="post" action="/carrinho/itens/{{.ID}}/remover"><button class="remove-item" type="submit">Remover</button></form></article>{{end}}</div><aside class="cart-summary"><span class="eyebrow">Resumo</span><h2>Seu pedido</h2><div><span>Itens disponíveis ({{contarDisponiveis .CarrinhoAutenticado.Anuncios}})</span><strong>{{formatarDinheiro .CarrinhoAutenticado.TotalCentavos}}</strong></div><div><span>Frete</span><span>Calculado no checkout</span></div><div class="cart-total"><span>Total dos itens</span><strong>{{formatarDinheiro .CarrinhoAutenticado.TotalCentavos}}</strong></div>{{if contarDisponiveis .CarrinhoAutenticado.Anuncios}}<a class="button button-dark button-large" href="/checkout">Finalizar compra</a><p>A disponibilidade das peças é confirmada na próxima etapa. O frete é somado por vendedor no checkout.</p>{{else}}<button class="button button-dark button-large" type="button" disabled>Finalizar compra</button><p>Nenhuma peça disponível na sacola para finalizar.</p>{{end}}</aside></div>{{else}}<div class="empty-state"><span class="empty-state-mark">R</span><h3>Sua sacola está vazia</h3><p>Explore o catálogo e adicione as peças que combinam com você.</p><a class="button button-dark" href="/catalogo">Explorar catálogo</a></div>{{end}}</section>{{end}}

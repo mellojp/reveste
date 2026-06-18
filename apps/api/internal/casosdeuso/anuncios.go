@@ -112,6 +112,9 @@ func (c *ControladorAnuncio) ListarAnuncios(
 	if filtro.Limite <= 0 || filtro.Limite > 50 {
 		filtro.Limite = 20
 	}
+	if filtro.Deslocamento < 0 {
+		filtro.Deslocamento = 0
+	}
 	return c.anuncios.ListarAnuncios(ctx, filtro)
 }
 

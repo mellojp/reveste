@@ -29,7 +29,7 @@ func (a *API) comSeguranca(proximo nethttp.Handler) nethttp.Handler {
 			"default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src %s; connect-src 'self' https://vercel.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; media-src 'none'; worker-src 'none'; manifest-src 'none'",
 			origemImagens,
 		)
-		if requisicaoHTTPS(r) {
+		if a.requisicaoHTTPS(r) {
 			csp += "; upgrade-insecure-requests"
 		}
 		w.Header().Set("Content-Security-Policy", csp)
@@ -42,7 +42,7 @@ func (a *API) comSeguranca(proximo nethttp.Handler) nethttp.Handler {
 		w.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
 		w.Header().Set("Origin-Agent-Cluster", "?1")
 		w.Header().Set("X-DNS-Prefetch-Control", "off")
-		if requisicaoHTTPS(r) {
+		if a.requisicaoHTTPS(r) {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		}
 		proximo.ServeHTTP(w, r)

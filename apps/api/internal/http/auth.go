@@ -2,14 +2,12 @@ package http
 
 import (
 	nethttp "net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"reveste/apps/api/internal/common"
+	"reveste/apps/api/internal/transporte"
 )
-
-const nomeCookieSessao = "reveste_session"
 
 type manipuladorAutenticado func(nethttp.ResponseWriter, *nethttp.Request, string, string)
 
@@ -19,7 +17,7 @@ func (a *API) autenticado(proximo manipuladorAutenticado) nethttp.HandlerFunc {
 		idUsuario, err := a.cadastros.IdentificarUsuario(r.Context(), token)
 		if err != nil {
 			if porCookie {
-				removerCookieSessao(w, r)
+				a.removerCookieSessao(w, r)
 			}
 			a.escreverErro(w, common.ErrNaoAutorizado)
 			return
@@ -32,11 +30,10 @@ func tokenDaRequisicao(r *nethttp.Request) (string, bool) {
 	if token := extrairToken(r.Header.Get("Authorization")); token != "" {
 		return token, false
 	}
-	cookie, err := r.Cookie(nomeCookieSessao)
-	if err != nil {
-		return "", false
+	if token := transporte.TokenSessaoDoCookie(r); token != "" {
+		return token, true
 	}
-	return strings.TrimSpace(cookie.Value), true
+	return "", false
 }
 
 func extrairToken(cabecalho string) string {
@@ -47,29 +44,16 @@ func extrairToken(cabecalho string) string {
 	return strings.TrimSpace(partes[1])
 }
 
-func definirCookieSessao(
-	w nethttp.ResponseWriter,
-	r *nethttp.Request,
-	token string,
-	expiraEm time.Time,
-) {
-	nethttp.SetCookie(w, &nethttp.Cookie{
-		Name: nomeCookieSessao, Value: token, Path: "/", HttpOnly: true,
-		Secure: requisicaoHTTPS(r), SameSite: nethttp.SameSiteLaxMode,
-		Expires: expiraEm, MaxAge: max(1, int(time.Until(expiraEm).Seconds())),
-	})
+func (a *API) definirCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request, token string, expiraEm time.Time) {
+	transporte.DefinirCookieSessao(w, r, token, expiraEm, a.confiarProxy)
 }
 
-func removerCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request) {
-	nethttp.SetCookie(w, &nethttp.Cookie{
-		Name: nomeCookieSessao, Value: "", Path: "/", HttpOnly: true,
-		Secure: requisicaoHTTPS(r), SameSite: nethttp.SameSiteLaxMode,
-		Expires: time.Unix(1, 0), MaxAge: -1,
-	})
+func (a *API) removerCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request) {
+	transporte.RemoverCookieSessao(w, r, a.confiarProxy)
 }
 
-func requisicaoHTTPS(r *nethttp.Request) bool {
-	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+func (a *API) requisicaoHTTPS(r *nethttp.Request) bool {
+	return transporte.HTTPS(r, a.confiarProxy)
 }
 
 func (a *API) comProtecaoCSRF(proximo nethttp.Handler) nethttp.Handler {
@@ -89,7 +73,7 @@ func (a *API) comProtecaoCSRF(proximo nethttp.Handler) nethttp.Handler {
 			return
 		}
 		if strings.EqualFold(r.Header.Get("Sec-Fetch-Site"), "cross-site") ||
-			!origemPermitida(r) {
+			!transporte.OrigemPermitida(r, a.confiarProxy) {
 			escreverJSON(w, nethttp.StatusForbidden, erroResposta{
 				Codigo:   "ORIGEM_NAO_PERMITIDA",
 				Mensagem: "A origem da requisicao nao foi permitida.",
@@ -104,17 +88,4 @@ func (a *API) comProtecaoCSRF(proximo nethttp.Handler) nethttp.Handler {
 func metodoSeguro(metodo string) bool {
 	return metodo == nethttp.MethodGet || metodo == nethttp.MethodHead ||
 		metodo == nethttp.MethodOptions || metodo == nethttp.MethodTrace
-}
-
-func origemPermitida(r *nethttp.Request) bool {
-	origem := strings.TrimSpace(r.Header.Get("Origin"))
-	if origem == "" {
-		return false
-	}
-	endereco, err := url.Parse(origem)
-	esquemaEsperado := "http"
-	if requisicaoHTTPS(r) {
-		esquemaEsperado = "https"
-	}
-	return err == nil && endereco.Host == r.Host && endereco.Scheme == esquemaEsperado
 }

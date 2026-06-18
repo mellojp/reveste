@@ -33,6 +33,15 @@
 - editar e excluir logicamente anuncios disponiveis do proprio vendedor;
 - consultar dados publicos e anuncios disponiveis de outros vendedores;
 - adicionar e remover anuncio do carrinho;
+- finalizar a compra (checkout) em fases: reserva atomica antes do pagamento, criacao de
+  uma compra com um pedido por vendedor, snapshot dos itens, pagamento simulado,
+  confirmacao da venda e limpeza do carrinho, com chave por versao do carrinho;
+- consultar os pedidos do comprador;
+- consultar as vendas do vendedor e marcar um pedido como enviado (com rastreio);
+- confirmar o recebimento, finalizando o pedido;
+- avaliar o vendedor por um pedido finalizado (nota e comentario), com media no perfil publico;
+- bloquear o vendedor automaticamente ao acumular itens nao enviados (por prazo);
+- cancelar pedidos vencidos, registrar falha da entrega e reembolso simulado;
 - validar CPF, anuncio, quantidade de fotos, categoria e disponibilidade;
 - apresentar um fluxo web navegavel de conta, catalogo, publicacao, perfil e carrinho.
 
@@ -63,7 +72,17 @@ Telas e fluxos disponiveis:
 - edicao de dados pessoais e endereco em `/perfil`;
 - painel do vendedor em `/meus-anuncios`, com edicao e exclusao logica;
 - perfil publico de vendedor em `/vendedores/:id`;
-- carrinho em `/carrinho`, com inclusao e remocao de pecas.
+- carrinho em `/carrinho`, com inclusao e remocao de pecas;
+- checkout em `/checkout`, com revisao (endereco, itens por vendedor, frete e total),
+  pagamento simulado e confirmacao;
+- pedidos do comprador em `/meus-pedidos` (lista) e `/meus-pedidos/{id}` (pagina do pedido),
+  com linha do tempo, codigo de rastreio, confirmacao de recebimento e avaliacao do vendedor
+  (o formulario de avaliacao some apos enviada, exibindo a avaliacao registrada);
+- vendas do vendedor em `/minhas-vendas` (lista) e `/minhas-vendas/{id}` (pagina da venda),
+  com prazo de envio por item, repasse e registro de rastreio;
+- a nota media do vendedor aparece no perfil publico e no proprio perfil da conta;
+- gestao de multiplos enderecos em `/perfil/enderecos` (listar, adicionar, editar, definir
+  principal e remover) e escolha do endereco de entrega no checkout.
 
 As alteracoes deste incremento, incluindo contratos, regras, decisoes de
 frontend, verificacoes e limitacoes, estao detalhadas em
@@ -77,8 +96,11 @@ HTML convencional. O `hx-boost` melhora progressivamente a navegacao e os
 formularios, sem alterar URLs ou depender de um estado global no navegador.
 Rotas autenticadas redirecionam para `/entrar` e preservam o destino.
 
-Checkout ainda nao e simulado na interface. Edicao de perfil, edicao de anuncios
-disponiveis e exclusao logica ja possuem contratos HTTP e fluxos web.
+O checkout tem fluxo web completo: a sacola leva a uma tela de revisao (`GET /checkout`,
+projecao sem reservar nem cobrar), o pagamento e simulado e a confirmacao acontece em
+`/meus-pedidos`. O comprador e o vendedor enxergam o rastreio, os prazos e a linha do tempo
+do pedido. Edicao de perfil, edicao de anuncios disponiveis e exclusao logica ja possuem
+contratos HTTP e fluxos web.
 
 O navegador autentica por cookie `HttpOnly`, `SameSite=Lax` e `Secure` em HTTPS.
 Todos os formularios web mutaveis e operacoes autenticadas por cookie exigem uma
@@ -95,6 +117,16 @@ exposto ao JavaScript nem persistido em Web Storage. Clientes de API podem solic
 - `PATCH /v1/me/anuncios/{idAnuncio}`: edita anuncio disponivel do usuario;
 - `DELETE /v1/me/anuncios/{idAnuncio}`: exclui logicamente anuncio disponivel;
 - `GET /v1/vendedores/{idVendedor}`: retorna perfil publico e anuncios disponiveis;
+- `GET /v1/me/enderecos`, `POST /v1/me/enderecos`, `PATCH /v1/me/enderecos/{id}`,
+  `DELETE /v1/me/enderecos/{id}` e `POST /v1/me/enderecos/{id}/principal`: gestao dos
+  enderecos do usuario (o principal nao pode ser removido sem antes promover outro);
+- `POST /v1/checkout`: finaliza a compra dos itens disponiveis do carrinho do usuario,
+  aceitando um `id_endereco` opcional (sem ele, usa o endereco principal);
+- `GET /v1/me/pedidos`: retorna os pedidos do comprador autenticado;
+- `GET /v1/me/vendas`: retorna os pedidos recebidos pelo vendedor autenticado;
+- `POST /v1/me/vendas/{idPedido}/envio`: registra a postagem (provedor e codigo de rastreio);
+- `POST /v1/me/pedidos/{idPedido}/recebimento`: confirma o recebimento e finaliza o pedido;
+- `POST /v1/me/pedidos/{idPedido}/avaliacao`: registra a avaliacao do vendedor;
 - `GET /v1/anuncios`: quando recebe um Bearer valido, omite anuncios do proprio
   usuario; sem autenticacao, continua publico;
 - `GET /saude/prontidao`: verifica a conexao PostgreSQL com timeout;
@@ -183,6 +215,10 @@ livres existentes antes de criar a constraint.
 - testes de autorizacao para edicao e exclusao de anuncios;
 - testes de privacidade do perfil publico do vendedor;
 - testes de carrinho com itens indisponiveis;
+- teste concorrente garantindo que apenas o vencedor da reserva chega ao provedor;
+- testes de aprovacao, recusa e expiracao com liberacao da reserva;
+- teste do vencimento de envio com cancelamento do pedido, falha da entrega,
+  reembolso simulado e bloqueio do vendedor;
 - testes do endpoint de prontidao e dos headers de seguranca;
 - teste de integracao PostgreSQL com migracoes em schema isolado;
 - fluxo manual contra PostgreSQL real: cadastro, login, publicacao, perfil,
@@ -208,14 +244,54 @@ as portas usadas pelos controladores.
 
 ## Comportamentos modelados, ainda nao executaveis
 
-- checkout e criacao de pedidos por vendedor;
-- pagamento, reembolso e repasse;
-- rastreio e confirmacao de recebimento;
-- chat, notificacoes e avaliacoes;
-- bloqueio e reativacao de vendedor.
+- pagamento e reembolso reais (hoje os dois sao simulados), alem do repasse ao vendedor;
+- reativacao de vendedor bloqueado apos pagamento de taxa;
+- chat e notificacoes.
 
 Essas classes ja existem no dominio e no esquema SQL, mas seus casos de uso ainda
 precisam ser implementados nas proximas fases.
+
+### Ciclo do pedido e bloqueio do vendedor (implementado)
+
+`casosdeuso.ControladorPedidos` cobre o pos-compra: o vendedor lista suas vendas e marca o
+pedido como enviado (itens -> enviado, entrega -> postado, pedido -> aguardando_entrega); o
+comprador confirma o recebimento (itens -> recebido, entrega -> entregue, pedido -> finalizado)
+e avalia o vendedor de um pedido finalizado. Todas as transicoes sao atomicas em
+`storage/postgres.MarcarPedidoEnviado`/`ConfirmarRecebimentoPedido`, com autorizacao por
+vendedor/comprador via `WHERE` de propriedade e status. `ProcessarItensVencidos` marca como
+`nao_enviado` os itens cujo prazo expirou, cancela o pedido, marca a entrega como falha,
+registra reembolso simulado dos itens e do frete, incrementa o contador do vendedor e o
+bloqueia ao atingir `LimiteItensNaoEnviados` (3).
+
+O processo principal executa `ProcessarItensVencidos` e a expiracao de intencoes de checkout
+periodicamente. O intervalo e configurado por `JOBS_INTERVAL` e vale `1m` por padrao.
+
+### Transporte compartilhado, limite de login e proxy (implementado)
+
+O pacote `internal/transporte` concentra cookie de sessao, deteccao de HTTPS, IP do cliente,
+verificacao de origem (CSRF) e o limite de login, eliminando a duplicacao entre os adaptadores
+JSON e SSR. O limite de tentativas e persistido em PostgreSQL (`tentativa_login`, migracao 004),
+sobrevivendo a reinicios e compartilhado entre instancias. `X-Forwarded-Proto` e
+`X-Forwarded-For` so sao considerados quando `TRUST_PROXY=true` (atras de um proxy reverso
+confiavel); por padrao a aplicacao confia apenas em `r.TLS`/`r.RemoteAddr`.
+
+### Checkout (implementado nesta fase)
+
+O caso de uso `casosdeuso.ControladorCheckout` le o carrinho, projeta os itens disponiveis e
+monta a `Compra` (um `Pedido` por vendedor com snapshot dos itens). Antes de chamar a porta
+`ProcessadorPagamento`, `storage/postgres.IniciarCompra` cria a intencao e muda os anuncios
+de `disponivel` para `reservado` em uma transacao. Somente o vencedor dessa reserva pode chegar
+ao provedor financeiro.
+
+Uma resposta positiva executa `ConfirmarCompraAprovada`, que muda os anuncios para `vendido`,
+aprova compra e pagamento, avanca os pedidos para `aguardando_envio` e limpa o carrinho. Uma
+recusa executa `RecusarCompra`, registra a falha e libera os anuncios. Intencoes abandonadas
+expiram depois de 30 minutos pelo job periodico. Repeticoes de uma intencao pendente usam a
+mesma chave no provedor, permitindo recuperar uma confirmacao sem duplicar a cobranca.
+
+A taxa de servico e a comissao da plataforma, descontada do repasse ao vendedor; o frete e
+um valor fixo por pedido cobrado do comprador. A chave inclui comprador, carrinho, versao do
+carrinho e anuncios.
 
 ## Diferencas intencionais em relacao ao diagrama
 

@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -15,6 +16,8 @@ type Config struct {
 	HTTPAddress     string
 	VercelBlobToken string
 	BlobPublicHost  string
+	ConfiarProxy    bool
+	IntervaloJobs   time.Duration
 }
 
 func Load() (Config, error) {
@@ -27,6 +30,8 @@ func Load() (Config, error) {
 		HTTPAddress:     os.Getenv("HTTP_ADDRESS"),
 		VercelBlobToken: os.Getenv("BLOB_READ_WRITE_TOKEN"),
 		BlobPublicHost:  strings.ToLower(strings.TrimSpace(os.Getenv("BLOB_PUBLIC_HOST"))),
+		ConfiarProxy:    proxyConfiavel(os.Getenv("TRUST_PROXY")),
+		IntervaloJobs:   time.Minute,
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL nao foi definida no arquivo .env ou no ambiente")
@@ -42,7 +47,23 @@ func Load() (Config, error) {
 			"BLOB_PUBLIC_HOST deve ser o hostname do store publico da Vercel Blob",
 		)
 	}
+	if valor := strings.TrimSpace(os.Getenv("JOBS_INTERVAL")); valor != "" {
+		intervalo, err := time.ParseDuration(valor)
+		if err != nil || intervalo <= 0 {
+			return Config{}, fmt.Errorf("JOBS_INTERVAL deve ser uma duracao positiva")
+		}
+		cfg.IntervaloJobs = intervalo
+	}
 	return cfg, nil
+}
+
+func proxyConfiavel(valor string) bool {
+	switch strings.ToLower(strings.TrimSpace(valor)) {
+	case "1", "true", "sim", "yes":
+		return true
+	default:
+		return false
+	}
 }
 
 func hostBlobDoToken(token string) string {

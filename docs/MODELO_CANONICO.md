@@ -11,7 +11,10 @@ Este documento registra as correcoes aplicadas antes da implementacao.
 - Comprador e vendedor sao papeis exercidos pelo mesmo `usuario`.
 - Um carrinho nao reserva anuncios.
 - Um usuario nao pode adicionar o proprio anuncio ao carrinho.
-- A reserva ocorre apenas no checkout, dentro de transacao no PostgreSQL.
+- A reserva ocorre apenas no checkout, dentro de transacao no PostgreSQL e antes de
+  qualquer chamada ao provedor de pagamento.
+- O checkout ocorre em fases idempotentes: intencao/reserva, processamento do
+  pagamento e confirmacao ou liberacao da reserva.
 - Uma `compra` representa o checkout unico; ela gera um `pedido` por vendedor.
 - `item_pedido` preserva um snapshot dos dados da peca no momento da compra.
 - Uma `entrega` pertence a um pedido, portanto existe um codigo de rastreio por vendedor.
@@ -33,6 +36,9 @@ Transicoes adicionais:
 - `suspenso -> disponivel`, apos pagamento da taxa de reativacao
 - `reservado -> disponivel`, quando pagamento falha ou expira
 
+No checkout aprovado, `reservado -> vendido` ocorre somente depois da resposta positiva
+do provedor. Uma intencao pendente expira em 30 minutos e libera os anuncios reservados.
+
 ### Compra
 
 `aguardando_pagamento -> aprovada | recusada | expirada | cancelada`
@@ -50,6 +56,10 @@ Saidas excepcionais: `cancelado` e `expirado`.
 Fluxo de falha:
 
 `aguardando_envio -> nao_enviado -> suspenso`
+
+No MVP, o vencimento do prazo enquanto o pedido ainda aguarda envio cancela o pedido,
+marca a entrega como falha, registra reembolso simulado dos itens e do frete e aplica a
+penalidade ao vendedor. Um pedido cancelado nao pode ser enviado posteriormente.
 
 ### Pagamento
 

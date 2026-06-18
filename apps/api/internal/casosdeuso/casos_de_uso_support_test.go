@@ -16,12 +16,15 @@ import (
 type Store struct {
 	mu sync.RWMutex
 
-	usuarios           map[string]cadastros.Usuario
-	usuarioPorEmail    map[string]string
-	usuarioPorCPF      map[string]string
-	anuncios           map[string]anuncios.Anuncio
-	carrinhoPorUsuario map[string]compras.Carrinho
-	sessoes            map[string]sessao
+	usuarios            map[string]cadastros.Usuario
+	usuarioPorEmail     map[string]string
+	usuarioPorCPF       map[string]string
+	anuncios            map[string]anuncios.Anuncio
+	carrinhoPorUsuario  map[string]compras.Carrinho
+	sessoes             map[string]sessao
+	comprasPorChave     map[string]compras.Compra
+	pedidosPorComprador map[string][]compras.Pedido
+	enderecosPorUsuario map[string][]cadastros.Endereco
 }
 
 type sessao struct {
@@ -31,13 +34,104 @@ type sessao struct {
 
 func newTestStore() *Store {
 	return &Store{
-		usuarios:           make(map[string]cadastros.Usuario),
-		usuarioPorEmail:    make(map[string]string),
-		usuarioPorCPF:      make(map[string]string),
-		anuncios:           make(map[string]anuncios.Anuncio),
-		carrinhoPorUsuario: make(map[string]compras.Carrinho),
-		sessoes:            make(map[string]sessao),
+		usuarios:            make(map[string]cadastros.Usuario),
+		usuarioPorEmail:     make(map[string]string),
+		usuarioPorCPF:       make(map[string]string),
+		anuncios:            make(map[string]anuncios.Anuncio),
+		carrinhoPorUsuario:  make(map[string]compras.Carrinho),
+		sessoes:             make(map[string]sessao),
+		comprasPorChave:     make(map[string]compras.Compra),
+		pedidosPorComprador: make(map[string][]compras.Pedido),
+		enderecosPorUsuario: make(map[string][]cadastros.Endereco),
 	}
+}
+
+func (r *Store) ListarEnderecos(ctx context.Context, idUsuario string) ([]cadastros.Endereco, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return append([]cadastros.Endereco(nil), r.enderecosPorUsuario[idUsuario]...), nil
+}
+
+func (r *Store) BuscarEndereco(ctx context.Context, idUsuario, idEndereco string) (cadastros.Endereco, error) {
+	if err := ctx.Err(); err != nil {
+		return cadastros.Endereco{}, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, e := range r.enderecosPorUsuario[idUsuario] {
+		if e.ID == idEndereco {
+			return e, nil
+		}
+	}
+	return cadastros.Endereco{}, common.ErrNaoEncontrado
+}
+
+func (r *Store) AdicionarEndereco(ctx context.Context, idUsuario string, endereco cadastros.Endereco, _ time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	endereco.Principal = false
+	r.enderecosPorUsuario[idUsuario] = append(r.enderecosPorUsuario[idUsuario], endereco)
+	return nil
+}
+
+func (r *Store) AtualizarEndereco(ctx context.Context, idUsuario, idEndereco string, endereco cadastros.Endereco, _ time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	lista := r.enderecosPorUsuario[idUsuario]
+	for i, e := range lista {
+		if e.ID == idEndereco {
+			endereco.ID = idEndereco
+			endereco.Principal = e.Principal
+			lista[i] = endereco
+			return nil
+		}
+	}
+	return common.ErrNaoEncontrado
+}
+
+func (r *Store) RemoverEndereco(ctx context.Context, idUsuario, idEndereco string, _ time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	lista := r.enderecosPorUsuario[idUsuario]
+	for i, e := range lista {
+		if e.ID == idEndereco {
+			r.enderecosPorUsuario[idUsuario] = append(lista[:i], lista[i+1:]...)
+			return nil
+		}
+	}
+	return common.ErrNaoEncontrado
+}
+
+func (r *Store) DefinirEnderecoPrincipal(ctx context.Context, idUsuario, idEndereco string, _ time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	lista := r.enderecosPorUsuario[idUsuario]
+	encontrado := false
+	for i := range lista {
+		lista[i].Principal = lista[i].ID == idEndereco
+		if lista[i].ID == idEndereco {
+			encontrado = true
+		}
+	}
+	if !encontrado {
+		return common.ErrNaoEncontrado
+	}
+	return nil
 }
 
 func (r *Store) CriarUsuario(ctx context.Context, usuario cadastros.Usuario) error {
@@ -306,6 +400,173 @@ func (r *Store) RemoverAnuncioDoCarrinho(
 	carrinho.AtualizadoEm = agora
 	r.carrinhoPorUsuario[idUsuario] = copiarCarrinho(carrinho)
 	return copiarCarrinho(carrinho), nil
+}
+
+func (r *Store) BuscarCompraPorChave(ctx context.Context, chave string) (compras.Compra, error) {
+	if err := ctx.Err(); err != nil {
+		return compras.Compra{}, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	compra, existe := r.comprasPorChave[chave]
+	if !existe {
+		return compras.Compra{}, common.ErrNaoEncontrado
+	}
+	return compra, nil
+}
+
+func (r *Store) IniciarCompra(
+	ctx context.Context,
+	compra compras.Compra,
+	pagamento compras.Pagamento,
+	idComprador string,
+) (compras.Compra, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return compras.Compra{}, false, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if existente, ok := r.comprasPorChave[compra.ChaveIdempotencia]; ok {
+		return existente, false, nil
+	}
+	ids := compra.IDsAnuncios()
+	for _, id := range ids {
+		anuncio, existe := r.anuncios[id]
+		if !existe || anuncio.Status != anuncios.StatusAnuncioDisponivel {
+			return compras.Compra{}, false, common.ErrAnuncioIndisponivel
+		}
+	}
+	for _, id := range ids {
+		anuncio := r.anuncios[id]
+		anuncio.Status = anuncios.StatusAnuncioReservado
+		anuncio.AtualizadoEm = compra.CriadaEm
+		r.anuncios[id] = anuncio
+	}
+	r.comprasPorChave[compra.ChaveIdempotencia] = compra
+	r.pedidosPorComprador[idComprador] = append(r.pedidosPorComprador[idComprador], compra.Pedidos...)
+	return compra, true, nil
+}
+
+func (r *Store) ConfirmarCompraAprovada(
+	ctx context.Context,
+	chave, provedor, identificadorExterno string,
+	agora time.Time,
+) (compras.Compra, error) {
+	if err := ctx.Err(); err != nil {
+		return compras.Compra{}, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	compra, existe := r.comprasPorChave[chave]
+	if !existe {
+		return compras.Compra{}, common.ErrNaoEncontrado
+	}
+	if compra.Status == compras.StatusCompraAprovada {
+		return compra, nil
+	}
+	if compra.Status != compras.StatusCompraAguardandoPagamento {
+		return compras.Compra{}, common.ErrTransicaoInvalida
+	}
+	compra.Status = compras.StatusCompraAprovada
+	for indice := range compra.Pedidos {
+		compra.Pedidos[indice].Status = compras.StatusPedidoAguardandoEnvio
+		for _, item := range compra.Pedidos[indice].Itens {
+			anuncio := r.anuncios[item.IDAnuncio]
+			if anuncio.Status != anuncios.StatusAnuncioReservado {
+				return compras.Compra{}, common.ErrTransicaoInvalida
+			}
+			anuncio.Status = anuncios.StatusAnuncioVendido
+			anuncio.AtualizadoEm = agora
+			r.anuncios[item.IDAnuncio] = anuncio
+		}
+	}
+	r.comprasPorChave[chave] = compra
+	r.pedidosPorComprador[compra.IDComprador] = append([]compras.Pedido(nil), compra.Pedidos...)
+	if carrinho, existe := r.carrinhoPorUsuario[compra.IDComprador]; existe {
+		for _, id := range compra.IDsAnuncios() {
+			carrinho.Remover(id)
+		}
+		carrinho.AtualizadoEm = agora
+		r.carrinhoPorUsuario[compra.IDComprador] = copiarCarrinho(carrinho)
+	}
+	return compra, nil
+}
+
+func (r *Store) RecusarCompra(
+	ctx context.Context,
+	chave, provedor, identificadorExterno string,
+	agora time.Time,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	compra, existe := r.comprasPorChave[chave]
+	if !existe {
+		return common.ErrNaoEncontrado
+	}
+	if compra.Status != compras.StatusCompraAguardandoPagamento {
+		return nil
+	}
+	compra.Status = compras.StatusCompraRecusada
+	for indice := range compra.Pedidos {
+		compra.Pedidos[indice].Status = compras.StatusPedidoCancelado
+		for _, item := range compra.Pedidos[indice].Itens {
+			anuncio := r.anuncios[item.IDAnuncio]
+			if anuncio.Status == anuncios.StatusAnuncioReservado {
+				anuncio.Status = anuncios.StatusAnuncioDisponivel
+				anuncio.AtualizadoEm = agora
+				r.anuncios[item.IDAnuncio] = anuncio
+			}
+		}
+	}
+	r.comprasPorChave[chave] = compra
+	r.pedidosPorComprador[compra.IDComprador] = append([]compras.Pedido(nil), compra.Pedidos...)
+	if carrinho, ok := r.carrinhoPorUsuario[compra.IDComprador]; ok {
+		carrinho.AtualizadoEm = agora
+		r.carrinhoPorUsuario[compra.IDComprador] = carrinho
+	}
+	return nil
+}
+
+func (r *Store) ExpirarComprasPendentes(ctx context.Context, agora time.Time) (int, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	afetadas := 0
+	for chave, compra := range r.comprasPorChave {
+		if compra.Status != compras.StatusCompraAguardandoPagamento || compra.ExpiraEm.After(agora) {
+			continue
+		}
+		compra.Status = compras.StatusCompraExpirada
+		for indice := range compra.Pedidos {
+			compra.Pedidos[indice].Status = compras.StatusPedidoExpirado
+			for _, item := range compra.Pedidos[indice].Itens {
+				anuncio := r.anuncios[item.IDAnuncio]
+				if anuncio.Status == anuncios.StatusAnuncioReservado {
+					anuncio.Status = anuncios.StatusAnuncioDisponivel
+					anuncio.AtualizadoEm = agora
+					r.anuncios[item.IDAnuncio] = anuncio
+				}
+			}
+		}
+		r.comprasPorChave[chave] = compra
+		r.pedidosPorComprador[compra.IDComprador] = append([]compras.Pedido(nil), compra.Pedidos...)
+		afetadas++
+	}
+	return afetadas, nil
+}
+
+func (r *Store) ListarPedidosDoComprador(ctx context.Context, idComprador string) ([]compras.Pedido, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return append([]compras.Pedido(nil), r.pedidosPorComprador[idComprador]...), nil
 }
 
 func (r *Store) CriarSessao(ctx context.Context, token, idUsuario string, expiraEm time.Time) error {

@@ -9,6 +9,7 @@ import (
 )
 
 type Endereco struct {
+	ID          string `json:"id,omitempty"`
 	CEP         string `json:"cep"`
 	Logradouro  string `json:"logradouro"`
 	Numero      string `json:"numero"`
@@ -16,6 +17,53 @@ type Endereco struct {
 	Bairro      string `json:"bairro"`
 	Cidade      string `json:"cidade"`
 	Estado      string `json:"estado"`
+	Principal   bool   `json:"principal,omitempty"`
+}
+
+func (e *Endereco) Normalizar() {
+	e.CEP = somenteDigitos(e.CEP)
+	e.Logradouro = strings.TrimSpace(e.Logradouro)
+	e.Numero = strings.TrimSpace(e.Numero)
+	e.Complemento = strings.TrimSpace(e.Complemento)
+	e.Bairro = strings.TrimSpace(e.Bairro)
+	e.Cidade = strings.TrimSpace(e.Cidade)
+	e.Estado = strings.ToUpper(strings.TrimSpace(e.Estado))
+}
+
+// Validar devolve as mensagens de erro por campo (chaves sem prefixo: "cep", "logradouro"...).
+// O mapa vazio significa endereco valido.
+func (e Endereco) Validar() map[string]string {
+	campos := make(map[string]string)
+	if len(e.CEP) != 8 {
+		campos["cep"] = "O CEP deve conter 8 dígitos."
+	}
+	if e.Logradouro == "" {
+		campos["logradouro"] = "Informe o logradouro."
+	} else if len(e.Logradouro) > 200 {
+		campos["logradouro"] = "O logradouro deve conter no máximo 200 caracteres."
+	}
+	if e.Numero == "" {
+		campos["numero"] = "Informe o número."
+	} else if len(e.Numero) > 20 {
+		campos["numero"] = "O número deve conter no máximo 20 caracteres."
+	}
+	if len(e.Complemento) > 100 {
+		campos["complemento"] = "O complemento deve conter no máximo 100 caracteres."
+	}
+	if e.Bairro == "" {
+		campos["bairro"] = "Informe o bairro."
+	} else if len(e.Bairro) > 100 {
+		campos["bairro"] = "O bairro deve conter no máximo 100 caracteres."
+	}
+	if e.Cidade == "" {
+		campos["cidade"] = "Informe a cidade."
+	} else if len(e.Cidade) > 100 {
+		campos["cidade"] = "A cidade deve conter no máximo 100 caracteres."
+	}
+	if !estadoBrasileiroValido(e.Estado) {
+		campos["estado"] = "Informe uma sigla de estado válida."
+	}
+	return campos
 }
 
 type Usuario struct {
@@ -37,13 +85,7 @@ func (u *Usuario) Normalizar() {
 	u.CPF = NormalizarCPF(u.CPF)
 	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
 	u.Telefone = somenteDigitos(u.Telefone)
-	u.EnderecoPrincipal.CEP = somenteDigitos(u.EnderecoPrincipal.CEP)
-	u.EnderecoPrincipal.Logradouro = strings.TrimSpace(u.EnderecoPrincipal.Logradouro)
-	u.EnderecoPrincipal.Numero = strings.TrimSpace(u.EnderecoPrincipal.Numero)
-	u.EnderecoPrincipal.Complemento = strings.TrimSpace(u.EnderecoPrincipal.Complemento)
-	u.EnderecoPrincipal.Bairro = strings.TrimSpace(u.EnderecoPrincipal.Bairro)
-	u.EnderecoPrincipal.Cidade = strings.TrimSpace(u.EnderecoPrincipal.Cidade)
-	u.EnderecoPrincipal.Estado = strings.ToUpper(strings.TrimSpace(u.EnderecoPrincipal.Estado))
+	u.EnderecoPrincipal.Normalizar()
 }
 
 func (u Usuario) Validar() error {
@@ -66,34 +108,8 @@ func (u Usuario) Validar() error {
 	if len(u.HashSenha) == 0 {
 		campos["senha"] = "Informe uma senha válida."
 	}
-	if len(u.EnderecoPrincipal.CEP) != 8 {
-		campos["endereco.cep"] = "O CEP deve conter 8 dígitos."
-	}
-	if u.EnderecoPrincipal.Logradouro == "" {
-		campos["endereco.logradouro"] = "Informe o logradouro."
-	} else if len(u.EnderecoPrincipal.Logradouro) > 200 {
-		campos["endereco.logradouro"] = "O logradouro deve conter no máximo 200 caracteres."
-	}
-	if u.EnderecoPrincipal.Numero == "" {
-		campos["endereco.numero"] = "Informe o número."
-	} else if len(u.EnderecoPrincipal.Numero) > 20 {
-		campos["endereco.numero"] = "O número deve conter no máximo 20 caracteres."
-	}
-	if len(u.EnderecoPrincipal.Complemento) > 100 {
-		campos["endereco.complemento"] = "O complemento deve conter no máximo 100 caracteres."
-	}
-	if u.EnderecoPrincipal.Bairro == "" {
-		campos["endereco.bairro"] = "Informe o bairro."
-	} else if len(u.EnderecoPrincipal.Bairro) > 100 {
-		campos["endereco.bairro"] = "O bairro deve conter no máximo 100 caracteres."
-	}
-	if u.EnderecoPrincipal.Cidade == "" {
-		campos["endereco.cidade"] = "Informe a cidade."
-	} else if len(u.EnderecoPrincipal.Cidade) > 100 {
-		campos["endereco.cidade"] = "A cidade deve conter no máximo 100 caracteres."
-	}
-	if !estadoBrasileiroValido(u.EnderecoPrincipal.Estado) {
-		campos["endereco.estado"] = "Informe uma sigla de estado válida."
+	for campo, mensagem := range u.EnderecoPrincipal.Validar() {
+		campos["endereco."+campo] = mensagem
 	}
 	if len(campos) > 0 {
 		return common.NovaValidacao(campos)

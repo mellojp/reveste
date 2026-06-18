@@ -376,6 +376,30 @@ func (usuariosInexistentes) BuscarUsuarioPorEmailOuCPF(context.Context, string) 
 	return cadastros.Usuario{}, common.ErrNaoEncontrado
 }
 
+func (usuariosInexistentes) ListarEnderecos(context.Context, string) ([]cadastros.Endereco, error) {
+	return nil, common.ErrNaoEncontrado
+}
+
+func (usuariosInexistentes) BuscarEndereco(context.Context, string, string) (cadastros.Endereco, error) {
+	return cadastros.Endereco{}, common.ErrNaoEncontrado
+}
+
+func (usuariosInexistentes) AdicionarEndereco(context.Context, string, cadastros.Endereco, time.Time) error {
+	return common.ErrNaoEncontrado
+}
+
+func (usuariosInexistentes) AtualizarEndereco(context.Context, string, string, cadastros.Endereco, time.Time) error {
+	return common.ErrNaoEncontrado
+}
+
+func (usuariosInexistentes) RemoverEndereco(context.Context, string, string, time.Time) error {
+	return common.ErrNaoEncontrado
+}
+
+func (usuariosInexistentes) DefinirEnderecoPrincipal(context.Context, string, string, time.Time) error {
+	return common.ErrNaoEncontrado
+}
+
 type comparadorContador struct {
 	chamadas int
 }

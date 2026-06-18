@@ -13,9 +13,12 @@ import (
 
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/common"
+	"reveste/apps/api/internal/dominio/compras"
 	httptransport "reveste/apps/api/internal/http"
+	"reveste/apps/api/internal/storage/pagamentos"
 	"reveste/apps/api/internal/storage/postgres"
 	"reveste/apps/api/internal/storage/vercel"
+	"reveste/apps/api/internal/transporte"
 	"reveste/apps/api/internal/web"
 )
 
@@ -66,10 +69,30 @@ func executar(logger *slog.Logger) error {
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 	)
+	controladorCheckout := casosdeuso.NovoControladorCheckout(
+		database,
+		database,
+		database,
+		database,
+		pagamentos.NovoSimulado(),
+		common.GeradorIDCriptografico{},
+		common.RelogioSistema{},
+		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
+	)
+	controladorPedidos := casosdeuso.NovoControladorPedidos(
+		database,
+		common.GeradorIDCriptografico{},
+		common.RelogioSistema{},
+	)
+	limitadorLogin := transporte.NovoLimitadorLogin(database)
 	paginasHTML, err := web.NovoAdaptadorPaginas(
 		controladorCadastros,
 		controladorAnuncios,
 		controladorCarrinho,
+		controladorCheckout,
+		controladorPedidos,
+		limitadorLogin,
+		cfg.ConfiarProxy,
 		logger,
 	)
 	if err != nil {
@@ -83,9 +106,13 @@ func executar(logger *slog.Logger) error {
 			controladorAnuncios,
 			controladorCarrinho,
 			controladorUpload,
+			controladorCheckout,
+			controladorPedidos,
 			database,
 			logger,
 			cfg.BlobPublicHost,
+			limitadorLogin,
+			cfg.ConfiarProxy,
 			paginasHTML,
 		),
 		ReadHeaderTimeout: 5 * time.Second,
@@ -102,6 +129,9 @@ func executar(logger *slog.Logger) error {
 
 	ctxEncerramento, parar := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer parar()
+	go executarJobsPeriodicos(
+		ctxEncerramento, logger, cfg.IntervaloJobs, controladorCheckout, controladorPedidos,
+	)
 	select {
 	case err := <-errosServidor:
 		if errors.Is(err, http.ErrServerClosed) {
@@ -117,4 +147,43 @@ func executar(logger *slog.Logger) error {
 		return fmt.Errorf("encerrar servidor HTTP: %w", err)
 	}
 	return nil
+}
+
+func executarJobsPeriodicos(
+	ctx context.Context,
+	logger *slog.Logger,
+	intervalo time.Duration,
+	checkout *casosdeuso.ControladorCheckout,
+	pedidos *casosdeuso.ControladorPedidos,
+) {
+	executar := func() {
+		ctxJob, cancelar := context.WithTimeout(ctx, 30*time.Second)
+		defer cancelar()
+
+		expiradas, err := checkout.ProcessarExpiracoes(ctxJob)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logger.Error("falha ao expirar compras pendentes", "erro", err)
+		} else if expiradas > 0 {
+			logger.Info("compras pendentes expiradas", "quantidade", expiradas)
+		}
+
+		naoEnviados, err := pedidos.ProcessarPrazosEnvio(ctxJob)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logger.Error("falha ao processar prazos de envio", "erro", err)
+		} else if naoEnviados > 0 {
+			logger.Info("itens marcados como nao enviados", "quantidade", naoEnviados)
+		}
+	}
+
+	executar()
+	ticker := time.NewTicker(intervalo)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			executar()
+		}
+	}
 }

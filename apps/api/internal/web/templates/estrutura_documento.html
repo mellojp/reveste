@@ -22,14 +22,21 @@
       {{else if eq .Conteudo "entrar"}}{{template "entrar" .}}
       {{else if eq .Conteudo "cadastro"}}{{template "cadastro" .}}
       {{else if eq .Conteudo "perfil"}}{{template "perfil" .}}
+      {{else if eq .Conteudo "enderecos"}}{{template "enderecos" .}}
+      {{else if eq .Conteudo "formulario-endereco"}}{{template "formulario-endereco" .}}
       {{else if eq .Conteudo "meus-anuncios"}}{{template "meus-anuncios" .}}
       {{else if eq .Conteudo "formulario-anuncio"}}{{template "formulario-anuncio" .}}
       {{else if eq .Conteudo "carrinho"}}{{template "carrinho" .}}
+      {{else if eq .Conteudo "checkout"}}{{template "checkout" .}}
+      {{else if eq .Conteudo "meus-pedidos"}}{{template "meus-pedidos" .}}
+      {{else if eq .Conteudo "detalhe-pedido"}}{{template "detalhe-pedido" .}}
+      {{else if eq .Conteudo "minhas-vendas"}}{{template "minhas-vendas" .}}
+      {{else if eq .Conteudo "detalhe-venda"}}{{template "detalhe-venda" .}}
       {{else}}{{template "nao-encontrado" .}}{{end}}
     </main>
     {{template "rodape" .}}
   </div>
-  <div class="toast-region" id="toast-region" aria-live="polite">{{if .MensagemTemporaria}}<div class="toast">{{.MensagemTemporaria}}</div>{{end}}</div>
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
 </body>
 </html>{{end}}
 
@@ -38,7 +45,7 @@
   <nav class="main-nav" id="main-nav" aria-label="Navegação principal">
     <a href="/catalogo" {{if or (eq .RotaAtual "/catalogo") (eq .Conteudo "detalhe-anuncio")}}aria-current="page"{{end}}>Explorar</a>
     <a href="/vender" {{if eq .RotaAtual "/vender"}}aria-current="page"{{end}}>Vender</a>
-    {{if .UsuarioAutenticado}}<a href="/meus-anuncios" {{if eq .RotaAtual "/meus-anuncios"}}aria-current="page"{{end}}>Meus anúncios</a>{{end}}
+    {{if .UsuarioAutenticado}}<a href="/meus-anuncios" {{if eq .RotaAtual "/meus-anuncios"}}aria-current="page"{{end}}>Meus anúncios</a><a href="/meus-pedidos" {{if eq .RotaAtual "/meus-pedidos"}}aria-current="page"{{end}}>Meus pedidos</a>{{end}}
   </nav>
   <div class="header-actions">
     <button class="icon-button menu-toggle" type="button" aria-label="Abrir navegação" aria-controls="main-nav" aria-expanded="false" data-menu-toggle>

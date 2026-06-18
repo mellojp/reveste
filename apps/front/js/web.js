@@ -198,17 +198,37 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("htmx:load", (event) => {
-  event.detail.elt.querySelectorAll?.("[data-ad-form]").forEach(initializeEditor);
-  event.detail.elt.querySelectorAll?.("[data-register-form]").forEach(initializeRegistrationForm);
-  scheduleToasts();
+  initializeEditors(event.detail.elt);
+  initializeRegistrationForms(event.detail.elt);
 });
 document.addEventListener("htmx:responseError", () => {
   document.querySelectorAll("[data-register-form].is-submitting").forEach(resetRegistrationSubmission);
 });
+// O aviso e exibido apos a pagina assentar, ja fora da transicao de swap, para nao ser
+// capturado pelo snapshot da view transition (o que fazia o toast piscar atras do conteudo).
+document.addEventListener("htmx:afterSettle", exibirAvisoDaURL);
+// Ao voltar/avancar, o htmx restaura um snapshot que pode conter um toast antigo. Removemos
+// para o aviso nao ficar preso na tela; um aviso novo so aparece via parametro de URL.
+document.addEventListener("htmx:historyRestore", () => {
+  document.querySelectorAll(".toast").forEach((toast) => toast.remove());
+});
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("[data-ad-form]").forEach(initializeEditor);
-  document.querySelectorAll("[data-register-form]").forEach(initializeRegistrationForm);
-  scheduleToasts();
+  initializeEditors(document);
+  initializeRegistrationForms(document);
+  exibirAvisoDaURL();
+});
+
+// Reseta o scroll ao topo em navegacoes de pagina inteira. Cobre tanto links boosted
+// quanto redirecionamentos via HX-Location (publicar anuncio, sair), que o htmx nao
+// rola sozinho. Voltar/avancar (popstate) preserva a posicao restaurada pelo htmx.
+let restaurandoHistorico = false;
+window.addEventListener("popstate", () => {
+  restaurandoHistorico = true;
+  window.setTimeout(() => { restaurandoHistorico = false; }, 600);
+});
+document.addEventListener("htmx:afterSwap", (event) => {
+  if (event.detail?.target?.tagName !== "BODY" || restaurandoHistorico) return;
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 });
 
 window.addEventListener("popstate", () => {
@@ -272,7 +292,9 @@ async function switchAuthForm(url, direction, options = {}) {
 
     nextPanel.classList.add(enteringClass);
     content.replaceChildren(nextPanel);
-    nextPanel.querySelectorAll("[data-register-form]").forEach(initializeRegistrationForm);
+    window.htmx?.process(nextPanel);
+    initializeEditors(nextPanel);
+    initializeRegistrationForms(nextPanel);
     document.title = nextDocument.title || document.title;
     if (options.push !== false) history.pushState({ auth: true }, "", url);
 
@@ -296,6 +318,10 @@ async function switchAuthForm(url, direction, options = {}) {
 
 function waitForAnimation(element) {
   return new Promise((resolve) => {
+    if (prefersReducedMotion() || window.getComputedStyle(element).animationName === "none") {
+      requestAnimationFrame(resolve);
+      return;
+    }
     let done = false;
     const finish = () => {
       if (done) return;
@@ -314,7 +340,7 @@ function scrollAuthPageToTop(options = {}) {
   if (!page) return Promise.resolve();
   const headerHeight = header?.getBoundingClientRect().height || 0;
   const top = Math.max(0, page.getBoundingClientRect().top + window.scrollY - headerHeight);
-  if (options.animate) {
+  if (options.animate && !prefersReducedMotion()) {
     return animateScrollTo(top, 380);
   }
   window.scrollTo({ top, behavior: "auto" });
@@ -365,6 +391,11 @@ function measureAuthContentHeight(content, panel) {
 
 function waitForTransition(element) {
   return new Promise((resolve) => {
+    const transitionDuration = window.getComputedStyle(element).transitionDuration;
+    if (prefersReducedMotion() || transitionDuration === "0s" || transitionDuration === "0ms") {
+      requestAnimationFrame(resolve);
+      return;
+    }
     let done = false;
     const finish = (event) => {
       if (event && event.target !== element) return;
@@ -376,6 +407,20 @@ function waitForTransition(element) {
     element.addEventListener("transitionend", finish);
     window.setTimeout(finish, 500);
   });
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function initializeRegistrationForms(root) {
+  if (root.matches?.("[data-register-form]")) initializeRegistrationForm(root);
+  root.querySelectorAll?.("[data-register-form]").forEach(initializeRegistrationForm);
+}
+
+function initializeEditors(root) {
+  if (root.matches?.("[data-ad-form]")) initializeEditor(root);
+  root.querySelectorAll?.("[data-ad-form]").forEach(initializeEditor);
 }
 
 function initializeRegistrationForm(form) {
@@ -607,12 +652,30 @@ function isPublicImageURL(value) {
   }
 }
 
-function scheduleToasts() {
-  document.querySelectorAll(".toast:not([data-scheduled])").forEach((toast) => {
-    toast.dataset.scheduled = "true";
-    window.setTimeout(() => {
-      toast.classList.add("is-leaving");
-      window.setTimeout(() => toast.remove(), 200);
-    }, 3200);
-  });
+// exibirAvisoDaURL le o parametro ?mensagem e cria o toast no cliente, ja com a pagina
+// assentada. Como o elemento nasce depois do swap, ele fica fora do snapshot da view
+// transition e aparece limpo, por cima do conteudo, sem piscar. Em seguida limpa a URL para
+// o aviso nao reaparecer ao recarregar ou voltar/avancar.
+function exibirAvisoDaURL() {
+  const mensagem = new URL(window.location.href).searchParams.get("mensagem");
+  if (!mensagem) return;
+  limparMensagemDaURL();
+  const regiao = document.getElementById("toast-region");
+  if (!regiao) return;
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = mensagem;
+  regiao.appendChild(toast);
+  window.setTimeout(() => {
+    toast.classList.add("is-leaving");
+    window.setTimeout(() => toast.remove(), 200);
+  }, 3200);
+}
+
+function limparMensagemDaURL() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("mensagem")) return;
+  url.searchParams.delete("mensagem");
+  const destino = url.pathname + url.search + url.hash;
+  window.history.replaceState(window.history.state, "", destino);
 }

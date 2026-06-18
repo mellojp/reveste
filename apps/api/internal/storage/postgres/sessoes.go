@@ -23,14 +23,18 @@ func (s *Store) CriarSessao(ctx context.Context, token, idUsuario string, expira
 func (s *Store) BuscarUsuarioDaSessao(ctx context.Context, token string, agora time.Time) (string, error) {
 	var idUsuario string
 	err := s.pool.QueryRow(ctx, `
-		SELECT id_usuario
-		FROM sessao
-		WHERE token_hash = $1 AND expira_em > $2
+		SELECT s.id_usuario
+		FROM sessao s
+		JOIN usuario u ON u.id = s.id_usuario AND u.excluido_em IS NULL
+		WHERE s.token_hash = $1 AND s.expira_em > $2
 	`, hashToken(token), agora).Scan(&idUsuario)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", common.ErrNaoAutorizado
 	}
-	return idUsuario, err
+	if err != nil {
+		return "", mapDatabaseError(err)
+	}
+	return idUsuario, nil
 }
 
 func (s *Store) RemoverSessao(ctx context.Context, token string) error {

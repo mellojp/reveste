@@ -180,6 +180,55 @@ func TestCadastroWebRejeitaConfirmacaoDeSenhaDiferente(t *testing.T) {
 	}
 }
 
+func TestLoginHTMXUsaLocationParaPreservarTransicao(t *testing.T) {
+	formulario := url.Values{
+		"identificador": {"vendedora@teste.local"},
+		"senha":         {"senha-segura"},
+		"retorno":       {"/perfil"},
+	}
+	requisicao := httptest.NewRequest(
+		nethttp.MethodPost,
+		"/entrar",
+		strings.NewReader(formulario.Encode()),
+	)
+	requisicao.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	requisicao.Header.Set("Origin", "http://example.com")
+	requisicao.Header.Set("HX-Request", "true")
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusNoContent {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusNoContent)
+	}
+	if local := resposta.Header().Get("HX-Location"); local != "/perfil" {
+		t.Fatalf("HX-Location = %q; esperado /perfil", local)
+	}
+	if redirecionamento := resposta.Header().Get("HX-Redirect"); redirecionamento != "" {
+		t.Fatalf("HX-Redirect inesperado: %q", redirecionamento)
+	}
+}
+
+func TestLogoutHTMXUsaLocationParaPreservarTransicao(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodPost, "/sair", nil)
+	requisicao.Header.Set("Origin", "http://example.com")
+	requisicao.Header.Set("HX-Request", "true")
+	requisicao.AddCookie(&nethttp.Cookie{Name: "reveste_session", Value: "sessao-valida"})
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusNoContent {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusNoContent)
+	}
+	if local := resposta.Header().Get("HX-Location"); local != "/" {
+		t.Fatalf("HX-Location = %q; esperado /", local)
+	}
+	if redirecionamento := resposta.Header().Get("HX-Redirect"); redirecionamento != "" {
+		t.Fatalf("HX-Redirect inesperado: %q", redirecionamento)
+	}
+}
+
 func TestFormularioWebRejeitaPostSemOrigem(t *testing.T) {
 	requisicao := httptest.NewRequest(nethttp.MethodPost, "/cadastro", strings.NewReader(""))
 	resposta := httptest.NewRecorder()
@@ -204,9 +253,15 @@ func TestPaginasSSRRenderizamDocumentosCompletos(t *testing.T) {
 		{rota: "/cadastro"},
 		{rota: "/perfil", autenticada: true},
 		{rota: "/perfil/editar", autenticada: true},
+		{rota: "/perfil/enderecos", autenticada: true},
+		{rota: "/perfil/enderecos/endereco-2/editar", autenticada: true},
 		{rota: "/meus-anuncios", autenticada: true},
 		{rota: "/vender", autenticada: true},
 		{rota: "/carrinho", autenticada: true},
+		{rota: "/meus-pedidos", autenticada: true},
+		{rota: "/meus-pedidos/pedido-1", autenticada: true},
+		{rota: "/minhas-vendas", autenticada: true},
+		{rota: "/minhas-vendas/venda-1", autenticada: true},
 	}
 
 	for _, caso := range casos {

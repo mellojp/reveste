@@ -1,11 +1,14 @@
 package web
 
 import (
+	"errors"
 	nethttp "net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 )
@@ -30,7 +33,7 @@ func (a *AdaptadorPaginas) processarLogin(w nethttp.ResponseWriter, r *nethttp.R
 		return
 	}
 	a.limparFalhasAutenticacao(r)
-	definirCookieSessao(w, r, sessao)
+	a.definirCookieSessao(w, r, sessao)
 	a.responderRedirecionamento(w, r, contexto.URLRetorno)
 }
 
@@ -64,7 +67,7 @@ func (a *AdaptadorPaginas) processarCadastroUsuario(w nethttp.ResponseWriter, r 
 
 func (a *AdaptadorPaginas) processarEncerramentoSessao(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
 	_ = a.controladorCadastro.EncerrarSessao(r.Context(), sessao.Token)
-	removerCookieSessao(w, r)
+	a.removerCookieSessao(w, r)
 	a.responderRedirecionamento(w, r, "/")
 }
 
@@ -72,7 +75,7 @@ func (a *AdaptadorPaginas) processarAtualizacaoPerfil(w nethttp.ResponseWriter, 
 	_ = r.ParseForm()
 	contexto := a.prepararContextoDocumento(r, "Meu perfil", conteudoPerfilUsuario)
 	contexto.EditandoPerfil = true
-	usuario, err := a.controladorCadastro.AtualizarPerfil(r.Context(), sessao.IDUsuario, casosdeuso.EntradaAtualizacaoPerfil{
+	_, err := a.controladorCadastro.AtualizarPerfil(r.Context(), sessao.IDUsuario, casosdeuso.EntradaAtualizacaoPerfil{
 		Nome: r.FormValue("nome"), Email: r.FormValue("email"),
 		Telefone: r.FormValue("telefone"), Endereco: enderecoDoFormulario(r),
 	})
@@ -82,10 +85,60 @@ func (a *AdaptadorPaginas) processarAtualizacaoPerfil(w nethttp.ResponseWriter, 
 		a.responderDocumentoHTML(w, nethttp.StatusUnprocessableEntity, contexto)
 		return
 	}
-	contexto.UsuarioAutenticado = &usuario
-	contexto.EditandoPerfil = false
-	contexto.MensagemTemporaria = "Perfil atualizado."
-	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+	// Padrao POST-redirect-GET: o aviso vai pela URL e e exibido como toast apos a navegacao,
+	// fora da transicao de pagina (evita o toast piscar atras do conteudo).
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/perfil", "Perfil atualizado."))
+}
+
+func (a *AdaptadorPaginas) processarInclusaoEndereco(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	_, err := a.controladorCadastro.AdicionarEndereco(r.Context(), sessao.IDUsuario, enderecoDoFormulario(r))
+	if err != nil {
+		contexto := a.prepararContextoDocumento(r, "Meus endereços", conteudoEnderecos)
+		contexto.MensagemErro, contexto.ErrosValidacao = apresentarErroCasoUso(err)
+		contexto.ValoresFormulario = capturarValoresFormulario(r)
+		if enderecos, errLista := a.controladorCadastro.ListarEnderecos(r.Context(), sessao.IDUsuario); errLista == nil {
+			contexto.EnderecosUsuario = enderecos
+		}
+		a.responderDocumentoHTML(w, nethttp.StatusUnprocessableEntity, contexto)
+		return
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/perfil/enderecos", "Endereço adicionado."))
+}
+
+func (a *AdaptadorPaginas) processarAtualizacaoEndereco(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	idEndereco := r.PathValue("idEndereco")
+	err := a.controladorCadastro.AtualizarEndereco(r.Context(), sessao.IDUsuario, idEndereco, enderecoDoFormulario(r))
+	if err != nil {
+		contexto := a.prepararContextoDocumento(r, "Editar endereço", conteudoFormularioEndereco)
+		contexto.MensagemErro, contexto.ErrosValidacao = apresentarErroCasoUso(err)
+		contexto.ValoresFormulario = capturarValoresFormulario(r)
+		contexto.EnderecoEmEdicao = &cadastros.Endereco{ID: idEndereco}
+		a.responderDocumentoHTML(w, nethttp.StatusUnprocessableEntity, contexto)
+		return
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/perfil/enderecos", "Endereço atualizado."))
+}
+
+func (a *AdaptadorPaginas) processarEnderecoPrincipal(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	mensagem := "Endereço principal atualizado."
+	if err := a.controladorCadastro.DefinirEnderecoPrincipal(r.Context(), sessao.IDUsuario, r.PathValue("idEndereco")); err != nil {
+		mensagem = "Não foi possível definir o endereço principal."
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/perfil/enderecos", mensagem))
+}
+
+func (a *AdaptadorPaginas) processarRemocaoEndereco(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	mensagem := "Endereço removido."
+	if err := a.controladorCadastro.RemoverEndereco(r.Context(), sessao.IDUsuario, r.PathValue("idEndereco")); err != nil {
+		if errors.Is(err, common.ErrNaoPermitido) {
+			mensagem = "Defina outro endereço como principal antes de remover este."
+		} else {
+			mensagem = "Não foi possível remover o endereço."
+		}
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/perfil/enderecos", mensagem))
 }
 
 func (a *AdaptadorPaginas) processarInclusaoCarrinho(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
@@ -111,6 +164,87 @@ func adicionarMensagemNaURL(destino, mensagem string) string {
 func (a *AdaptadorPaginas) processarRemocaoCarrinho(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
 	_, _ = a.controladorCarrinho.RemoverDoCarrinho(r.Context(), sessao.IDUsuario, r.PathValue("idAnuncio"))
 	a.responderRedirecionamento(w, r, "/carrinho")
+}
+
+func (a *AdaptadorPaginas) processarCheckout(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	_, err := a.controladorCheckout.FinalizarCompra(r.Context(), sessao.IDUsuario, r.FormValue("id_endereco"))
+	if err != nil {
+		destino := adicionarMensagemNaURL("/carrinho", mensagemFalhaCheckout(err))
+		a.responderRedirecionamento(w, r, destino)
+		return
+	}
+	a.responderRedirecionamento(w, r, "/meus-pedidos?comprado=1")
+}
+
+func (a *AdaptadorPaginas) processarEnvioPedido(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	err := a.controladorPedidos.MarcarEnviado(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"), casosdeuso.EntradaEnvio{
+		Provedor:       r.FormValue("provedor"),
+		CodigoRastreio: r.FormValue("codigo_rastreio"),
+	})
+	mensagem := "Envio registrado. O comprador foi avisado."
+	if err != nil {
+		mensagem = mensagemFalhaPedido(err)
+	}
+	destino := "/minhas-vendas/" + url.PathEscape(r.PathValue("idPedido"))
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL(destino, mensagem))
+}
+
+func (a *AdaptadorPaginas) processarRecebimentoPedido(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	err := a.controladorPedidos.ConfirmarRecebimento(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"))
+	mensagem := "Recebimento confirmado. Que tal avaliar a compra?"
+	if err != nil {
+		mensagem = mensagemFalhaPedido(err)
+	}
+	destino := "/meus-pedidos/" + url.PathEscape(r.PathValue("idPedido"))
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL(destino, mensagem))
+}
+
+func (a *AdaptadorPaginas) processarAvaliacaoPedido(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	nota, _ := strconv.Atoi(r.FormValue("nota"))
+	err := a.controladorPedidos.Avaliar(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"), nota, r.FormValue("comentario"))
+	mensagem := "Avaliação registrada. Obrigado!"
+	if err != nil {
+		mensagem = mensagemFalhaPedido(err)
+	}
+	destino := "/meus-pedidos/" + url.PathEscape(r.PathValue("idPedido"))
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL(destino, mensagem))
+}
+
+func mensagemFalhaPedido(err error) string {
+	switch {
+	case errors.Is(err, common.ErrConflito):
+		return "Você já avaliou este pedido."
+	case errors.Is(err, common.ErrTransicaoInvalida):
+		return "Este pedido ainda não pode ser avaliado."
+	case errors.Is(err, common.ErrNaoPermitido):
+		return "Não foi possível alterar este pedido."
+	default:
+		var validacao common.ErroValidacao
+		if errors.As(err, &validacao) {
+			for _, mensagem := range validacao.Campos {
+				return mensagem
+			}
+		}
+		return "Não foi possível concluir a ação."
+	}
+}
+
+func mensagemFalhaCheckout(err error) string {
+	switch {
+	case errors.Is(err, common.ErrCarrinhoVazio):
+		return "Sua sacola está vazia."
+	case errors.Is(err, common.ErrSemItensDisponiveis):
+		return "Nenhuma peça da sacola está mais disponível."
+	case errors.Is(err, common.ErrAnuncioIndisponivel):
+		return "Uma das peças acabou de ser vendida. Revise sua sacola."
+	case errors.Is(err, common.ErrPagamentoRecusado):
+		return "O pagamento foi recusado. Tente novamente."
+	default:
+		return "Não foi possível concluir a compra."
+	}
 }
 
 func (a *AdaptadorPaginas) processarExclusaoAnuncio(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {

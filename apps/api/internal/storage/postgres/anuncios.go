@@ -20,7 +20,7 @@ func (s *Store) CriarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) erro
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	_, err = tx.Exec(ctx, `
+	resultado, err := tx.Exec(ctx, `
 		INSERT INTO anuncio (
 			id, id_perfil_vendedor, titulo, descricao, categoria, tamanho, cor,
 			estado_conservacao, preco_centavos, status, criado_em, atualizado_em
@@ -32,6 +32,9 @@ func (s *Store) CriarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) erro
 		anuncio.PrecoCentavos, anuncio.Status, anuncio.CriadoEm, anuncio.AtualizadoEm)
 	if err != nil {
 		return mapDatabaseError(err)
+	}
+	if resultado.RowsAffected() == 0 {
+		return common.ErrNaoEncontrado
 	}
 	for _, foto := range anuncio.Fotos {
 		_, err = tx.Exec(ctx, `

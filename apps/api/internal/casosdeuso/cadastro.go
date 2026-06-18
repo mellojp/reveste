@@ -81,6 +81,83 @@ func (c *ControladorCadastro) CadastrarUsuario(
 	return usuario, nil
 }
 
+// ListarEnderecos devolve todos os enderecos ativos do usuario (principal primeiro).
+func (c *ControladorCadastro) ListarEnderecos(
+	ctx context.Context,
+	idUsuario string,
+) ([]dominiocadastros.Endereco, error) {
+	enderecos, err := c.usuarios.ListarEnderecos(ctx, idUsuario)
+	if err != nil {
+		return nil, err
+	}
+	if enderecos == nil {
+		enderecos = []dominiocadastros.Endereco{}
+	}
+	return enderecos, nil
+}
+
+// BuscarEndereco devolve um endereco especifico do usuario.
+func (c *ControladorCadastro) BuscarEndereco(
+	ctx context.Context,
+	idUsuario, idEndereco string,
+) (dominiocadastros.Endereco, error) {
+	return c.usuarios.BuscarEndereco(ctx, idUsuario, idEndereco)
+}
+
+// AdicionarEndereco valida e cria um novo endereco (nao principal) para o usuario.
+func (c *ControladorCadastro) AdicionarEndereco(
+	ctx context.Context,
+	idUsuario string,
+	entrada dominiocadastros.Endereco,
+) (dominiocadastros.Endereco, error) {
+	entrada.Normalizar()
+	if campos := entrada.Validar(); len(campos) > 0 {
+		return dominiocadastros.Endereco{}, common.NovaValidacao(campos)
+	}
+	entrada.ID = c.ids.Novo()
+	if err := c.usuarios.AdicionarEndereco(ctx, idUsuario, entrada, c.relogio.Agora()); err != nil {
+		return dominiocadastros.Endereco{}, err
+	}
+	return entrada, nil
+}
+
+// AtualizarEndereco valida e atualiza um endereco existente do usuario.
+func (c *ControladorCadastro) AtualizarEndereco(
+	ctx context.Context,
+	idUsuario, idEndereco string,
+	entrada dominiocadastros.Endereco,
+) error {
+	entrada.Normalizar()
+	if campos := entrada.Validar(); len(campos) > 0 {
+		return common.NovaValidacao(campos)
+	}
+	return c.usuarios.AtualizarEndereco(ctx, idUsuario, idEndereco, entrada, c.relogio.Agora())
+}
+
+// DefinirEnderecoPrincipal marca o endereco escolhido como principal do usuario.
+func (c *ControladorCadastro) DefinirEnderecoPrincipal(
+	ctx context.Context,
+	idUsuario, idEndereco string,
+) error {
+	return c.usuarios.DefinirEnderecoPrincipal(ctx, idUsuario, idEndereco, c.relogio.Agora())
+}
+
+// RemoverEndereco exclui logicamente um endereco. O endereco principal nao pode ser removido
+// antes de outro ser definido como principal.
+func (c *ControladorCadastro) RemoverEndereco(
+	ctx context.Context,
+	idUsuario, idEndereco string,
+) error {
+	endereco, err := c.usuarios.BuscarEndereco(ctx, idUsuario, idEndereco)
+	if err != nil {
+		return err
+	}
+	if endereco.Principal {
+		return common.ErrNaoPermitido
+	}
+	return c.usuarios.RemoverEndereco(ctx, idUsuario, idEndereco, c.relogio.Agora())
+}
+
 type Sessao struct {
 	Token    string                   `json:"token"`
 	ExpiraEm time.Time                `json:"expira_em"`

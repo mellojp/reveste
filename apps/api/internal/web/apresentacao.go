@@ -11,19 +11,22 @@ import (
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
+	"reveste/apps/api/internal/dominio/compras"
 )
 
 func funcoesApresentacaoTemplates() template.FuncMap {
 	return template.FuncMap{
-		"formatarDinheiro":  formatarDinheiro,
-		"formatarData":      formatarData,
-		"extrairAno":        func(valor time.Time) int { return valor.Year() },
-		"formatarRotulo":    formatarRotulo,
-		"iniciais":          iniciais,
-		"primeiroNome":      primeiroNome,
-		"incrementar":       func(valor int) int { return valor + 1 },
-		"anuncioNoCarrinho": carrinhoContemAnuncio,
-		"contarDisponiveis": contarAnunciosDisponiveis,
+		"formatarDinheiro":   formatarDinheiro,
+		"formatarData":       formatarData,
+		"linhaDoTempoPedido": linhaDoTempoPedido,
+		"linhaDeEstrelas":    linhaDeEstrelas,
+		"extrairAno":         func(valor time.Time) int { return valor.Year() },
+		"formatarRotulo":     formatarRotulo,
+		"iniciais":           iniciais,
+		"primeiroNome":       primeiroNome,
+		"incrementar":        func(valor int) int { return valor + 1 },
+		"anuncioNoCarrinho":  carrinhoContemAnuncio,
+		"contarDisponiveis":  contarAnunciosDisponiveis,
 		"contarIndisponiveis": func(itens []anuncios.Anuncio) int {
 			return len(itens) - contarAnunciosDisponiveis(itens)
 		},
@@ -89,11 +92,65 @@ func formatarDinheiro(centavos int64) string {
 	return "R$ " + partes[0] + "," + partes[1]
 }
 
-func formatarData(valor time.Time) string {
-	if valor.IsZero() {
+// formatarData aceita time.Time ou *time.Time (campos opcionais como enviado_em/postado_em),
+// devolvendo vazio para ponteiro nulo ou data zerada.
+func formatarData(valor any) string {
+	instante, ok := comoTempo(valor)
+	if !ok || instante.IsZero() {
 		return ""
 	}
-	return valor.Format("02/01/2006")
+	return instante.Format("02/01/2006")
+}
+
+func comoTempo(valor any) (time.Time, bool) {
+	switch v := valor.(type) {
+	case time.Time:
+		return v, true
+	case *time.Time:
+		if v == nil {
+			return time.Time{}, false
+		}
+		return *v, true
+	default:
+		return time.Time{}, false
+	}
+}
+
+// passoPedido descreve um marco da linha do tempo do pedido para o comprador.
+type passoPedido struct {
+	Rotulo    string
+	Concluido bool
+	Atual     bool
+}
+
+// linhaDoTempoPedido projeta o status do pedido em marcos visuais (Pago -> Enviado -> Recebido).
+func linhaDoTempoPedido(status compras.StatusPedido) []passoPedido {
+	nivel := 1
+	switch status {
+	case compras.StatusPedidoAguardandoEntrega:
+		nivel = 2
+	case compras.StatusPedidoFinalizado:
+		nivel = 3
+	}
+	rotulos := []string{"Pago", "Enviado", "Recebido"}
+	passos := make([]passoPedido, len(rotulos))
+	for indice, rotulo := range rotulos {
+		passos[indice] = passoPedido{
+			Rotulo:    rotulo,
+			Concluido: indice+1 <= nivel,
+			Atual:     indice+1 == nivel,
+		}
+	}
+	return passos
+}
+
+// linhaDeEstrelas devolve cinco posicoes (true = preenchida) para renderizar a nota visualmente.
+func linhaDeEstrelas(nota int) []bool {
+	estrelas := make([]bool, 5)
+	for indice := range estrelas {
+		estrelas[indice] = indice < nota
+	}
+	return estrelas
 }
 
 func formatarMesAno(valor time.Time) string {

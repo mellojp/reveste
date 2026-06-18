@@ -12,7 +12,10 @@ import (
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
+	"reveste/apps/api/internal/dominio/interacao"
 	httptransport "reveste/apps/api/internal/http"
+	"reveste/apps/api/internal/storage/pagamentos"
+	"reveste/apps/api/internal/transporte"
 	"reveste/apps/api/internal/web"
 )
 
@@ -66,6 +69,45 @@ func (operacoesHTTP) BuscarUsuarioPorEmailOuCPF(
 		},
 		CriadoEm: time.Date(2025, 1, 10, 12, 0, 0, 0, time.UTC),
 	}, nil
+}
+
+func (operacoesHTTP) ListarEnderecos(context.Context, string) ([]cadastros.Endereco, error) {
+	return []cadastros.Endereco{
+		{
+			ID: "endereco-1", CEP: "49000000", Logradouro: "Rua Teste", Numero: "10",
+			Bairro: "Centro", Cidade: "Aracaju", Estado: "SE", Principal: true,
+		},
+		{
+			ID: "endereco-2", CEP: "01310200", Logradouro: "Avenida Paulista", Numero: "1000",
+			Bairro: "Bela Vista", Cidade: "São Paulo", Estado: "SP",
+		},
+	}, nil
+}
+
+func (operacoesHTTP) BuscarEndereco(_ context.Context, _, idEndereco string) (cadastros.Endereco, error) {
+	if idEndereco != "endereco-2" {
+		return cadastros.Endereco{}, common.ErrNaoEncontrado
+	}
+	return cadastros.Endereco{
+		ID: "endereco-2", CEP: "01310200", Logradouro: "Avenida Paulista", Numero: "1000",
+		Bairro: "Bela Vista", Cidade: "São Paulo", Estado: "SP",
+	}, nil
+}
+
+func (operacoesHTTP) AdicionarEndereco(context.Context, string, cadastros.Endereco, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) AtualizarEndereco(context.Context, string, string, cadastros.Endereco, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) RemoverEndereco(context.Context, string, string, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) DefinirEnderecoPrincipal(context.Context, string, string, time.Time) error {
+	return nil
 }
 
 func (operacoesHTTP) CriarAnuncio(context.Context, anuncios.Anuncio) error {
@@ -124,6 +166,124 @@ func (operacoesHTTP) RemoverAnuncioDoCarrinho(
 	return compras.Carrinho{}, nil
 }
 
+func (operacoesHTTP) BuscarCompraPorChave(context.Context, string) (compras.Compra, error) {
+	return compras.Compra{}, common.ErrNaoEncontrado
+}
+
+func (operacoesHTTP) IniciarCompra(_ context.Context, compra compras.Compra, _ compras.Pagamento, _ string) (compras.Compra, bool, error) {
+	return compra, true, nil
+}
+
+func (operacoesHTTP) ConfirmarCompraAprovada(_ context.Context, _ string, _, _ string, _ time.Time) (compras.Compra, error) {
+	return compras.Compra{ID: "compra-1", Status: compras.StatusCompraAprovada}, nil
+}
+
+func (operacoesHTTP) RecusarCompra(context.Context, string, string, string, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) ExpirarComprasPendentes(context.Context, time.Time) (int, error) {
+	return 0, nil
+}
+
+func (operacoesHTTP) ListarPedidosDoComprador(context.Context, string) ([]compras.Pedido, error) {
+	return []compras.Pedido{{
+		ID: "pedido-1", Status: compras.StatusPedidoAguardandoEnvio,
+		ValorTotalItensCentavos: 12_000, ValorFreteCentavos: 1990,
+		NomeDestinatario: "Comprador Teste",
+		EnderecoEntrega: cadastros.Endereco{
+			Logradouro: "Rua Teste", Numero: "10", Cidade: "Aracaju", Estado: "SE",
+		},
+		Itens: []compras.ItemPedido{{
+			IDAnuncio: "anuncio-publico", Titulo: "Casaco de lã",
+			Categoria: anuncios.CategoriaCasacos, Tamanho: "M",
+			EstadoConservacao: anuncios.EstadoSeminovo, Status: compras.StatusItemAguardandoEnvio,
+			ValorUnitarioCentavos: 12_000,
+		}},
+		CriadoEm: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC),
+	}}, nil
+}
+
+func (operacoesHTTP) ListarPedidosDoVendedor(context.Context, string) ([]compras.Pedido, error) {
+	return []compras.Pedido{{
+		ID: "venda-1", Status: compras.StatusPedidoAguardandoEnvio,
+		ValorTotalItensCentavos: 12_000, ValorFreteCentavos: 1990,
+		ValorLiquidoVendedorCentavos: 12_990, NomeDestinatario: "Comprador Teste",
+		EnderecoEntrega: cadastros.Endereco{
+			CEP: "49000000", Logradouro: "Rua Teste", Numero: "10",
+			Bairro: "Centro", Cidade: "Aracaju", Estado: "SE",
+		},
+		Itens: []compras.ItemPedido{{
+			IDAnuncio: "anuncio-publico", Titulo: "Casaco de lã",
+			Categoria: anuncios.CategoriaCasacos, Tamanho: "M",
+			EstadoConservacao: anuncios.EstadoSeminovo, Status: compras.StatusItemAguardandoEnvio,
+			ValorUnitarioCentavos: 12_000,
+		}},
+		CriadoEm: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC),
+	}}, nil
+}
+
+func (operacoesHTTP) BuscarPedidoDoComprador(_ context.Context, _, idPedido string) (compras.Pedido, error) {
+	return compras.Pedido{
+		ID: idPedido, Status: compras.StatusPedidoFinalizado,
+		ValorTotalItensCentavos: 12_000, ValorFreteCentavos: 1990,
+		NomeDestinatario: "Comprador Teste",
+		EnderecoEntrega: cadastros.Endereco{
+			Logradouro: "Rua Teste", Numero: "10", Cidade: "Aracaju", Estado: "SE",
+		},
+		Itens: []compras.ItemPedido{{
+			IDAnuncio: "anuncio-publico", Titulo: "Casaco de lã",
+			Categoria: anuncios.CategoriaCasacos, Tamanho: "M",
+			EstadoConservacao: anuncios.EstadoSeminovo, Status: compras.StatusItemRecebido,
+			ValorUnitarioCentavos: 12_000,
+		}},
+		CriadoEm: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC),
+	}, nil
+}
+
+func (operacoesHTTP) BuscarPedidoDoVendedor(_ context.Context, _, idPedido string) (compras.Pedido, error) {
+	return compras.Pedido{
+		ID: idPedido, Status: compras.StatusPedidoAguardandoEnvio,
+		ValorTotalItensCentavos: 12_000, ValorFreteCentavos: 1990,
+		ValorLiquidoVendedorCentavos: 12_990, NomeDestinatario: "Comprador Teste",
+		EnderecoEntrega: cadastros.Endereco{
+			CEP: "49000000", Logradouro: "Rua Teste", Numero: "10",
+			Bairro: "Centro", Cidade: "Aracaju", Estado: "SE",
+		},
+		Itens: []compras.ItemPedido{{
+			IDAnuncio: "anuncio-publico", Titulo: "Casaco de lã",
+			Categoria: anuncios.CategoriaCasacos, Tamanho: "M",
+			EstadoConservacao: anuncios.EstadoSeminovo, Status: compras.StatusItemAguardandoEnvio,
+			ValorUnitarioCentavos: 12_000,
+		}},
+		CriadoEm: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC),
+	}, nil
+}
+
+func (operacoesHTTP) BuscarAvaliacaoDoPedido(context.Context, string) (interacao.Avaliacao, error) {
+	return interacao.Avaliacao{}, common.ErrNaoEncontrado
+}
+
+func (operacoesHTTP) MarcarPedidoEnviado(context.Context, string, string, string, string, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) ConfirmarRecebimentoPedido(context.Context, string, string, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) RegistrarAvaliacao(context.Context, interacao.Avaliacao) error {
+	return nil
+}
+
+func (operacoesHTTP) ProcessarItensVencidos(context.Context, time.Time, int) (int, error) {
+	return 0, nil
+}
+
+func (operacoesHTTP) MediaAvaliacoesVendedor(context.Context, string) (casosdeuso.MediaAvaliacoes, error) {
+	return casosdeuso.MediaAvaliacoes{Media: 4.5, Quantidade: 2}, nil
+}
+
 func (operacoesHTTP) CriarSessao(context.Context, string, string, time.Time) error {
 	return nil
 }
@@ -178,12 +338,20 @@ func novoHandler() nethttp.Handler {
 		operacoes, operacoes, idHTTP{}, relogioHTTP{},
 	)
 	uploadsCU := casosdeuso.NovoControladorUpload(operacoes, idHTTP{}, relogioHTTP{})
+	checkoutCU := casosdeuso.NovoControladorCheckout(
+		operacoes, operacoes, operacoes, operacoes, pagamentos.NovoSimulado(),
+		idHTTP{}, relogioHTTP{},
+		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
+	)
+	pedidosCU := casosdeuso.NovoControladorPedidos(operacoes, idHTTP{}, relogioHTTP{})
+	limitador := transporte.NovoLimitadorLogin(transporte.NovoRegistroMemoria())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, logger)
+	// confiarProxy = true: os testes simulam HTTPS via X-Forwarded-Proto, como atrás de um proxy.
+	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, checkoutCU, pedidosCU, limitador, true, logger)
 	if err != nil {
 		panic(err)
 	}
 	return httptransport.NovaAPI(
-		cadastrosCU, anunciosCU, comprasCU, uploadsCU, operacoes, logger, hostBlobTeste, paginasHTML,
+		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, operacoes, logger, hostBlobTeste, limitador, true, paginasHTML,
 	)
 }

@@ -6,21 +6,31 @@ import (
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
+	"reveste/apps/api/internal/dominio/compras"
+	"reveste/apps/api/internal/dominio/interacao"
+	"reveste/apps/api/internal/transporte"
 )
 
 const (
-	conteudoPaginaInicial     = "inicio"
-	conteudoCatalogo          = "catalogo"
-	conteudoDetalheAnuncio    = "detalhe-anuncio"
-	conteudoPerfilVendedor    = "vendedor"
-	conteudoLogin             = "entrar"
-	conteudoCadastroUsuario   = "cadastro"
-	conteudoPerfilUsuario     = "perfil"
-	conteudoAnunciosUsuario   = "meus-anuncios"
-	conteudoFormularioAnuncio = "formulario-anuncio"
-	conteudoCarrinhoUsuario   = "carrinho"
-	conteudoNaoEncontrado     = "nao-encontrado"
-	fragmentoProximoLote      = "catalogo-lote"
+	conteudoPaginaInicial      = "inicio"
+	conteudoCatalogo           = "catalogo"
+	conteudoDetalheAnuncio     = "detalhe-anuncio"
+	conteudoPerfilVendedor     = "vendedor"
+	conteudoLogin              = "entrar"
+	conteudoCadastroUsuario    = "cadastro"
+	conteudoPerfilUsuario      = "perfil"
+	conteudoEnderecos          = "enderecos"
+	conteudoFormularioEndereco = "formulario-endereco"
+	conteudoAnunciosUsuario    = "meus-anuncios"
+	conteudoFormularioAnuncio  = "formulario-anuncio"
+	conteudoCarrinhoUsuario    = "carrinho"
+	conteudoCheckout           = "checkout"
+	conteudoPedidosUsuario     = "meus-pedidos"
+	conteudoDetalhePedido      = "detalhe-pedido"
+	conteudoVendasUsuario      = "minhas-vendas"
+	conteudoDetalheVenda       = "detalhe-venda"
+	conteudoNaoEncontrado      = "nao-encontrado"
+	fragmentoProximoLote       = "catalogo-lote"
 )
 
 // contextoDocumento concentra somente os contexto de apresentacao entregues aos templates.
@@ -34,6 +44,14 @@ type contextoDocumento struct {
 	UsuarioAutenticado  *cadastros.Usuario
 	CarrinhoAutenticado casosdeuso.CarrinhoDetalhado
 	AnunciosListados    []anuncios.Anuncio
+	EnderecosUsuario    []cadastros.Endereco
+	EnderecoEmEdicao    *cadastros.Endereco
+	PedidosListados     []compras.Pedido
+	PedidoDetalhe       *compras.Pedido
+	AvaliacaoPedido     *interacao.Avaliacao
+	ResumoCompra        *compras.Compra
+	CompraConfirmada    bool
+	AvaliacaoVendedor   casosdeuso.MediaAvaliacoes
 	DetalheAnuncio      *casosdeuso.AnuncioDetalhado
 	PerfilVendedor      *casosdeuso.PerfilVendedorDetalhado
 	FiltrosCatalogo     filtrosCatalogo
@@ -97,7 +115,7 @@ func (a *AdaptadorPaginas) prepararContextoDocumento(
 			{"usado", "Usado"}, {"muito_usado", "Muito usado"}, {"desgastado", "Desgastado"},
 		},
 	}
-	token := tokenSessaoDoCookie(r)
+	token := transporte.TokenSessaoDoCookie(r)
 	idUsuario, err := a.controladorCadastro.IdentificarUsuario(r.Context(), token)
 	if err != nil {
 		return contexto

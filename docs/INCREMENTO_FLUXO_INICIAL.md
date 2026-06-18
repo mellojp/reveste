@@ -241,7 +241,10 @@ Todas passaram.
 
 ## Limitacoes conhecidas
 
-- checkout, pagamento, entrega e pedidos ainda nao estao implementados;
+- este documento descreve o incremento anterior ao checkout. O estado funcional atual
+  desses fluxos esta consolidado em `ALINHAMENTO_IMPLEMENTACAO.md`;
+- pagamento e reembolso usam comportamentos simulados; gateway real, webhook e repasse
+  ao vendedor ainda nao estao implementados;
 - a sessao do navegador usa cookie `HttpOnly`, `SameSite=Lax` e `Secure` em HTTPS;
 - formularios web e operacoes mutaveis autenticadas por cookie validam `Origin`
   e `Sec-Fetch-Site`;

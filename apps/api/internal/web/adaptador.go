@@ -6,9 +6,9 @@ import (
 	"html/template"
 	"log/slog"
 	nethttp "net/http"
-	"sync"
 
 	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/transporte"
 )
 
 //go:embed templates/*.html
@@ -18,16 +18,22 @@ type AdaptadorPaginas struct {
 	controladorCadastro *casosdeuso.ControladorCadastro
 	controladorAnuncio  *casosdeuso.ControladorAnuncio
 	controladorCarrinho *casosdeuso.ControladorCarrinho
+	controladorCheckout *casosdeuso.ControladorCheckout
+	controladorPedidos  *casosdeuso.ControladorPedidos
 	documentosHTML      *template.Template
 	logger              *slog.Logger
-	tentativasMu        sync.Mutex
-	tentativasLogin     map[string]registroTentativasLogin
+	limitador           *transporte.LimitadorLogin
+	confiarProxy        bool
 }
 
 func NovoAdaptadorPaginas(
 	controladorCadastro *casosdeuso.ControladorCadastro,
 	controladorAnuncio *casosdeuso.ControladorAnuncio,
 	controladorCarrinho *casosdeuso.ControladorCarrinho,
+	controladorCheckout *casosdeuso.ControladorCheckout,
+	controladorPedidos *casosdeuso.ControladorPedidos,
+	limitador *transporte.LimitadorLogin,
+	confiarProxy bool,
 	logger *slog.Logger,
 ) (nethttp.Handler, error) {
 	tmpl, err := template.New("web").
@@ -40,9 +46,12 @@ func NovoAdaptadorPaginas(
 		controladorCadastro: controladorCadastro,
 		controladorAnuncio:  controladorAnuncio,
 		controladorCarrinho: controladorCarrinho,
+		controladorCheckout: controladorCheckout,
+		controladorPedidos:  controladorPedidos,
 		documentosHTML:      tmpl,
 		logger:              logger,
-		tentativasLogin:     make(map[string]registroTentativasLogin),
+		limitador:           limitador,
+		confiarProxy:        confiarProxy,
 	}
 	mux := nethttp.NewServeMux()
 	adaptador.registrarConsultasPaginas(mux)
@@ -60,10 +69,17 @@ func (a *AdaptadorPaginas) registrarConsultasPaginas(mux *nethttp.ServeMux) {
 	mux.HandleFunc("GET /cadastro", a.exibirCadastroUsuario)
 	mux.HandleFunc("GET /perfil", a.exigirSessao(a.exibirPerfilUsuario))
 	mux.HandleFunc("GET /perfil/editar", a.exigirSessao(a.exibirEdicaoPerfilUsuario))
+	mux.HandleFunc("GET /perfil/enderecos", a.exigirSessao(a.exibirEnderecos))
+	mux.HandleFunc("GET /perfil/enderecos/{idEndereco}/editar", a.exigirSessao(a.exibirEdicaoEndereco))
 	mux.HandleFunc("GET /meus-anuncios", a.exigirSessao(a.exibirAnunciosUsuario))
 	mux.HandleFunc("GET /meus-anuncios/{idAnuncio}/editar", a.exigirSessao(a.exibirEdicaoAnuncio))
 	mux.HandleFunc("GET /vender", a.exigirSessao(a.exibirPublicacaoAnuncio))
 	mux.HandleFunc("GET /carrinho", a.exigirSessao(a.exibirCarrinhoUsuario))
+	mux.HandleFunc("GET /checkout", a.exigirSessao(a.exibirCheckout))
+	mux.HandleFunc("GET /meus-pedidos", a.exigirSessao(a.exibirPedidosUsuario))
+	mux.HandleFunc("GET /meus-pedidos/{idPedido}", a.exigirSessao(a.exibirDetalhePedido))
+	mux.HandleFunc("GET /minhas-vendas", a.exigirSessao(a.exibirVendasUsuario))
+	mux.HandleFunc("GET /minhas-vendas/{idPedido}", a.exigirSessao(a.exibirDetalheVenda))
 }
 
 func (a *AdaptadorPaginas) registrarComandosFormularios(mux *nethttp.ServeMux) {
@@ -71,8 +87,16 @@ func (a *AdaptadorPaginas) registrarComandosFormularios(mux *nethttp.ServeMux) {
 	mux.HandleFunc("POST /cadastro", a.processarCadastroUsuario)
 	mux.HandleFunc("POST /sair", a.exigirSessao(a.processarEncerramentoSessao))
 	mux.HandleFunc("POST /perfil", a.exigirSessao(a.processarAtualizacaoPerfil))
+	mux.HandleFunc("POST /perfil/enderecos", a.exigirSessao(a.processarInclusaoEndereco))
+	mux.HandleFunc("POST /perfil/enderecos/{idEndereco}", a.exigirSessao(a.processarAtualizacaoEndereco))
+	mux.HandleFunc("POST /perfil/enderecos/{idEndereco}/principal", a.exigirSessao(a.processarEnderecoPrincipal))
+	mux.HandleFunc("POST /perfil/enderecos/{idEndereco}/remover", a.exigirSessao(a.processarRemocaoEndereco))
 	mux.HandleFunc("POST /carrinho/itens", a.exigirSessao(a.processarInclusaoCarrinho))
 	mux.HandleFunc("POST /carrinho/itens/{idAnuncio}/remover", a.exigirSessao(a.processarRemocaoCarrinho))
+	mux.HandleFunc("POST /checkout", a.exigirSessao(a.processarCheckout))
+	mux.HandleFunc("POST /minhas-vendas/{idPedido}/envio", a.exigirSessao(a.processarEnvioPedido))
+	mux.HandleFunc("POST /meus-pedidos/{idPedido}/recebimento", a.exigirSessao(a.processarRecebimentoPedido))
+	mux.HandleFunc("POST /meus-pedidos/{idPedido}/avaliacao", a.exigirSessao(a.processarAvaliacaoPedido))
 	mux.HandleFunc("POST /meus-anuncios/{idAnuncio}/excluir", a.exigirSessao(a.processarExclusaoAnuncio))
 	mux.HandleFunc("POST /anuncios", a.exigirSessao(a.processarCriacaoAnuncio))
 	mux.HandleFunc("POST /meus-anuncios/{idAnuncio}", a.exigirSessao(a.processarAtualizacaoAnuncio))

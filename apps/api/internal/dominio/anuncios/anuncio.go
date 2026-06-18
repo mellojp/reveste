@@ -87,16 +87,45 @@ func (a *Anuncio) Normalizar() {
 }
 
 func (a Anuncio) ValidarNovo() error {
-	if a.IDVendedor == "" || len(a.Titulo) < 3 || len(a.Descricao) < 10 ||
-		!CategoriaValida(a.Categoria) || a.Tamanho == "" || a.Cor == "" ||
-		a.PrecoCentavos <= 0 || !a.EstadoConservacao.Valido() ||
-		len(a.Fotos) < 2 || len(a.Fotos) > 5 {
-		return common.ErrDadosInvalidos
+	campos := make(map[string]string)
+	if a.IDVendedor == "" {
+		campos["vendedor"] = "Anúncio sem vendedor associado."
 	}
-	for _, foto := range a.Fotos {
-		if !URLFotoValida(foto.URL) {
-			return common.ErrDadosInvalidos
+	if len([]rune(a.Titulo)) < 3 {
+		campos["titulo"] = "Informe um título com pelo menos 3 caracteres."
+	} else if len([]rune(a.Titulo)) > 120 {
+		campos["titulo"] = "O título deve conter no máximo 120 caracteres."
+	}
+	if len([]rune(a.Descricao)) < 10 {
+		campos["descricao"] = "Descreva a peça com pelo menos 10 caracteres."
+	}
+	if !CategoriaValida(a.Categoria) {
+		campos["categoria"] = "Selecione uma categoria válida."
+	}
+	if a.Tamanho == "" {
+		campos["tamanho"] = "Informe o tamanho da peça."
+	}
+	if a.Cor == "" {
+		campos["cor"] = "Informe a cor da peça."
+	}
+	if a.PrecoCentavos <= 0 {
+		campos["preco"] = "Informe um preço maior que zero."
+	}
+	if !a.EstadoConservacao.Valido() {
+		campos["estado_conservacao"] = "Selecione um estado de conservação válido."
+	}
+	if len(a.Fotos) < 2 || len(a.Fotos) > 5 {
+		campos["fotos"] = "Envie de 2 a 5 fotos da peça."
+	} else {
+		for _, foto := range a.Fotos {
+			if !URLFotoValida(foto.URL) {
+				campos["fotos"] = "As fotos devem usar URLs válidas do armazenamento da ReVeste."
+				break
+			}
 		}
+	}
+	if len(campos) > 0 {
+		return common.NovaValidacao(campos)
 	}
 	return nil
 }

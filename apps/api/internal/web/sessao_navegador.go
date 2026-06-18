@@ -3,13 +3,10 @@ package web
 import (
 	nethttp "net/http"
 	"net/url"
-	"strings"
-	"time"
 
 	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/transporte"
 )
-
-const nomeCookieSessao = "reveste_session"
 
 type sessaoNavegador struct {
 	IDUsuario string
@@ -20,10 +17,10 @@ type manipuladorComSessao func(nethttp.ResponseWriter, *nethttp.Request, sessaoN
 
 func (a *AdaptadorPaginas) exigirSessao(proximo manipuladorComSessao) nethttp.HandlerFunc {
 	return func(w nethttp.ResponseWriter, r *nethttp.Request) {
-		token := tokenSessaoDoCookie(r)
+		token := transporte.TokenSessaoDoCookie(r)
 		idUsuario, err := a.controladorCadastro.IdentificarUsuario(r.Context(), token)
 		if err != nil {
-			removerCookieSessao(w, r)
+			a.removerCookieSessao(w, r)
 			a.responderRedirecionamento(w, r, "/entrar?retorno="+url.QueryEscape(retornoRequisicao(r)))
 			return
 		}
@@ -42,30 +39,10 @@ func retornoRequisicao(r *nethttp.Request) string {
 	return "/catalogo"
 }
 
-func tokenSessaoDoCookie(r *nethttp.Request) string {
-	cookie, err := r.Cookie(nomeCookieSessao)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(cookie.Value)
+func (a *AdaptadorPaginas) definirCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request, sessao casosdeuso.Sessao) {
+	transporte.DefinirCookieSessao(w, r, sessao.Token, sessao.ExpiraEm, a.confiarProxy)
 }
 
-func definirCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request, sessao casosdeuso.Sessao) {
-	nethttp.SetCookie(w, &nethttp.Cookie{
-		Name: nomeCookieSessao, Value: sessao.Token, Path: "/", HttpOnly: true,
-		Secure: requisicaoHTTPS(r), SameSite: nethttp.SameSiteLaxMode,
-		Expires: sessao.ExpiraEm, MaxAge: max(1, int(time.Until(sessao.ExpiraEm).Seconds())),
-	})
-}
-
-func removerCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request) {
-	nethttp.SetCookie(w, &nethttp.Cookie{
-		Name: nomeCookieSessao, Value: "", Path: "/", HttpOnly: true,
-		Secure: requisicaoHTTPS(r), SameSite: nethttp.SameSiteLaxMode,
-		Expires: time.Unix(1, 0), MaxAge: -1,
-	})
-}
-
-func requisicaoHTTPS(r *nethttp.Request) bool {
-	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+func (a *AdaptadorPaginas) removerCookieSessao(w nethttp.ResponseWriter, r *nethttp.Request) {
+	transporte.RemoverCookieSessao(w, r, a.confiarProxy)
 }

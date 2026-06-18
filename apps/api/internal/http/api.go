@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 	nethttp "net/http"
-	"sync"
 
 	"reveste/apps/api/internal/casosdeuso"
+	"reveste/apps/api/internal/transporte"
 )
 
 type verificadorProntidao interface {
@@ -14,15 +14,17 @@ type verificadorProntidao interface {
 }
 
 type API struct {
-	cadastros *casosdeuso.ControladorCadastro
-	anuncios  *casosdeuso.ControladorAnuncio
-	compras   *casosdeuso.ControladorCarrinho
-	uploads   *casosdeuso.ControladorUpload
-	prontidao verificadorProntidao
-	logger    *slog.Logger
-	hostBlob  string
-	loginMu   sync.Mutex
-	logins    map[string]tentativasLogin
+	cadastros    *casosdeuso.ControladorCadastro
+	anuncios     *casosdeuso.ControladorAnuncio
+	compras      *casosdeuso.ControladorCarrinho
+	checkout     *casosdeuso.ControladorCheckout
+	pedidos      *casosdeuso.ControladorPedidos
+	uploads      *casosdeuso.ControladorUpload
+	prontidao    verificadorProntidao
+	logger       *slog.Logger
+	hostBlob     string
+	limitador    *transporte.LimitadorLogin
+	confiarProxy bool
 }
 
 func NovaAPI(
@@ -30,20 +32,27 @@ func NovaAPI(
 	anuncios *casosdeuso.ControladorAnuncio,
 	compras *casosdeuso.ControladorCarrinho,
 	uploads *casosdeuso.ControladorUpload,
+	checkout *casosdeuso.ControladorCheckout,
+	pedidos *casosdeuso.ControladorPedidos,
 	prontidao verificadorProntidao,
 	logger *slog.Logger,
 	hostBlob string,
+	limitador *transporte.LimitadorLogin,
+	confiarProxy bool,
 	paginasHTML nethttp.Handler,
 ) nethttp.Handler {
 	api := &API{
-		cadastros: cadastros,
-		anuncios:  anuncios,
-		compras:   compras,
-		uploads:   uploads,
-		prontidao: prontidao,
-		logger:    logger,
-		hostBlob:  hostBlob,
-		logins:    make(map[string]tentativasLogin),
+		cadastros:    cadastros,
+		anuncios:     anuncios,
+		compras:      compras,
+		checkout:     checkout,
+		pedidos:      pedidos,
+		uploads:      uploads,
+		prontidao:    prontidao,
+		logger:       logger,
+		hostBlob:     hostBlob,
+		limitador:    limitador,
+		confiarProxy: confiarProxy,
 	}
 	mux := nethttp.NewServeMux()
 
@@ -51,6 +60,9 @@ func NovaAPI(
 	api.registrarRotasCadastros(mux)
 	api.registrarRotasAnuncios(mux)
 	api.registrarRotasCarrinho(mux)
+	api.registrarRotasCheckout(mux)
+	api.registrarRotasEnderecos(mux)
+	api.registrarRotasPedidos(mux)
 	api.registrarRotasUploads(mux)
 	api.registrarRotasFrontend(mux, paginasHTML)
 

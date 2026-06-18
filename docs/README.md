@@ -9,6 +9,11 @@
   conclusao dos fluxos de perfil e anuncios e refinamentos do frontend.
 - `MIGRACAO_HTMX_SSR.md`: arquitetura, fronteiras e regras da migracao SSR.
 
+Os PDFs em `docs/base` registram etapas anteriores da modelagem acadêmica. Quando
+divergirem da implementacao atual, prevalecem `MODELO_CANONICO.md`,
+`MIGRACAO_HTMX_SSR.md` e `ALINHAMENTO_IMPLEMENTACAO.md`. Em particular, a arquitetura
+atual usa SSR/HTMX e Vercel Blob, nao React SPA e Amazon S3.
+
 O fluxo principal da API e:
 
 ```text
@@ -66,6 +71,7 @@ DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable
 HTTP_ADDRESS=:8080
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_SEU_STORE_ID_SEU_TOKEN
 BLOB_PUBLIC_HOST=SEU_STORE_ID.public.blob.vercel-storage.com
+JOBS_INTERVAL=1m
 ```
 
 O token e obtido ao criar/conectar um Blob store **publico** no projeto da Vercel.
@@ -86,6 +92,10 @@ go run ./apps/api/cmd/api
 ```
 
 O frontend fica disponivel em `http://localhost:8080`.
+
+O mesmo processo executa periodicamente os jobs de expiracao de reservas de checkout e
+de vencimento do prazo de envio. `JOBS_INTERVAL` controla o intervalo e aceita duracoes
+Go, como `30s`, `1m` ou `5m`.
 
 As paginas sao renderizadas no servidor pelo adaptador `internal/web` e
 aprimoradas com uma copia local do HTMX, sem bundler ou runtime SPA. O CSS e os

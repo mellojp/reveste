@@ -26,7 +26,6 @@
 html {
   overflow-x: hidden;
   background: #122d22;
-  scroll-behavior: smooth;
   scrollbar-color: var(--sage-dark) var(--sand);
   scrollbar-width: thin;
 }
@@ -145,14 +144,6 @@ legend { margin-bottom: 1rem; font-family: var(--serif); font-size: 1.5rem; font
   from { opacity: 0; }
 }
 .route-enter { animation: none; }
-
-body.htmx-swapping #app { 
-  animation: page-exit .28s var(--ease-premium) both; 
-}
-
-@keyframes page-exit {
-  to { opacity: 0; transform: scale(0.96); }
-}
 
 @keyframes content-reveal {
   from { opacity: 0; transform: translateY(6px); }

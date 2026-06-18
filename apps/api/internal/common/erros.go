@@ -13,6 +13,9 @@ var (
 	ErrVendedorBloqueado     = errors.New("conta bloqueada para novas vendas")
 	ErrTransicaoInvalida     = errors.New("transicao de estado invalida")
 	ErrServicoIndisponivel   = errors.New("servico temporariamente indisponivel")
+	ErrCarrinhoVazio         = errors.New("carrinho sem itens para finalizar")
+	ErrSemItensDisponiveis   = errors.New("nenhum item do carrinho esta disponivel")
+	ErrPagamentoRecusado     = errors.New("pagamento recusado pelo provedor")
 )
 
 type ErroValidacao struct {

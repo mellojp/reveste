@@ -7,6 +7,26 @@ import (
 	"reveste/apps/api/internal/common"
 )
 
+func TestEnderecoValidarApontaCamposInvalidos(t *testing.T) {
+	campos := Endereco{CEP: "123", Estado: "XX"}.Validar()
+	for _, esperado := range []string{"cep", "logradouro", "numero", "bairro", "cidade", "estado"} {
+		if campos[esperado] == "" {
+			t.Fatalf("esperava erro no campo %q; campos = %v", esperado, campos)
+		}
+	}
+}
+
+func TestEnderecoValidarAceitaEnderecoCompleto(t *testing.T) {
+	endereco := Endereco{
+		CEP: "49000000", Logradouro: "Rua A", Numero: "10",
+		Bairro: "Centro", Cidade: "Aracaju", Estado: "SE",
+	}
+	endereco.Normalizar()
+	if campos := endereco.Validar(); len(campos) != 0 {
+		t.Fatalf("endereço válido não deveria ter erros: %v", campos)
+	}
+}
+
 func TestValidarUsuarioInformaCamposInvalidos(t *testing.T) {
 	usuario := Usuario{
 		Nome:      "A",

@@ -31,7 +31,7 @@ func (a *AdaptadorPaginas) responderRedirecionamento(
 	destino string,
 ) {
 	if r.Header.Get("HX-Request") == "true" {
-		w.Header().Set("HX-Redirect", destino)
+		w.Header().Set("HX-Location", destino)
 		w.WriteHeader(nethttp.StatusNoContent)
 		return
 	}

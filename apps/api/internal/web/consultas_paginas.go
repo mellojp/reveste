@@ -9,6 +9,7 @@ import (
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
+	"reveste/apps/api/internal/transporte"
 )
 
 func (a *AdaptadorPaginas) exibirPaginaInicial(w nethttp.ResponseWriter, r *nethttp.Request) {
@@ -76,7 +77,7 @@ func (a *AdaptadorPaginas) consultarLoteCatalogo(r *nethttp.Request, deslocament
 		Limite:            25,
 		Deslocamento:      deslocamento,
 	}
-	if token := tokenSessaoDoCookie(r); token != "" {
+	if token := transporte.TokenSessaoDoCookie(r); token != "" {
 		if id, err := a.controladorCadastro.IdentificarUsuario(r.Context(), token); err == nil {
 			filtro.ExcluirVendedor = id
 		}
@@ -117,6 +118,9 @@ func (a *AdaptadorPaginas) exibirPerfilPublicoVendedor(w nethttp.ResponseWriter,
 	}
 	contexto.PerfilVendedor = &perfil
 	contexto.Titulo = perfil.Vendedor.Nome
+	if media, err := a.controladorPedidos.MediaVendedor(r.Context(), r.PathValue("idVendedor")); err == nil {
+		contexto.AvaliacaoVendedor = media
+	}
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
 }
 
@@ -141,8 +145,11 @@ func (a *AdaptadorPaginas) exibirCadastroUsuario(w nethttp.ResponseWriter, r *ne
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
 }
 
-func (a *AdaptadorPaginas) exibirPerfilUsuario(w nethttp.ResponseWriter, r *nethttp.Request, _ sessaoNavegador) {
+func (a *AdaptadorPaginas) exibirPerfilUsuario(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
 	contexto := a.prepararContextoDocumento(r, "Meu perfil", conteudoPerfilUsuario)
+	if media, err := a.controladorPedidos.MediaVendedor(r.Context(), sessao.IDUsuario); err == nil {
+		contexto.AvaliacaoVendedor = media
+	}
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
 }
 
@@ -196,6 +203,97 @@ func (a *AdaptadorPaginas) exibirCarrinhoUsuario(w nethttp.ResponseWriter, r *ne
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
 }
 
+func (a *AdaptadorPaginas) exibirCheckout(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Finalizar compra", conteudoCheckout)
+	resumo, err := a.controladorCheckout.ResumoCheckout(r.Context(), sessao.IDUsuario, "")
+	if err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/carrinho", mensagemFalhaCheckout(err)))
+		return
+	}
+	contexto.ResumoCompra = &resumo
+	if enderecos, err := a.controladorCadastro.ListarEnderecos(r.Context(), sessao.IDUsuario); err == nil {
+		contexto.EnderecosUsuario = enderecos
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirEnderecos(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Meus endereços", conteudoEnderecos)
+	enderecos, err := a.controladorCadastro.ListarEnderecos(r.Context(), sessao.IDUsuario)
+	if err != nil {
+		contexto.MensagemErro = "Não foi possível carregar seus endereços."
+	} else {
+		contexto.EnderecosUsuario = enderecos
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirEdicaoEndereco(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Editar endereço", conteudoFormularioEndereco)
+	endereco, err := a.controladorCadastro.BuscarEndereco(r.Context(), sessao.IDUsuario, r.PathValue("idEndereco"))
+	if err != nil {
+		contexto.Conteudo = conteudoNaoEncontrado
+		contexto.Titulo = "Endereço não encontrado"
+		a.responderDocumentoHTML(w, nethttp.StatusNotFound, contexto)
+		return
+	}
+	contexto.EnderecoEmEdicao = &endereco
+	contexto.ValoresFormulario = valoresFormularioEndereco(endereco)
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirPedidosUsuario(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Meus pedidos", conteudoPedidosUsuario)
+	contexto.CompraConfirmada = r.URL.Query().Get("comprado") == "1"
+	pedidos, err := a.controladorCheckout.ListarPedidos(r.Context(), sessao.IDUsuario)
+	if err != nil {
+		contexto.MensagemErro = "Não foi possível carregar seus pedidos."
+	} else {
+		contexto.PedidosListados = pedidos
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirDetalhePedido(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Detalhes do pedido", conteudoDetalhePedido)
+	pedido, err := a.controladorPedidos.DetalharCompra(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"))
+	if err != nil {
+		contexto.Conteudo = conteudoNaoEncontrado
+		contexto.Titulo = "Pedido não encontrado"
+		a.responderDocumentoHTML(w, nethttp.StatusNotFound, contexto)
+		return
+	}
+	contexto.PedidoDetalhe = &pedido
+	if avaliacao, existe, err := a.controladorPedidos.AvaliacaoDoPedido(r.Context(), pedido.ID); err == nil && existe {
+		contexto.AvaliacaoPedido = &avaliacao
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirVendasUsuario(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Minhas vendas", conteudoVendasUsuario)
+	vendas, err := a.controladorPedidos.ListarVendas(r.Context(), sessao.IDUsuario)
+	if err != nil {
+		contexto.MensagemErro = "Não foi possível carregar suas vendas."
+	} else {
+		contexto.PedidosListados = vendas
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirDetalheVenda(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Detalhes da venda", conteudoDetalheVenda)
+	pedido, err := a.controladorPedidos.DetalharVenda(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"))
+	if err != nil {
+		contexto.Conteudo = conteudoNaoEncontrado
+		contexto.Titulo = "Venda não encontrada"
+		a.responderDocumentoHTML(w, nethttp.StatusNotFound, contexto)
+		return
+	}
+	contexto.PedidoDetalhe = &pedido
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
 func interpretarFiltrosCatalogo(r *nethttp.Request) filtrosCatalogo {
 	return filtrosCatalogo{
 		Busca: r.URL.Query().Get("q"), Categoria: r.URL.Query().Get("categoria"),
@@ -240,6 +338,14 @@ func valoresFormularioAnuncio(item anuncios.Anuncio) map[string]string {
 		"tamanho": item.Tamanho, "cor": item.Cor,
 		"estado_conservacao": string(item.EstadoConservacao),
 		"preco":              strings.ReplaceAll(formatarDinheiro(item.PrecoCentavos), "R$ ", ""),
+	}
+}
+
+func valoresFormularioEndereco(endereco cadastros.Endereco) map[string]string {
+	return map[string]string{
+		"cep": endereco.CEP, "estado": endereco.Estado, "logradouro": endereco.Logradouro,
+		"numero": endereco.Numero, "complemento": endereco.Complemento,
+		"bairro": endereco.Bairro, "cidade": endereco.Cidade,
 	}
 }
 

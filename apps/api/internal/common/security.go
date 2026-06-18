@@ -26,6 +26,18 @@ func (GeradorIDCriptografico) Novo() string {
 	return texto[0:8] + "-" + texto[8:12] + "-" + texto[12:16] + "-" + texto[16:20] + "-" + texto[20:32]
 }
 
+// HashEstavel devolve um identificador deterministico (hex de 64 caracteres) para os valores
+// informados. Util para chaves de idempotencia que precisam ser reproduzíveis a partir do
+// mesmo conjunto de entradas, sem expor os valores originais.
+func HashEstavel(valores ...string) string {
+	hash := sha256.New()
+	for _, valor := range valores {
+		hash.Write([]byte(valor))
+		hash.Write([]byte{0})
+	}
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
 type RelogioSistema struct{}
 
 func (RelogioSistema) Agora() time.Time {

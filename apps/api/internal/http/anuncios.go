@@ -116,7 +116,7 @@ func (a *API) listarAnuncios(w nethttp.ResponseWriter, r *nethttp.Request) {
 		idUsuario, err := a.cadastros.IdentificarUsuario(r.Context(), token)
 		if err != nil {
 			if porCookie {
-				removerCookieSessao(w, r)
+				a.removerCookieSessao(w, r)
 			}
 			a.escreverErro(w, err)
 			return

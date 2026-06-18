@@ -49,6 +49,12 @@ func (a *API) escreverErro(w nethttp.ResponseWriter, err error) {
 		status, codigo, mensagem = nethttp.StatusConflict, "TRANSICAO_INVALIDA", err.Error()
 	case errors.Is(err, common.ErrServicoIndisponivel):
 		status, codigo, mensagem = nethttp.StatusServiceUnavailable, "SERVICO_INDISPONIVEL", "O armazenamento de imagens não está configurado."
+	case errors.Is(err, common.ErrCarrinhoVazio):
+		status, codigo, mensagem = nethttp.StatusUnprocessableEntity, "CARRINHO_VAZIO", "Adicione peças à sacola antes de finalizar."
+	case errors.Is(err, common.ErrSemItensDisponiveis):
+		status, codigo, mensagem = nethttp.StatusConflict, "SEM_ITENS_DISPONIVEIS", "Nenhuma peça da sacola está disponível para compra."
+	case errors.Is(err, common.ErrPagamentoRecusado):
+		status, codigo, mensagem = nethttp.StatusPaymentRequired, "PAGAMENTO_RECUSADO", "O pagamento foi recusado pelo provedor."
 	default:
 		a.logger.Error("erro nao tratado", "erro", err)
 	}
