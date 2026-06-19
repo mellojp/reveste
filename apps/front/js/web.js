@@ -60,12 +60,13 @@ document.addEventListener("click", (event) => {
   const deletion = event.target.closest("[data-confirm-delete]");
   if (deletion && deletion.dataset.confirming !== "true") {
     event.preventDefault();
+    deletion.dataset.originalLabel ||= deletion.textContent;
     deletion.dataset.confirming = "true";
-    deletion.textContent = "Confirmar exclusão";
+    deletion.textContent = deletion.dataset.confirmLabel || "Confirmar exclusão";
     window.setTimeout(() => {
       if (deletion.isConnected) {
         deletion.dataset.confirming = "false";
-        deletion.textContent = "Excluir";
+        deletion.textContent = deletion.dataset.originalLabel;
       }
     }, 5000);
   }
@@ -73,6 +74,12 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeMainMenu();
+
+  const chatInput = event.target.closest("[data-chat-compose] textarea");
+  if (chatInput && event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+    event.preventDefault();
+    if (chatInput.value.trim()) chatInput.form.requestSubmit();
+  }
 });
 
 document.addEventListener("submit", async (event) => {
@@ -216,6 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeEditors(document);
   initializeRegistrationForms(document);
   exibirAvisoDaURL();
+  rolarChatSeNecessario();
 });
 
 // Reseta o scroll ao topo em navegacoes de pagina inteira. Cobre tanto links boosted
@@ -229,6 +237,29 @@ window.addEventListener("popstate", () => {
 document.addEventListener("htmx:afterSwap", (event) => {
   if (event.detail?.target?.tagName !== "BODY" || restaurandoHistorico) return;
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+});
+
+// Chat: mantem a conversa rolada ate a ultima mensagem. So rola automaticamente quando o
+// usuario ja estava no fim, para o polling nao interromper a leitura do historico.
+let chatPresoNoFim = true;
+function chatNoFim(elemento) {
+  return elemento.scrollHeight - elemento.scrollTop - elemento.clientHeight < 80;
+}
+function rolarChatSeNecessario() {
+  const thread = document.getElementById("chat-thread");
+  if (thread && chatPresoNoFim) thread.scrollTop = thread.scrollHeight;
+}
+document.addEventListener("htmx:beforeSwap", (event) => {
+  const alvo = event.detail?.target;
+  if (alvo?.id === "chat-thread") chatPresoNoFim = chatNoFim(alvo);
+  else if (alvo?.tagName === "BODY") chatPresoNoFim = true;
+});
+document.addEventListener("htmx:afterSettle", rolarChatSeNecessario);
+document.addEventListener("htmx:afterRequest", (event) => {
+  const form = event.detail?.elt?.closest?.("[data-chat-compose]");
+  if (!form || !event.detail.successful) return;
+  form.reset();
+  form.querySelector("textarea")?.focus({ preventScroll: true });
 });
 
 window.addEventListener("popstate", () => {

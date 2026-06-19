@@ -41,6 +41,12 @@
 - confirmar o recebimento, finalizando o pedido;
 - avaliar o vendedor por um pedido finalizado (nota e comentario), com media no perfil publico;
 - bloquear o vendedor automaticamente ao acumular itens nao enviados (por prazo);
+- reativar a conta de vendedor bloqueada apos o pagamento (simulado) da taxa de reativacao,
+  desbloqueando e zerando o contador de itens nao enviados;
+- notificar o comprador e o vendedor nos eventos do pedido (envio, recebimento e avaliacao),
+  com caixa de entrada, contador de nao lidas no cabecalho e marcacao de leitura;
+- conversar por pedido entre comprador e vendedor, com autorizacao restrita aos participantes
+  e notificacao do interlocutor a cada nova mensagem;
 - cancelar pedidos vencidos, registrar falha da entrega e reembolso simulado;
 - validar CPF, anuncio, quantidade de fotos, categoria e disponibilidade;
 - apresentar um fluxo web navegavel de conta, catalogo, publicacao, perfil e carrinho.
@@ -127,6 +133,11 @@ exposto ao JavaScript nem persistido em Web Storage. Clientes de API podem solic
 - `POST /v1/me/vendas/{idPedido}/envio`: registra a postagem (provedor e codigo de rastreio);
 - `POST /v1/me/pedidos/{idPedido}/recebimento`: confirma o recebimento e finaliza o pedido;
 - `POST /v1/me/pedidos/{idPedido}/avaliacao`: registra a avaliacao do vendedor;
+- `POST /v1/me/reativacao`: cobra a taxa (simulada) e reativa a conta do vendedor bloqueado;
+- `GET /v1/me/notificacoes`: lista as notificacoes do usuario e o total de nao lidas;
+- `POST /v1/me/notificacoes/lidas`: marca todas as notificacoes do usuario como lidas;
+- `GET /v1/me/pedidos/{idPedido}/conversa`: abre a conversa do pedido (participantes apenas);
+- `POST /v1/me/pedidos/{idPedido}/mensagens`: envia uma mensagem na conversa do pedido;
 - `GET /v1/anuncios`: quando recebe um Bearer valido, omite anuncios do proprio
   usuario; sem autenticacao, continua publico;
 - `GET /saude/prontidao`: verifica a conexao PostgreSQL com timeout;
@@ -244,9 +255,7 @@ as portas usadas pelos controladores.
 
 ## Comportamentos modelados, ainda nao executaveis
 
-- pagamento e reembolso reais (hoje os dois sao simulados), alem do repasse ao vendedor;
-- reativacao de vendedor bloqueado apos pagamento de taxa;
-- chat e notificacoes.
+- pagamento e reembolso reais (hoje os dois sao simulados), alem do repasse ao vendedor.
 
 Essas classes ja existem no dominio e no esquema SQL, mas seus casos de uso ainda
 precisam ser implementados nas proximas fases.

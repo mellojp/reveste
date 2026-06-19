@@ -11,6 +11,7 @@ import (
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
+	"reveste/apps/api/internal/dominio/interacao"
 )
 
 type Store struct {
@@ -25,6 +26,7 @@ type Store struct {
 	comprasPorChave     map[string]compras.Compra
 	pedidosPorComprador map[string][]compras.Pedido
 	enderecosPorUsuario map[string][]cadastros.Endereco
+	notificacoes        []interacao.Notificacao
 }
 
 type sessao struct {
@@ -180,6 +182,109 @@ func (r *Store) BuscarUsuarioPorID(ctx context.Context, id string) (cadastros.Us
 		return cadastros.Usuario{}, common.ErrNaoEncontrado
 	}
 	return usuario, nil
+}
+
+func (r *Store) CriarNotificacao(ctx context.Context, n interacao.Notificacao) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.notificacoes = append(r.notificacoes, n)
+	return nil
+}
+
+func (r *Store) ListarNotificacoes(ctx context.Context, idUsuario string, limite int) ([]interacao.Notificacao, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var lista []interacao.Notificacao
+	for i := len(r.notificacoes) - 1; i >= 0 && len(lista) < limite; i-- {
+		if r.notificacoes[i].IDUsuario == idUsuario {
+			lista = append(lista, r.notificacoes[i])
+		}
+	}
+	return lista, nil
+}
+
+func (r *Store) ContarNotificacoesNaoLidas(ctx context.Context, idUsuario string) (int, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	total := 0
+	for _, n := range r.notificacoes {
+		if n.IDUsuario == idUsuario && n.LidaEm == nil {
+			total++
+		}
+	}
+	return total, nil
+}
+
+func (r *Store) MarcarNotificacoesLidas(ctx context.Context, idUsuario string, agora time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for i := range r.notificacoes {
+		if r.notificacoes[i].IDUsuario == idUsuario && r.notificacoes[i].LidaEm == nil {
+			lida := agora
+			r.notificacoes[i].LidaEm = &lida
+		}
+	}
+	return nil
+}
+
+func (r *Store) RemoverNotificacao(ctx context.Context, idUsuario, idNotificacao string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for i, n := range r.notificacoes {
+		if n.ID == idNotificacao && n.IDUsuario == idUsuario {
+			r.notificacoes = append(r.notificacoes[:i], r.notificacoes[i+1:]...)
+			break
+		}
+	}
+	return nil
+}
+
+func (r *Store) LimparNotificacoes(ctx context.Context, idUsuario string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	filtradas := r.notificacoes[:0]
+	for _, n := range r.notificacoes {
+		if n.IDUsuario != idUsuario {
+			filtradas = append(filtradas, n)
+		}
+	}
+	r.notificacoes = filtradas
+	return nil
+}
+
+func (r *Store) ReativarVendedor(ctx context.Context, idVendedor string, agora time.Time) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	usuario, existe := r.usuarios[idVendedor]
+	if !existe || !usuario.BloqueadoParaVendas {
+		return false, nil
+	}
+	usuario.BloqueadoParaVendas = false
+	usuario.ItensNaoEnviados = 0
+	usuario.AtualizadoEm = agora
+	r.usuarios[idVendedor] = usuario
+	return true, nil
 }
 
 func (r *Store) BuscarUsuarioPorEmailOuCPF(ctx context.Context, identificador string) (cadastros.Usuario, error) {

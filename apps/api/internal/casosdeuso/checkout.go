@@ -2,11 +2,13 @@ package casosdeuso
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/compras"
+	"reveste/apps/api/internal/dominio/interacao"
 )
 
 const (
@@ -17,14 +19,15 @@ const (
 // ControladorCheckout coordena a finalizacao da compra em fases: reserva e persiste a
 // intencao, processa o pagamento e confirma ou desfaz a intencao.
 type ControladorCheckout struct {
-	usuarios   OperacoesUsuarios
-	anuncios   OperacoesAnuncios
-	carrinhos  OperacoesCarrinhos
-	checkout   OperacoesCheckout
-	pagamentos ProcessadorPagamento
-	ids        GeradorID
-	relogio    Relogio
-	politica   compras.PoliticaCobranca
+	usuarios     OperacoesUsuarios
+	anuncios     OperacoesAnuncios
+	carrinhos    OperacoesCarrinhos
+	checkout     OperacoesCheckout
+	notificacoes RegistroNotificacoes
+	pagamentos   ProcessadorPagamento
+	ids          GeradorID
+	relogio      Relogio
+	politica     compras.PoliticaCobranca
 }
 
 func NovoControladorCheckout(
@@ -32,6 +35,7 @@ func NovoControladorCheckout(
 	anuncios OperacoesAnuncios,
 	carrinhos OperacoesCarrinhos,
 	checkout OperacoesCheckout,
+	notificacoes RegistroNotificacoes,
 	pagamentos ProcessadorPagamento,
 	ids GeradorID,
 	relogio Relogio,
@@ -39,7 +43,7 @@ func NovoControladorCheckout(
 ) *ControladorCheckout {
 	return &ControladorCheckout{
 		usuarios: usuarios, anuncios: anuncios, carrinhos: carrinhos,
-		checkout: checkout, pagamentos: pagamentos, ids: ids, relogio: relogio,
+		checkout: checkout, notificacoes: notificacoes, pagamentos: pagamentos, ids: ids, relogio: relogio,
 		politica: politica,
 	}
 }
@@ -94,9 +98,35 @@ func (c *ControladorCheckout) FinalizarCompra(
 		return compras.Compra{}, common.ErrPagamentoRecusado
 	}
 
-	return c.checkout.ConfirmarCompraAprovada(
+	confirmada, err := c.checkout.ConfirmarCompraAprovada(
 		ctx, chave, resultado.Provedor, resultado.IdentificadorExterno, c.relogio.Agora(),
 	)
+	if err != nil {
+		return compras.Compra{}, err
+	}
+	c.notificarVendedores(ctx, confirmada)
+	return confirmada, nil
+}
+
+func (c *ControladorCheckout) notificarVendedores(ctx context.Context, compra compras.Compra) {
+	if c.notificacoes == nil {
+		return
+	}
+	for _, pedido := range compra.Pedidos {
+		quantidade := len(pedido.Itens)
+		pecas := "peças"
+		if quantidade == 1 {
+			pecas = "peça"
+		}
+		_ = c.notificacoes.CriarNotificacao(ctx, interacao.Notificacao{
+			ID:        c.ids.Novo(),
+			IDUsuario: pedido.IDVendedor,
+			Tipo:      interacao.NotificacaoVendaRealizada,
+			Conteudo:  fmt.Sprintf("Nova venda! Você vendeu %d %s. Prepare o envio dentro do prazo.", quantidade, pecas),
+			IDPedido:  pedido.ID,
+			CriadaEm:  c.relogio.Agora(),
+		})
+	}
 }
 
 // ListarPedidos devolve os pedidos do comprador, dos mais recentes para os mais antigos.

@@ -11,7 +11,9 @@ import (
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/common"
 	"reveste/apps/api/internal/dominio/anuncios"
+	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
+	"reveste/apps/api/internal/dominio/interacao"
 )
 
 func funcoesApresentacaoTemplates() template.FuncMap {
@@ -22,6 +24,10 @@ func funcoesApresentacaoTemplates() template.FuncMap {
 		"linhaDeEstrelas":    linhaDeEstrelas,
 		"extrairAno":         func(valor time.Time) int { return valor.Year() },
 		"formatarRotulo":     formatarRotulo,
+		"classeStatus":       classeStatus,
+		"taxaReativacao":     func() int64 { return cadastros.TaxaReativacaoCentavos },
+		"linkNotificacao":    linkNotificacao,
+		"iconeNotificacao":   iconeNotificacao,
 		"iniciais":           iniciais,
 		"primeiroNome":       primeiroNome,
 		"incrementar":        func(valor int) int { return valor + 1 },
@@ -56,6 +62,23 @@ func funcoesApresentacaoTemplates() template.FuncMap {
 		"valorFormulario": func(valores map[string]string, nome string) string {
 			return valores[nome]
 		},
+	}
+}
+
+func iconeNotificacao(tipo string) string {
+	switch tipo {
+	case interacao.NotificacaoVendaRealizada:
+		return "✓"
+	case interacao.NotificacaoPedidoEnviado:
+		return "↗"
+	case interacao.NotificacaoPedidoRecebido:
+		return "⌂"
+	case interacao.NotificacaoAvaliacaoRecebida:
+		return "★"
+	case interacao.NotificacaoMensagemRecebida:
+		return "✦"
+	default:
+		return "R"
 	}
 }
 
@@ -167,6 +190,47 @@ func formatarRotulo(valor any) string {
 		return ""
 	}
 	return strings.ToUpper(texto[:1]) + texto[1:]
+}
+
+// classeStatus projeta um status de anuncio ou pedido em um tom visual do badge
+// (sucesso, em andamento, encerrado negativo ou neutro), para que o estado seja
+// lido de relance sem depender apenas do texto.
+func classeStatus(valor any) string {
+	switch fmt.Sprint(valor) {
+	case "disponivel", "finalizado", "aprovada", "aprovado", "recebido", "entregue", "processado",
+		interacao.NotificacaoVendaRealizada, interacao.NotificacaoPedidoRecebido, interacao.NotificacaoAvaliacaoRecebida:
+		return "is-success"
+	case "aguardando_pagamento", "aguardando_envio", "aguardando_entrega", "aguardando_postagem",
+		"criado", "reservado", "pendente", "enviado", "postado", "em_transito",
+		interacao.NotificacaoPedidoEnviado, interacao.NotificacaoMensagemRecebida:
+		return "is-progress"
+	case "cancelado", "cancelada", "recusada", "recusado", "expirado", "expirada",
+		"suspenso", "excluido", "falhou", "nao_enviado":
+		return "is-danger"
+	default:
+		return "is-neutral"
+	}
+}
+
+// linkNotificacao resolve o destino de uma notificacao a partir do tipo do evento e do
+// pedido associado. O lado (comprador ou vendedor) e inferido pelo tipo, ja que o
+// destinatario da notificacao corresponde ao papel esperado em cada evento.
+func linkNotificacao(n interacao.Notificacao) string {
+	if n.IDPedido == "" {
+		return ""
+	}
+	switch n.Tipo {
+	case interacao.NotificacaoVendaRealizada:
+		return "/minhas-vendas/" + n.IDPedido
+	case interacao.NotificacaoPedidoEnviado:
+		return "/meus-pedidos/" + n.IDPedido
+	case interacao.NotificacaoPedidoRecebido, interacao.NotificacaoAvaliacaoRecebida:
+		return "/minhas-vendas/" + n.IDPedido
+	case interacao.NotificacaoMensagemRecebida:
+		return "/pedidos/" + n.IDPedido + "/conversa"
+	default:
+		return ""
+	}
 }
 
 func iniciais(nome string) string {

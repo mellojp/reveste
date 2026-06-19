@@ -177,6 +177,91 @@ func (a *AdaptadorPaginas) processarCheckout(w nethttp.ResponseWriter, r *nethtt
 	a.responderRedirecionamento(w, r, "/meus-pedidos?comprado=1")
 }
 
+func (a *AdaptadorPaginas) processarLeituraNotificacoes(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	if err := a.controladorNotificacoes.MarcarTodasLidas(r.Context(), sessao.IDUsuario); err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/notificacoes", "Não foi possível atualizar as notificações."))
+		return
+	}
+	a.responderRedirecionamento(w, r, "/notificacoes")
+}
+
+func (a *AdaptadorPaginas) processarRemocaoNotificacao(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	if err := a.controladorNotificacoes.Remover(r.Context(), sessao.IDUsuario, r.PathValue("idNotificacao")); err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/notificacoes", "Não foi possível remover a notificação."))
+		return
+	}
+	a.responderRedirecionamento(w, r, "/notificacoes")
+}
+
+func (a *AdaptadorPaginas) processarLimpezaNotificacoes(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	if err := a.controladorNotificacoes.Limpar(r.Context(), sessao.IDUsuario); err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/notificacoes", "Não foi possível limpar as notificações."))
+		return
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/notificacoes", "Notificações removidas."))
+}
+
+func (a *AdaptadorPaginas) processarMensagemConversa(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	idPedido := r.PathValue("idPedido")
+	destino := "/pedidos/" + url.PathEscape(idPedido) + "/conversa"
+	erroEnvio := a.controladorConversas.Enviar(r.Context(), sessao.IDUsuario, idPedido, r.FormValue("conteudo"))
+
+	// Sem JS: redireciona de volta (com aviso em caso de falha) e o thread recarrega.
+	if r.Header.Get("HX-Request") != "true" {
+		if erroEnvio != nil {
+			destino = adicionarMensagemNaURL(destino, mensagemFalhaConversa(erroEnvio))
+		}
+		a.responderRedirecionamento(w, r, destino)
+		return
+	}
+
+	// Via HTMX: devolve o thread atualizado para troca imediata. Reabrir tambem reautoriza;
+	// quem nao participa recebe 403 e o thread permanece intacto (a config nao troca em 4xx).
+	conversa, err := a.controladorConversas.Abrir(r.Context(), sessao.IDUsuario, idPedido)
+	if err != nil {
+		w.WriteHeader(nethttp.StatusForbidden)
+		return
+	}
+	contexto := a.prepararContextoDocumento(r, "Conversa do pedido", conteudoConversa)
+	contexto.ConversaDetalhe = &conversa
+	a.responderFragmentoHTML(w, fragmentoConversaThread, contexto)
+}
+
+func mensagemFalhaConversa(err error) string {
+	switch {
+	case errors.Is(err, common.ErrNaoPermitido), errors.Is(err, common.ErrNaoEncontrado):
+		return "Você não participa desta conversa."
+	default:
+		var validacao common.ErroValidacao
+		if errors.As(err, &validacao) {
+			for _, mensagem := range validacao.Campos {
+				return mensagem
+			}
+		}
+		return "Não foi possível enviar sua mensagem."
+	}
+}
+
+func (a *AdaptadorPaginas) processarReativacaoVendedor(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	mensagem := "Conta reativada. Você já pode voltar a vender."
+	if err := a.controladorVendedor.Reativar(r.Context(), sessao.IDUsuario); err != nil {
+		mensagem = mensagemFalhaReativacao(err)
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/minhas-vendas", mensagem))
+}
+
+func mensagemFalhaReativacao(err error) string {
+	switch {
+	case errors.Is(err, common.ErrTransicaoInvalida):
+		return "Sua conta não está bloqueada."
+	case errors.Is(err, common.ErrPagamentoRecusado):
+		return "O pagamento da taxa foi recusado. Tente novamente."
+	default:
+		return "Não foi possível reativar sua conta agora."
+	}
+}
+
 func (a *AdaptadorPaginas) processarEnvioPedido(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
 	_ = r.ParseForm()
 	err := a.controladorPedidos.MarcarEnviado(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"), casosdeuso.EntradaEnvio{

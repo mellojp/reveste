@@ -86,7 +86,7 @@
 .section-heading h1, .section-heading h2 { margin-bottom: .35rem; }
 .section-heading p { margin-bottom: 0; color: var(--muted); }
 .page-intro { max-width: 760px; margin-bottom: 3rem; }
-.page-intro h1 { margin-bottom: 1rem; font-size: clamp(2.7rem, 5vw, 4.8rem); }
+.page-intro h1 { margin-bottom: 1rem; font-size: clamp(2.2rem, 4vw, 3.4rem); }
 .page-intro p { max-width: 650px; color: var(--muted); font-size: 1.05rem; }
 .page-loading { display: grid; min-height: 260px; place-items: center; color: var(--muted); }
 #site-footer {
@@ -170,7 +170,7 @@
     grid-row: auto;
     gap: .25rem;
     border: 1px solid rgba(64, 88, 68, .16);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     background: rgba(255, 253, 248, .98);
     box-shadow: 0 22px 55px rgba(35, 43, 34, .16);
     opacity: 0;
@@ -188,7 +188,7 @@
     display: flex;
     min-height: 44px;
     align-items: center;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     padding: .75rem .9rem;
     color: var(--ink);
     font-size: .9rem;

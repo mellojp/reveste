@@ -65,7 +65,14 @@ func (f *pedidosFake) MediaAvaliacoesVendedor(context.Context, string) (casosdeu
 
 func novoPedidos(fake *pedidosFake) *casosdeuso.ControladorPedidos {
 	return casosdeuso.NovoControladorPedidos(
-		fake, &geradorSequencial{},
+		fake, nil, &geradorSequencial{},
+		relogioFixo{agora: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)},
+	)
+}
+
+func novoPedidosComNotificacoes(fake *pedidosFake, registro casosdeuso.RegistroNotificacoes) *casosdeuso.ControladorPedidos {
+	return casosdeuso.NovoControladorPedidos(
+		fake, registro, &geradorSequencial{},
 		relogioFixo{agora: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)},
 	)
 }

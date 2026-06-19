@@ -4,6 +4,11 @@ package cadastros
 // para novas vendas, conforme o modelo canonico do MVP.
 const LimiteItensNaoEnviados = 3
 
+// TaxaReativacaoCentavos e o valor cobrado do vendedor para reativar a conta apos o
+// bloqueio por itens nao enviados. A cobranca usa o mesmo provedor (simulado no MVP) do
+// checkout e so libera a reativacao quando aprovada.
+const TaxaReativacaoCentavos = 1990
+
 type PerfilVendedor struct {
 	ID               string `json:"id"`
 	IDUsuario        string `json:"id_usuario"`

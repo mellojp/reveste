@@ -13,6 +13,7 @@ import (
 	"reveste/apps/api/internal/dominio/anuncios"
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
+	"reveste/apps/api/internal/dominio/interacao"
 )
 
 type pagamentoFake struct {
@@ -36,7 +37,7 @@ func (p pagamentoFake) Processar(
 
 func novoCheckout(store *Store, pagamento casosdeuso.ProcessadorPagamento) *casosdeuso.ControladorCheckout {
 	return casosdeuso.NovoControladorCheckout(
-		store, store, store, store, pagamento,
+		store, store, store, store, store, pagamento,
 		&geradorSequencial{},
 		relogioFixo{agora: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
@@ -98,6 +99,13 @@ func TestCheckoutFinalizaCompraEReservaItem(t *testing.T) {
 	}
 	if itens := store.carrinhoPorUsuario["comprador-1"].IDsAnuncios; len(itens) != 0 {
 		t.Fatalf("carrinho deveria estar vazio: %+v", itens)
+	}
+	notificacoes, err := store.ListarNotificacoes(context.Background(), "vendedor-1", 10)
+	if err != nil || len(notificacoes) != 1 {
+		t.Fatalf("notificações do vendedor = %d, erro %v; esperada nova venda", len(notificacoes), err)
+	}
+	if notificacoes[0].Tipo != interacao.NotificacaoVendaRealizada || notificacoes[0].IDPedido != pedido.ID {
+		t.Fatalf("notificação de venda inesperada: %+v", notificacoes[0])
 	}
 	pedidos, err := checkout.ListarPedidos(context.Background(), "comprador-1")
 	if err != nil || len(pedidos) != 1 {

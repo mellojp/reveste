@@ -124,6 +124,24 @@ func (a *AdaptadorPaginas) exibirPerfilPublicoVendedor(w nethttp.ResponseWriter,
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
 }
 
+func (a *AdaptadorPaginas) exibirPerfilPublicoUsuario(w nethttp.ResponseWriter, r *nethttp.Request) {
+	contexto := a.prepararContextoDocumento(r, "Perfil público", conteudoPerfilVendedor)
+	idUsuario := r.PathValue("idUsuario")
+	perfil, err := a.controladorAnuncio.ObterPerfilPublicoVendedor(r.Context(), idUsuario)
+	if err != nil {
+		contexto.Conteudo = conteudoNaoEncontrado
+		contexto.Titulo = "Perfil não encontrado"
+		a.responderDocumentoHTML(w, nethttp.StatusNotFound, contexto)
+		return
+	}
+	contexto.PerfilVendedor = &perfil
+	contexto.Titulo = perfil.Vendedor.Nome
+	if media, err := a.controladorPedidos.MediaVendedor(r.Context(), idUsuario); err == nil {
+		contexto.AvaliacaoVendedor = media
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
 func (a *AdaptadorPaginas) exibirLogin(w nethttp.ResponseWriter, r *nethttp.Request) {
 	contexto := a.prepararContextoDocumento(r, "Entrar", conteudoLogin)
 	if contexto.UsuarioAutenticado != nil {
@@ -264,6 +282,10 @@ func (a *AdaptadorPaginas) exibirDetalhePedido(w nethttp.ResponseWriter, r *neth
 		return
 	}
 	contexto.PedidoDetalhe = &pedido
+	if perfil, err := a.controladorAnuncio.ObterPerfilPublicoVendedor(r.Context(), pedido.IDVendedor); err == nil {
+		contexto.PerfilContraparte = &perfil
+		contexto.RotuloContraparte = "Vendido por"
+	}
 	if avaliacao, existe, err := a.controladorPedidos.AvaliacaoDoPedido(r.Context(), pedido.ID); err == nil && existe {
 		contexto.AvaliacaoPedido = &avaliacao
 	}
@@ -291,7 +313,60 @@ func (a *AdaptadorPaginas) exibirDetalheVenda(w nethttp.ResponseWriter, r *netht
 		return
 	}
 	contexto.PedidoDetalhe = &pedido
+	if perfil, err := a.controladorAnuncio.ObterPerfilPublicoVendedor(r.Context(), pedido.IDComprador); err == nil {
+		contexto.PerfilContraparte = &perfil
+		contexto.RotuloContraparte = "Comprado por"
+	}
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirNotificacoes(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Notificações", conteudoNotificacoes)
+	notificacoes, err := a.controladorNotificacoes.Listar(r.Context(), sessao.IDUsuario)
+	if err != nil {
+		contexto.MensagemErro = "Não foi possível carregar suas notificações."
+	} else {
+		contexto.NotificacoesListadas = notificacoes
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+func (a *AdaptadorPaginas) exibirConversa(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Conversa do pedido", conteudoConversa)
+	conversa, err := a.controladorConversas.Abrir(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"))
+	if err != nil {
+		contexto.Conteudo = conteudoNaoEncontrado
+		contexto.Titulo = "Conversa não encontrada"
+		a.responderDocumentoHTML(w, nethttp.StatusNotFound, contexto)
+		return
+	}
+	contexto.ConversaDetalhe = &conversa
+	interlocutor, err := a.controladorCadastro.ObterPerfil(r.Context(), conversa.Interlocutor(sessao.IDUsuario))
+	if err == nil {
+		contexto.InterlocutorNome = interlocutor.Nome
+		contexto.URLPerfilInterlocutor = "/usuarios/" + interlocutor.ID
+	} else {
+		contexto.InterlocutorNome = "Participante"
+	}
+	if sessao.IDUsuario == conversa.IDComprador {
+		contexto.URLPedidoOrigem = "/meus-pedidos/" + conversa.IDPedido
+	} else {
+		contexto.URLPedidoOrigem = "/minhas-vendas/" + conversa.IDPedido
+	}
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+// exibirMensagensConversa devolve apenas o thread da conversa, usado pelo polling do HTMX
+// para manter a tela atualizada sem recarregar a pagina. Acesso restrito aos participantes.
+func (a *AdaptadorPaginas) exibirMensagensConversa(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	contexto := a.prepararContextoDocumento(r, "Conversa do pedido", conteudoConversa)
+	conversa, err := a.controladorConversas.Abrir(r.Context(), sessao.IDUsuario, r.PathValue("idPedido"))
+	if err != nil {
+		w.WriteHeader(nethttp.StatusNotFound)
+		return
+	}
+	contexto.ConversaDetalhe = &conversa
+	a.responderFragmentoHTML(w, fragmentoConversaThread, contexto)
 }
 
 func interpretarFiltrosCatalogo(r *nethttp.Request) filtrosCatalogo {

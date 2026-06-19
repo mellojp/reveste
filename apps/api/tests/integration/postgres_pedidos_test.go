@@ -16,7 +16,7 @@ import (
 
 func checkoutDeTeste(store *postgres.Store) *casosdeuso.ControladorCheckout {
 	return casosdeuso.NovoControladorCheckout(
-		store, store, store, store, pagamentos.NovoSimulado(),
+		store, store, store, store, store, pagamentos.NovoSimulado(),
 		common.GeradorIDCriptografico{}, relogioHTTP{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)

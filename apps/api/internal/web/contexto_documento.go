@@ -29,43 +29,54 @@ const (
 	conteudoDetalhePedido      = "detalhe-pedido"
 	conteudoVendasUsuario      = "minhas-vendas"
 	conteudoDetalheVenda       = "detalhe-venda"
+	conteudoNotificacoes       = "notificacoes"
+	conteudoConversa           = "conversa"
 	conteudoNaoEncontrado      = "nao-encontrado"
 	fragmentoProximoLote       = "catalogo-lote"
+	fragmentoConversaThread    = "conversa-thread"
 )
 
 // contextoDocumento concentra somente os contexto de apresentacao entregues aos templates.
 // Os manipuladores consultam os casos de uso, preenchem este contexto e o renderer
 // transforma o resultado em um documento HTML ou fragmento HTMX.
 type contextoDocumento struct {
-	Conteudo            string
-	Titulo              string
-	RotaAtual           string
-	URLRetorno          string
-	UsuarioAutenticado  *cadastros.Usuario
-	CarrinhoAutenticado casosdeuso.CarrinhoDetalhado
-	AnunciosListados    []anuncios.Anuncio
-	EnderecosUsuario    []cadastros.Endereco
-	EnderecoEmEdicao    *cadastros.Endereco
-	PedidosListados     []compras.Pedido
-	PedidoDetalhe       *compras.Pedido
-	AvaliacaoPedido     *interacao.Avaliacao
-	ResumoCompra        *compras.Compra
-	CompraConfirmada    bool
-	AvaliacaoVendedor   casosdeuso.MediaAvaliacoes
-	DetalheAnuncio      *casosdeuso.AnuncioDetalhado
-	PerfilVendedor      *casosdeuso.PerfilVendedorDetalhado
-	FiltrosCatalogo     filtrosCatalogo
-	URLProximoLote      string
-	PossuiProximoLote   bool
-	QuantidadeCarregada int
-	EditandoPerfil      bool
-	EditandoAnuncio     bool
-	MensagemErro        string
-	ErrosValidacao      map[string]string
-	ValoresFormulario   map[string]string
-	MensagemTemporaria  string
-	OpcoesCategoria     []opcaoFormulario
-	OpcoesConservacao   []opcaoFormulario
+	Conteudo              string
+	Titulo                string
+	RotaAtual             string
+	URLRetorno            string
+	UsuarioAutenticado    *cadastros.Usuario
+	CarrinhoAutenticado   casosdeuso.CarrinhoDetalhado
+	AnunciosListados      []anuncios.Anuncio
+	EnderecosUsuario      []cadastros.Endereco
+	EnderecoEmEdicao      *cadastros.Endereco
+	PedidosListados       []compras.Pedido
+	PedidoDetalhe         *compras.Pedido
+	AvaliacaoPedido       *interacao.Avaliacao
+	NotificacoesListadas  []interacao.Notificacao
+	NotificacoesNaoLidas  int
+	ConversaDetalhe       *casosdeuso.ConversaDetalhada
+	InterlocutorNome      string
+	URLPerfilInterlocutor string
+	URLPedidoOrigem       string
+	ResumoCompra          *compras.Compra
+	CompraConfirmada      bool
+	AvaliacaoVendedor     casosdeuso.MediaAvaliacoes
+	DetalheAnuncio        *casosdeuso.AnuncioDetalhado
+	PerfilVendedor        *casosdeuso.PerfilVendedorDetalhado
+	PerfilContraparte     *casosdeuso.PerfilVendedorDetalhado
+	RotuloContraparte     string
+	FiltrosCatalogo       filtrosCatalogo
+	URLProximoLote        string
+	PossuiProximoLote     bool
+	QuantidadeCarregada   int
+	EditandoPerfil        bool
+	EditandoAnuncio       bool
+	MensagemErro          string
+	ErrosValidacao        map[string]string
+	ValoresFormulario     map[string]string
+	MensagemTemporaria    string
+	OpcoesCategoria       []opcaoFormulario
+	OpcoesConservacao     []opcaoFormulario
 }
 
 type opcaoFormulario struct {
@@ -127,6 +138,9 @@ func (a *AdaptadorPaginas) prepararContextoDocumento(
 	carrinho, err := a.controladorCarrinho.ObterCarrinho(r.Context(), idUsuario)
 	if err == nil {
 		contexto.CarrinhoAutenticado = carrinho
+	}
+	if naoLidas, err := a.controladorNotificacoes.ContarNaoLidas(r.Context(), idUsuario); err == nil {
+		contexto.NotificacoesNaoLidas = naoLidas
 	}
 	return contexto
 }

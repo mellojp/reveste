@@ -13,6 +13,7 @@ import (
 
 	"reveste/apps/api/internal/casosdeuso"
 	"reveste/apps/api/internal/common"
+	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
 	httptransport "reveste/apps/api/internal/http"
 	"reveste/apps/api/internal/storage/pagamentos"
@@ -74,12 +75,30 @@ func executar(logger *slog.Logger) error {
 		database,
 		database,
 		database,
+		database,
 		pagamentos.NovoSimulado(),
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
+	controladorNotificacoes := casosdeuso.NovoControladorNotificacoes(
+		database,
+		common.RelogioSistema{},
+	)
 	controladorPedidos := casosdeuso.NovoControladorPedidos(
+		database,
+		database,
+		common.GeradorIDCriptografico{},
+		common.RelogioSistema{},
+	)
+	controladorVendedor := casosdeuso.NovoControladorVendedor(
+		database,
+		pagamentos.NovoSimulado(),
+		common.RelogioSistema{},
+		cadastros.TaxaReativacaoCentavos,
+	)
+	controladorConversas := casosdeuso.NovoControladorConversas(
+		database,
 		database,
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
@@ -91,6 +110,9 @@ func executar(logger *slog.Logger) error {
 		controladorCarrinho,
 		controladorCheckout,
 		controladorPedidos,
+		controladorVendedor,
+		controladorNotificacoes,
+		controladorConversas,
 		limitadorLogin,
 		cfg.ConfiarProxy,
 		logger,
@@ -108,6 +130,9 @@ func executar(logger *slog.Logger) error {
 			controladorUpload,
 			controladorCheckout,
 			controladorPedidos,
+			controladorVendedor,
+			controladorNotificacoes,
+			controladorConversas,
 			database,
 			logger,
 			cfg.BlobPublicHost,

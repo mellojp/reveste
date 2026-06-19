@@ -108,11 +108,14 @@ Endpoints de monitoramento:
 - `GET /saude`: liveness do processo;
 - `GET /saude/prontidao`: readiness com verificacao da conexao PostgreSQL.
 
-Para aplicar a migracao de categorias em um volume criado antes dela:
+Para aplicar uma migracao em um volume criado antes dela (exemplos: categorias e o
+`id_pedido` das notificacoes):
 
 ```text
 docker compose exec -T postgres psql -v ON_ERROR_STOP=1 \
   -U reveste -d reveste -f /dev/stdin < db/migrations/003_categorias_anuncio.up.sql
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 \
+  -U reveste -d reveste -f /dev/stdin < db/migrations/005_notificacao_pedido.up.sql
 ```
 
 Para executar todos os testes, incluindo a integracao PostgreSQL:

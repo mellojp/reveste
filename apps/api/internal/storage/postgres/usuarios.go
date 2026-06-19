@@ -125,6 +125,21 @@ func (s *Store) buscarUsuario(ctx context.Context, condicao string, args ...any)
 	return usuario, err
 }
 
+// ReativarVendedor desfaz o bloqueio do vendedor e zera o contador de itens nao enviados.
+// So afeta perfis efetivamente bloqueados (idempotente via WHERE); o bool informa se havia
+// um bloqueio para reverter.
+func (s *Store) ReativarVendedor(ctx context.Context, idVendedor string, agora time.Time) (bool, error) {
+	resultado, err := s.pool.Exec(ctx, `
+		UPDATE perfil_vendedor
+		SET bloqueado = FALSE, itens_nao_enviados = 0, atualizado_em = $2
+		WHERE id_usuario = $1 AND bloqueado = TRUE
+	`, idVendedor, agora)
+	if err != nil {
+		return false, mapDatabaseError(err)
+	}
+	return resultado.RowsAffected() > 0, nil
+}
+
 func (s *Store) ListarEnderecos(ctx context.Context, idUsuario string) ([]cadastros.Endereco, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT id::text, cep, logradouro, numero, COALESCE(complemento, ''),

@@ -54,6 +54,53 @@ func (operacoesHTTP) BuscarUsuarioPorID(_ context.Context, id string) (cadastros
 	return cadastros.Usuario{}, common.ErrNaoEncontrado
 }
 
+func (operacoesHTTP) ReativarVendedor(context.Context, string, time.Time) (bool, error) {
+	return true, nil
+}
+
+func (operacoesHTTP) CriarNotificacao(context.Context, interacao.Notificacao) error {
+	return nil
+}
+
+func (operacoesHTTP) ListarNotificacoes(context.Context, string, int) ([]interacao.Notificacao, error) {
+	return nil, nil
+}
+
+func (operacoesHTTP) ContarNotificacoesNaoLidas(context.Context, string) (int, error) {
+	return 0, nil
+}
+
+func (operacoesHTTP) MarcarNotificacoesLidas(context.Context, string, time.Time) error {
+	return nil
+}
+
+func (operacoesHTTP) RemoverNotificacao(context.Context, string, string) error {
+	return nil
+}
+
+func (operacoesHTTP) LimparNotificacoes(context.Context, string) error {
+	return nil
+}
+
+func (operacoesHTTP) BuscarParticipantesPedido(_ context.Context, idPedido string) (string, string, error) {
+	if idPedido == "pedido-http" {
+		return "comprador-1", "vendedor-1", nil
+	}
+	return "", "", common.ErrNaoEncontrado
+}
+
+func (operacoesHTTP) ObterOuCriarConversa(context.Context, string, string, time.Time) (string, error) {
+	return "conversa-http", nil
+}
+
+func (operacoesHTTP) ListarMensagens(context.Context, string) ([]interacao.Mensagem, error) {
+	return nil, nil
+}
+
+func (operacoesHTTP) CriarMensagem(context.Context, interacao.Mensagem) error {
+	return nil
+}
+
 func (operacoesHTTP) BuscarUsuarioPorEmailOuCPF(
 	_ context.Context,
 	identificador string,
@@ -339,19 +386,24 @@ func novoHandler() nethttp.Handler {
 	)
 	uploadsCU := casosdeuso.NovoControladorUpload(operacoes, idHTTP{}, relogioHTTP{})
 	checkoutCU := casosdeuso.NovoControladorCheckout(
-		operacoes, operacoes, operacoes, operacoes, pagamentos.NovoSimulado(),
+		operacoes, operacoes, operacoes, operacoes, operacoes, pagamentos.NovoSimulado(),
 		idHTTP{}, relogioHTTP{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
-	pedidosCU := casosdeuso.NovoControladorPedidos(operacoes, idHTTP{}, relogioHTTP{})
+	notificacoesCU := casosdeuso.NovoControladorNotificacoes(operacoes, relogioHTTP{})
+	pedidosCU := casosdeuso.NovoControladorPedidos(operacoes, operacoes, idHTTP{}, relogioHTTP{})
+	vendedoresCU := casosdeuso.NovoControladorVendedor(
+		operacoes, pagamentos.NovoSimulado(), relogioHTTP{}, cadastros.TaxaReativacaoCentavos,
+	)
+	conversasCU := casosdeuso.NovoControladorConversas(operacoes, operacoes, idHTTP{}, relogioHTTP{})
 	limitador := transporte.NovoLimitadorLogin(transporte.NovoRegistroMemoria())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	// confiarProxy = true: os testes simulam HTTPS via X-Forwarded-Proto, como atrás de um proxy.
-	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, checkoutCU, pedidosCU, limitador, true, logger)
+	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, limitador, true, logger)
 	if err != nil {
 		panic(err)
 	}
 	return httptransport.NovaAPI(
-		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, operacoes, logger, hostBlobTeste, limitador, true, paginasHTML,
+		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, operacoes, logger, hostBlobTeste, limitador, true, paginasHTML,
 	)
 }

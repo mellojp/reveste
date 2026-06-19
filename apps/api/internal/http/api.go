@@ -19,6 +19,9 @@ type API struct {
 	compras      *casosdeuso.ControladorCarrinho
 	checkout     *casosdeuso.ControladorCheckout
 	pedidos      *casosdeuso.ControladorPedidos
+	vendedores   *casosdeuso.ControladorVendedor
+	notificacoes *casosdeuso.ControladorNotificacoes
+	conversas    *casosdeuso.ControladorConversas
 	uploads      *casosdeuso.ControladorUpload
 	prontidao    verificadorProntidao
 	logger       *slog.Logger
@@ -34,6 +37,9 @@ func NovaAPI(
 	uploads *casosdeuso.ControladorUpload,
 	checkout *casosdeuso.ControladorCheckout,
 	pedidos *casosdeuso.ControladorPedidos,
+	vendedores *casosdeuso.ControladorVendedor,
+	notificacoes *casosdeuso.ControladorNotificacoes,
+	conversas *casosdeuso.ControladorConversas,
 	prontidao verificadorProntidao,
 	logger *slog.Logger,
 	hostBlob string,
@@ -47,6 +53,9 @@ func NovaAPI(
 		compras:      compras,
 		checkout:     checkout,
 		pedidos:      pedidos,
+		vendedores:   vendedores,
+		notificacoes: notificacoes,
+		conversas:    conversas,
 		uploads:      uploads,
 		prontidao:    prontidao,
 		logger:       logger,
@@ -63,6 +72,9 @@ func NovaAPI(
 	api.registrarRotasCheckout(mux)
 	api.registrarRotasEnderecos(mux)
 	api.registrarRotasPedidos(mux)
+	api.registrarRotasVendedores(mux)
+	api.registrarRotasNotificacoes(mux)
+	api.registrarRotasConversas(mux)
 	api.registrarRotasUploads(mux)
 	api.registrarRotasFrontend(mux, paginasHTML)
 

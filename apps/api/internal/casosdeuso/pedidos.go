@@ -15,17 +15,38 @@ import (
 // vendedor, confirmacao de recebimento e avaliacao pelo comprador, e o bloqueio do
 // vendedor por itens nao enviados.
 type ControladorPedidos struct {
-	pedidos OperacoesPedidos
-	ids     GeradorID
-	relogio Relogio
+	pedidos      OperacoesPedidos
+	notificacoes RegistroNotificacoes
+	ids          GeradorID
+	relogio      Relogio
 }
 
+// NovoControladorPedidos compoe o controlador. O registro de notificacoes e opcional: quando
+// nil, as transicoes seguem funcionando sem gerar avisos (util em testes focados).
 func NovoControladorPedidos(
 	pedidos OperacoesPedidos,
+	notificacoes RegistroNotificacoes,
 	ids GeradorID,
 	relogio Relogio,
 ) *ControladorPedidos {
-	return &ControladorPedidos{pedidos: pedidos, ids: ids, relogio: relogio}
+	return &ControladorPedidos{pedidos: pedidos, notificacoes: notificacoes, ids: ids, relogio: relogio}
+}
+
+// notificar registra uma notificacao como efeito de uma transicao ja confirmada. A escrita e
+// best-effort: uma falha aqui nao desfaz nem mascara o sucesso da operacao principal. Eventos
+// confiaveis e reprocessaveis dependem do outbox previsto no backlog (P1).
+func (c *ControladorPedidos) notificar(ctx context.Context, idUsuario, tipo, idPedido, conteudo string) {
+	if c.notificacoes == nil {
+		return
+	}
+	_ = c.notificacoes.CriarNotificacao(ctx, interacao.Notificacao{
+		ID:        c.ids.Novo(),
+		IDUsuario: idUsuario,
+		Tipo:      tipo,
+		Conteudo:  conteudo,
+		IDPedido:  idPedido,
+		CriadaEm:  c.relogio.Agora(),
+	})
 }
 
 type EntradaEnvio struct {
@@ -95,7 +116,16 @@ func (c *ControladorPedidos) MarcarEnviado(
 	if provedor == "" {
 		provedor = "Correios"
 	}
-	return c.pedidos.MarcarPedidoEnviado(ctx, idPedido, idVendedor, provedor, rastreio, c.relogio.Agora())
+	if err := c.pedidos.MarcarPedidoEnviado(ctx, idPedido, idVendedor, provedor, rastreio, c.relogio.Agora()); err != nil {
+		return err
+	}
+	if c.notificacoes != nil {
+		if pedido, err := c.pedidos.BuscarPedidoDoVendedor(ctx, idVendedor, idPedido); err == nil {
+			c.notificar(ctx, pedido.IDComprador, interacao.NotificacaoPedidoEnviado, idPedido,
+				"Seu pedido foi enviado por "+provedor+". Acompanhe pelo código "+rastreio+".")
+		}
+	}
+	return nil
 }
 
 // ConfirmarRecebimento finaliza o pedido a pedido do comprador.
@@ -103,7 +133,16 @@ func (c *ControladorPedidos) ConfirmarRecebimento(
 	ctx context.Context,
 	idComprador, idPedido string,
 ) error {
-	return c.pedidos.ConfirmarRecebimentoPedido(ctx, idPedido, idComprador, c.relogio.Agora())
+	if err := c.pedidos.ConfirmarRecebimentoPedido(ctx, idPedido, idComprador, c.relogio.Agora()); err != nil {
+		return err
+	}
+	if c.notificacoes != nil {
+		if pedido, err := c.pedidos.BuscarPedidoDoComprador(ctx, idComprador, idPedido); err == nil {
+			c.notificar(ctx, pedido.IDVendedor, interacao.NotificacaoPedidoRecebido, idPedido,
+				"O comprador confirmou o recebimento. O pedido foi finalizado.")
+		}
+	}
+	return nil
 }
 
 // Avaliar registra a avaliacao do vendedor por um pedido finalizado do comprador.
@@ -134,7 +173,12 @@ func (c *ControladorPedidos) Avaliar(
 			"nota": "A nota deve ser um número de 1 a 5.",
 		})
 	}
-	return c.pedidos.RegistrarAvaliacao(ctx, avaliacao)
+	if err := c.pedidos.RegistrarAvaliacao(ctx, avaliacao); err != nil {
+		return err
+	}
+	c.notificar(ctx, pedido.IDVendedor, interacao.NotificacaoAvaliacaoRecebida, idPedido,
+		"Você recebeu uma nova avaliação de um comprador.")
+	return nil
 }
 
 func (c *ControladorPedidos) MediaVendedor(

@@ -25,6 +25,42 @@ type OperacoesUsuarios interface {
 	DefinirEnderecoPrincipal(ctx context.Context, idUsuario, idEndereco string, agora time.Time) error
 }
 
+// OperacoesReativacao cobre o ciclo de reativacao de um vendedor bloqueado: consulta do
+// estado atual e a transicao atomica de desbloqueio com zeragem do contador.
+type OperacoesReativacao interface {
+	BuscarUsuarioPorID(context.Context, string) (cadastros.Usuario, error)
+	// ReativarVendedor desbloqueia o vendedor e zera itens_nao_enviados. O bool informa se
+	// havia de fato um bloqueio para reverter (false quando ja estava ativo).
+	ReativarVendedor(ctx context.Context, idVendedor string, agora time.Time) (bool, error)
+}
+
+// RegistroNotificacoes e a porta minima usada por outros casos de uso para registrar uma
+// notificacao como efeito de um evento de dominio (envio, recebimento, avaliacao, mensagem).
+type RegistroNotificacoes interface {
+	CriarNotificacao(context.Context, interacao.Notificacao) error
+}
+
+// OperacoesConversas cobre o chat por pedido: identificacao dos participantes (para
+// autorizacao), criacao idempotente da conversa do pedido e leitura/escrita de mensagens.
+type OperacoesConversas interface {
+	// BuscarParticipantesPedido devolve comprador e vendedor do pedido, ou ErrNaoEncontrado.
+	BuscarParticipantesPedido(ctx context.Context, idPedido string) (idComprador, idVendedor string, err error)
+	// ObterOuCriarConversa devolve o id da conversa do pedido, criando-a quando ainda nao existe.
+	ObterOuCriarConversa(ctx context.Context, novoID, idPedido string, agora time.Time) (string, error)
+	ListarMensagens(ctx context.Context, idConversa string) ([]interacao.Mensagem, error)
+	CriarMensagem(ctx context.Context, mensagem interacao.Mensagem) error
+}
+
+// OperacoesNotificacoes acrescenta a leitura e o controle de leitura da caixa de entrada.
+type OperacoesNotificacoes interface {
+	RegistroNotificacoes
+	ListarNotificacoes(ctx context.Context, idUsuario string, limite int) ([]interacao.Notificacao, error)
+	ContarNotificacoesNaoLidas(ctx context.Context, idUsuario string) (int, error)
+	MarcarNotificacoesLidas(ctx context.Context, idUsuario string, agora time.Time) error
+	RemoverNotificacao(ctx context.Context, idUsuario, idNotificacao string) error
+	LimparNotificacoes(ctx context.Context, idUsuario string) error
+}
+
 type OperacoesSessoes interface {
 	CriarSessao(context.Context, string, string, time.Time) error
 	BuscarUsuarioDaSessao(context.Context, string, time.Time) (string, error)

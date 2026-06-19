@@ -22,13 +22,28 @@ func (m *Mensagem) MarcarComoLida(agora time.Time) {
 	m.LidaEm = &agora
 }
 
+// Tipos canonicos de notificacao. O tipo classifica o evento de origem e permite que a
+// apresentacao escolha o tom visual sem interpretar o texto.
+const (
+	NotificacaoVendaRealizada    = "venda_realizada"
+	NotificacaoPedidoEnviado     = "pedido_enviado"
+	NotificacaoPedidoRecebido    = "pedido_recebido"
+	NotificacaoAvaliacaoRecebida = "avaliacao_recebida"
+	NotificacaoMensagemRecebida  = "mensagem_recebida"
+)
+
 type Notificacao struct {
 	ID        string     `json:"id"`
 	IDUsuario string     `json:"id_usuario"`
 	Tipo      string     `json:"tipo"`
 	Conteudo  string     `json:"conteudo"`
+	IDPedido  string     `json:"id_pedido,omitempty"`
 	LidaEm    *time.Time `json:"lida_em,omitempty"`
 	CriadaEm  time.Time  `json:"criada_em"`
+}
+
+func (n Notificacao) Lida() bool {
+	return n.LidaEm != nil
 }
 
 type Avaliacao struct {

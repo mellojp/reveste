@@ -143,7 +143,7 @@ func TestIntegracaoCheckoutPersisteCompraEReservaItem(t *testing.T) {
 	}
 
 	checkout := casosdeuso.NovoControladorCheckout(
-		store, store, store, store, pagamentos.NovoSimulado(),
+		store, store, store, store, store, pagamentos.NovoSimulado(),
 		common.GeradorIDCriptografico{}, relogioHTTP{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
@@ -212,7 +212,7 @@ func TestIntegracaoCheckoutConcorrenteVendeItemUmaVez(t *testing.T) {
 
 	provedor := &pagamentoContado{}
 	checkout := casosdeuso.NovoControladorCheckout(
-		store, store, store, store, provedor,
+		store, store, store, store, store, provedor,
 		common.GeradorIDCriptografico{}, relogioHTTP{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
@@ -279,7 +279,7 @@ func TestIntegracaoExpiracaoLiberaReservaPendente(t *testing.T) {
 	}
 
 	checkout := casosdeuso.NovoControladorCheckout(
-		store, store, store, store, pagamentos.NovoSimulado(),
+		store, store, store, store, store, pagamentos.NovoSimulado(),
 		common.GeradorIDCriptografico{}, relogioHTTP{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
