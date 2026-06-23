@@ -165,6 +165,38 @@ type ProcessadorPagamento interface {
 	Processar(context.Context, SolicitacaoPagamento) (ResultadoPagamento, error)
 }
 
+// ItemFrete descreve uma peca a transportar, usada na cotacao de frete.
+type ItemFrete struct {
+	PesoGramas    int
+	AlturaCm      int
+	LarguraCm     int
+	ComprimentoCm int
+	ValorCentavos int64 // valor declarado da peca, para seguro
+}
+
+// CotacaoFrete e o resultado de uma cotacao para um pedido (um vendedor).
+type CotacaoFrete struct {
+	ValorCentavos int64
+	Provedor      string
+	Servico       string
+	PrazoDias     int
+}
+
+// CotadorFrete abstrai o provedor de cotacao de frete. A origem e o CEP do vendedor e o
+// destino o CEP de entrega; ambos chegam com apenas digitos. Implementacoes devem devolver
+// erro em caso de indisponibilidade para que o caso de uso aplique um valor de contingencia.
+type CotadorFrete interface {
+	Cotar(ctx context.Context, origemCEP, destinoCEP string, itens []ItemFrete) (CotacaoFrete, error)
+}
+
+// ConsultorCEP resolve um CEP em um endereco parcial (logradouro, bairro, cidade e estado;
+// sem numero/complemento), consultando um provedor externo. Implementacoes devem tratar
+// timeouts e indisponibilidade como ErrConsultaCEPIndisponivel e o CEP inexistente como
+// ErrNaoEncontrado. O CEP recebido ja vem com apenas digitos (8 caracteres).
+type ConsultorCEP interface {
+	ConsultarCEP(ctx context.Context, cep string) (cadastros.Endereco, error)
+}
+
 type SolicitacaoUpload struct {
 	Pathname           string
 	TiposPermitidos    []string

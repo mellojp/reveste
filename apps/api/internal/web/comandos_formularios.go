@@ -370,6 +370,10 @@ func (a *AdaptadorPaginas) processarPersistenciaAnuncio(w nethttp.ResponseWriter
 		Cor:               r.FormValue("cor"),
 		EstadoConservacao: anuncios.EstadoConservacao(r.FormValue("estado_conservacao")),
 		PrecoCentavos:     converterPrecoFormulario(r.FormValue("preco")),
+		PesoGramas:        inteiroDoFormulario(r.FormValue("peso_gramas")),
+		AlturaCm:          inteiroDoFormulario(r.FormValue("altura_cm")),
+		LarguraCm:         inteiroDoFormulario(r.FormValue("largura_cm")),
+		ComprimentoCm:     inteiroDoFormulario(r.FormValue("comprimento_cm")),
 		URLsFotos:         r.Form["urls_fotos"],
 	}
 	var (

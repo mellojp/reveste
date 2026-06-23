@@ -389,6 +389,16 @@ func converterPrecoFormulario(valorFormulario string) int64 {
 	return int64(numero*100 + .5)
 }
 
+// inteiroDoFormulario converte um campo numerico inteiro do formulario; valores vazios ou
+// invalidos viram 0 e sao rejeitados pela validacao de dominio (peso/dimensoes).
+func inteiroDoFormulario(valorFormulario string) int {
+	numero, err := strconv.Atoi(strings.TrimSpace(valorFormulario))
+	if err != nil || numero < 0 {
+		return 0
+	}
+	return numero
+}
+
 func urlProximoLoteCatalogo(query url.Values, deslocamento int) string {
 	copia := url.Values{}
 	for chave, valores := range query {
@@ -413,6 +423,10 @@ func valoresFormularioAnuncio(item anuncios.Anuncio) map[string]string {
 		"tamanho": item.Tamanho, "cor": item.Cor,
 		"estado_conservacao": string(item.EstadoConservacao),
 		"preco":              strings.ReplaceAll(formatarDinheiro(item.PrecoCentavos), "R$ ", ""),
+		"peso_gramas":        strconv.Itoa(item.PesoGramas),
+		"altura_cm":          strconv.Itoa(item.AlturaCm),
+		"largura_cm":         strconv.Itoa(item.LarguraCm),
+		"comprimento_cm":     strconv.Itoa(item.ComprimentoCm),
 	}
 }
 

@@ -36,6 +36,30 @@ func TestRotaProntidaoVerificaDependencias(t *testing.T) {
 	}
 }
 
+func TestRotaCEPRejeitaFormatoInvalido(t *testing.T) {
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/cep/123", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusUnprocessableEntity {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusUnprocessableEntity)
+	}
+}
+
+func TestRotaCEPPublicaRetornaNaoEncontrado(t *testing.T) {
+	// O consultor de teste devolve ErrNaoEncontrado; o objetivo aqui e provar que a rota
+	// publica esta acessivel atraves de toda a stack de middleware (sem sessao nem CSRF).
+	requisicao := httptest.NewRequest(nethttp.MethodGet, "/v1/cep/01310100", nil)
+	resposta := httptest.NewRecorder()
+
+	novoHandler().ServeHTTP(resposta, requisicao)
+
+	if resposta.Code != nethttp.StatusNotFound {
+		t.Fatalf("status = %d; esperado %d", resposta.Code, nethttp.StatusNotFound)
+	}
+}
+
 func TestFrontendEEntreguePelaAPI(t *testing.T) {
 	requisicao := httptest.NewRequest(nethttp.MethodGet, "/", nil)
 	resposta := httptest.NewRecorder()

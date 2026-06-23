@@ -23,6 +23,7 @@ type API struct {
 	notificacoes *casosdeuso.ControladorNotificacoes
 	conversas    *casosdeuso.ControladorConversas
 	uploads      *casosdeuso.ControladorUpload
+	cep          *casosdeuso.ControladorCEP
 	prontidao    verificadorProntidao
 	logger       *slog.Logger
 	hostBlob     string
@@ -40,6 +41,7 @@ func NovaAPI(
 	vendedores *casosdeuso.ControladorVendedor,
 	notificacoes *casosdeuso.ControladorNotificacoes,
 	conversas *casosdeuso.ControladorConversas,
+	cep *casosdeuso.ControladorCEP,
 	prontidao verificadorProntidao,
 	logger *slog.Logger,
 	hostBlob string,
@@ -57,6 +59,7 @@ func NovaAPI(
 		notificacoes: notificacoes,
 		conversas:    conversas,
 		uploads:      uploads,
+		cep:          cep,
 		prontidao:    prontidao,
 		logger:       logger,
 		hostBlob:     hostBlob,
@@ -76,6 +79,7 @@ func NovaAPI(
 	api.registrarRotasNotificacoes(mux)
 	api.registrarRotasConversas(mux)
 	api.registrarRotasUploads(mux)
+	api.registrarRotasCEP(mux)
 	api.registrarRotasFrontend(mux, paginasHTML)
 
 	return api.comRecuperacao(api.comSeguranca(api.comJSON(api.comProtecaoCSRF(mux))))

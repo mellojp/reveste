@@ -55,6 +55,8 @@ func (a *API) escreverErro(w nethttp.ResponseWriter, err error) {
 		status, codigo, mensagem = nethttp.StatusConflict, "SEM_ITENS_DISPONIVEIS", "Nenhuma peça da sacola está disponível para compra."
 	case errors.Is(err, common.ErrPagamentoRecusado):
 		status, codigo, mensagem = nethttp.StatusPaymentRequired, "PAGAMENTO_RECUSADO", "O pagamento foi recusado pelo provedor."
+	case errors.Is(err, common.ErrConsultaCEPIndisponivel):
+		status, codigo, mensagem = nethttp.StatusBadGateway, "CEP_INDISPONIVEL", "Não foi possível consultar o CEP agora. Preencha o endereço manualmente."
 	default:
 		a.logger.Error("erro nao tratado", "erro", err)
 	}

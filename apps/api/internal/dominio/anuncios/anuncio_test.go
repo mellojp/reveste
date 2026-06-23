@@ -87,6 +87,7 @@ func anuncioValido() Anuncio {
 		Descricao: "Jaqueta jeans em excelente estado", Categoria: CategoriaCasacos,
 		Tamanho: "M", Cor: "azul", EstadoConservacao: EstadoSeminovo,
 		PrecoCentavos: 12_000, Status: StatusAnuncioDisponivel,
+		PesoGramas: 800, AlturaCm: 5, LarguraCm: 30, ComprimentoCm: 40,
 		Fotos: []Foto{
 			{ID: "foto-1", URL: "https://reveste-test.public.blob.vercel-storage.com/1.jpg"},
 			{ID: "foto-2", URL: "https://reveste-test.public.blob.vercel-storage.com/2.jpg"},

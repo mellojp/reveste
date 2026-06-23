@@ -176,6 +176,7 @@ func (operacoesHTTP) BuscarAnuncioPorID(_ context.Context, id string) (anuncios.
 			Descricao: "Casaco em ótimo estado.", Categoria: anuncios.CategoriaCasacos,
 			Tamanho: "M", Cor: "verde", EstadoConservacao: anuncios.EstadoSeminovo,
 			PrecoCentavos: 12_000, Status: anuncios.StatusAnuncioDisponivel,
+			PesoGramas: 900, AlturaCm: 8, LarguraCm: 30, ComprimentoCm: 40,
 			Fotos: []anuncios.Foto{
 				{ID: "foto-1", URL: "https://reveste-test.public.blob.vercel-storage.com/casaco-1.jpg", Ordem: 0},
 				{ID: "foto-2", URL: "https://reveste-test.public.blob.vercel-storage.com/casaco-2.jpg", Ordem: 1},
@@ -387,7 +388,7 @@ func novoHandler() nethttp.Handler {
 	uploadsCU := casosdeuso.NovoControladorUpload(operacoes, idHTTP{}, relogioHTTP{})
 	checkoutCU := casosdeuso.NovoControladorCheckout(
 		operacoes, operacoes, operacoes, operacoes, operacoes, pagamentos.NovoSimulado(),
-		idHTTP{}, relogioHTTP{},
+		nil, idHTTP{}, relogioHTTP{},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
 	notificacoesCU := casosdeuso.NovoControladorNotificacoes(operacoes, relogioHTTP{})
@@ -396,6 +397,7 @@ func novoHandler() nethttp.Handler {
 		operacoes, pagamentos.NovoSimulado(), relogioHTTP{}, cadastros.TaxaReativacaoCentavos,
 	)
 	conversasCU := casosdeuso.NovoControladorConversas(operacoes, operacoes, idHTTP{}, relogioHTTP{})
+	cepCU := casosdeuso.NovoControladorCEP(consultorCEPHTTP{})
 	limitador := transporte.NovoLimitadorLogin(transporte.NovoRegistroMemoria())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	// confiarProxy = true: os testes simulam HTTPS via X-Forwarded-Proto, como atrás de um proxy.
@@ -404,6 +406,12 @@ func novoHandler() nethttp.Handler {
 		panic(err)
 	}
 	return httptransport.NovaAPI(
-		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, operacoes, logger, hostBlobTeste, limitador, true, paginasHTML,
+		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, cepCU, operacoes, logger, hostBlobTeste, limitador, true, paginasHTML,
 	)
+}
+
+type consultorCEPHTTP struct{}
+
+func (consultorCEPHTTP) ConsultarCEP(context.Context, string) (cadastros.Endereco, error) {
+	return cadastros.Endereco{}, common.ErrNaoEncontrado
 }

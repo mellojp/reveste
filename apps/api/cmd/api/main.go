@@ -16,6 +16,8 @@ import (
 	"reveste/apps/api/internal/dominio/cadastros"
 	"reveste/apps/api/internal/dominio/compras"
 	httptransport "reveste/apps/api/internal/http"
+	"reveste/apps/api/internal/storage/cep"
+	"reveste/apps/api/internal/storage/frete"
 	"reveste/apps/api/internal/storage/pagamentos"
 	"reveste/apps/api/internal/storage/postgres"
 	"reveste/apps/api/internal/storage/vercel"
@@ -70,6 +72,13 @@ func executar(logger *slog.Logger) error {
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 	)
+	const fretePadraoCentavos = 1990
+	var cotadorFrete casosdeuso.CotadorFrete
+	if cfg.MelhorEnvioToken != "" {
+		cotadorFrete = frete.NovoMelhorEnvio(cfg.MelhorEnvioURL, cfg.MelhorEnvioToken, cfg.MelhorEnvioUA)
+	} else {
+		cotadorFrete = frete.NovoFixo(fretePadraoCentavos)
+	}
 	controladorCheckout := casosdeuso.NovoControladorCheckout(
 		database,
 		database,
@@ -77,9 +86,10 @@ func executar(logger *slog.Logger) error {
 		database,
 		database,
 		pagamentos.NovoSimulado(),
+		cotadorFrete,
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
-		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
+		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: fretePadraoCentavos},
 	)
 	controladorNotificacoes := casosdeuso.NovoControladorNotificacoes(
 		database,
@@ -103,6 +113,7 @@ func executar(logger *slog.Logger) error {
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
 	)
+	controladorCEP := casosdeuso.NovoControladorCEP(cep.NovoViaCEP())
 	limitadorLogin := transporte.NovoLimitadorLogin(database)
 	paginasHTML, err := web.NovoAdaptadorPaginas(
 		controladorCadastros,
@@ -133,6 +144,7 @@ func executar(logger *slog.Logger) error {
 			controladorVendedor,
 			controladorNotificacoes,
 			controladorConversas,
+			controladorCEP,
 			database,
 			logger,
 			cfg.BlobPublicHost,

@@ -23,13 +23,15 @@ func (s *Store) CriarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) erro
 	resultado, err := tx.Exec(ctx, `
 		INSERT INTO anuncio (
 			id, id_perfil_vendedor, titulo, descricao, categoria, tamanho, cor,
-			estado_conservacao, preco_centavos, status, criado_em, atualizado_em
-		) SELECT $1, pv.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+			estado_conservacao, preco_centavos, status, criado_em, atualizado_em,
+			peso_g, altura_cm, largura_cm, comprimento_cm
+		) SELECT $1, pv.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 		  FROM perfil_vendedor pv
 		 WHERE pv.id_usuario = $2
 	`, anuncio.ID, anuncio.IDVendedor, anuncio.Titulo, anuncio.Descricao,
 		anuncio.Categoria, anuncio.Tamanho, anuncio.Cor, anuncio.EstadoConservacao,
-		anuncio.PrecoCentavos, anuncio.Status, anuncio.CriadoEm, anuncio.AtualizadoEm)
+		anuncio.PrecoCentavos, anuncio.Status, anuncio.CriadoEm, anuncio.AtualizadoEm,
+		anuncio.PesoGramas, anuncio.AlturaCm, anuncio.LarguraCm, anuncio.ComprimentoCm)
 	if err != nil {
 		return mapDatabaseError(err)
 	}
@@ -58,13 +60,15 @@ func (s *Store) AtualizarAnuncio(ctx context.Context, anuncio anuncios.Anuncio) 
 	resultado, err := tx.Exec(ctx, `
 		UPDATE anuncio a
 		SET titulo = $3, descricao = $4, categoria = $5, tamanho = $6, cor = $7,
-		    estado_conservacao = $8, preco_centavos = $9, atualizado_em = $10
+		    estado_conservacao = $8, preco_centavos = $9, atualizado_em = $10,
+		    peso_g = $11, altura_cm = $12, largura_cm = $13, comprimento_cm = $14
 		FROM perfil_vendedor pv
 		WHERE a.id = $1 AND a.id_perfil_vendedor = pv.id AND pv.id_usuario = $2
 		  AND a.status = 'disponivel' AND a.excluido_em IS NULL
 	`, anuncio.ID, anuncio.IDVendedor, anuncio.Titulo, anuncio.Descricao,
 		anuncio.Categoria, anuncio.Tamanho, anuncio.Cor, anuncio.EstadoConservacao,
-		anuncio.PrecoCentavos, anuncio.AtualizadoEm)
+		anuncio.PrecoCentavos, anuncio.AtualizadoEm,
+		anuncio.PesoGramas, anuncio.AlturaCm, anuncio.LarguraCm, anuncio.ComprimentoCm)
 	if err != nil {
 		return mapDatabaseError(err)
 	}
@@ -112,7 +116,8 @@ func (s *Store) BuscarAnuncioPorID(ctx context.Context, id string) (anuncios.Anu
 	err := s.pool.QueryRow(ctx, `
 		SELECT a.id, pv.id_usuario, a.titulo, a.descricao, a.categoria, a.tamanho, a.cor,
 		       a.estado_conservacao, a.preco_centavos, a.status, a.criado_em,
-		       a.atualizado_em, a.excluido_em
+		       a.atualizado_em, a.excluido_em,
+		       a.peso_g, a.altura_cm, a.largura_cm, a.comprimento_cm
 		FROM anuncio a
 		JOIN perfil_vendedor pv ON pv.id = a.id_perfil_vendedor
 		WHERE a.id = $1 AND a.excluido_em IS NULL
@@ -121,6 +126,7 @@ func (s *Store) BuscarAnuncioPorID(ctx context.Context, id string) (anuncios.Anu
 		&anuncio.Categoria, &anuncio.Tamanho, &anuncio.Cor, &anuncio.EstadoConservacao,
 		&anuncio.PrecoCentavos, &anuncio.Status, &anuncio.CriadoEm,
 		&anuncio.AtualizadoEm, &anuncio.ExcluidoEm,
+		&anuncio.PesoGramas, &anuncio.AlturaCm, &anuncio.LarguraCm, &anuncio.ComprimentoCm,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return anuncios.Anuncio{}, common.ErrNaoEncontrado
@@ -142,7 +148,8 @@ func (s *Store) ListarAnuncios(
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.id, pv.id_usuario, a.titulo, a.descricao, a.categoria, a.tamanho, a.cor,
-		       a.estado_conservacao, a.preco_centavos, a.status, a.criado_em, a.atualizado_em
+		       a.estado_conservacao, a.preco_centavos, a.status, a.criado_em, a.atualizado_em,
+		       a.peso_g, a.altura_cm, a.largura_cm, a.comprimento_cm
 		FROM anuncio a
 		JOIN perfil_vendedor pv ON pv.id = a.id_perfil_vendedor
 		WHERE ($7 OR a.status = 'disponivel')
@@ -175,6 +182,7 @@ func (s *Store) ListarAnuncios(
 			&anuncio.ID, &anuncio.IDVendedor, &anuncio.Titulo, &anuncio.Descricao,
 			&anuncio.Categoria, &anuncio.Tamanho, &anuncio.Cor, &anuncio.EstadoConservacao,
 			&anuncio.PrecoCentavos, &anuncio.Status, &anuncio.CriadoEm, &anuncio.AtualizadoEm,
+			&anuncio.PesoGramas, &anuncio.AlturaCm, &anuncio.LarguraCm, &anuncio.ComprimentoCm,
 		); err != nil {
 			return nil, err
 		}

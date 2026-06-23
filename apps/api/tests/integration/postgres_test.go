@@ -146,6 +146,7 @@ func novoAnuncioIntegracao(id, idVendedor string, agora time.Time) anuncios.Anun
 		Descricao: "Descricao valida para teste", Categoria: anuncios.CategoriaCamisetas,
 		Tamanho: "M", Cor: "azul", EstadoConservacao: anuncios.EstadoSeminovo,
 		PrecoCentavos: 10_000, Status: anuncios.StatusAnuncioDisponivel,
+		PesoGramas: 400, AlturaCm: 3, LarguraCm: 25, ComprimentoCm: 35,
 		Fotos: []anuncios.Foto{
 			{ID: id[:len(id)-1] + "1", URL: "https://reveste-test.public.blob.vercel-storage.com/1.jpg", Ordem: 0},
 			{ID: id[:len(id)-1] + "2", URL: "https://reveste-test.public.blob.vercel-storage.com/2.jpg", Ordem: 1},

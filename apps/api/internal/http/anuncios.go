@@ -91,6 +91,10 @@ func decodificarEntradaAnuncio(
 		Cor               string                     `json:"cor"`
 		EstadoConservacao anuncios.EstadoConservacao `json:"estado_conservacao"`
 		PrecoCentavos     int64                      `json:"preco_centavos"`
+		PesoGramas        int                        `json:"peso_gramas"`
+		AlturaCm          int                        `json:"altura_cm"`
+		LarguraCm         int                        `json:"largura_cm"`
+		ComprimentoCm     int                        `json:"comprimento_cm"`
 		URLsFotos         []string                   `json:"urls_fotos"`
 	}
 	if !decodificarJSON(w, r, &entrada) {
@@ -99,7 +103,10 @@ func decodificarEntradaAnuncio(
 	return casosdeuso.EntradaAnuncio{
 		Titulo: entrada.Titulo, Descricao: entrada.Descricao, Categoria: entrada.Categoria,
 		Tamanho: entrada.Tamanho, Cor: entrada.Cor, EstadoConservacao: entrada.EstadoConservacao,
-		PrecoCentavos: entrada.PrecoCentavos, URLsFotos: entrada.URLsFotos,
+		PrecoCentavos: entrada.PrecoCentavos,
+		PesoGramas:    entrada.PesoGramas, AlturaCm: entrada.AlturaCm,
+		LarguraCm: entrada.LarguraCm, ComprimentoCm: entrada.ComprimentoCm,
+		URLsFotos: entrada.URLsFotos,
 	}, true
 }
 

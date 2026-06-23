@@ -39,6 +39,17 @@ const (
 	CategoriaOutros      = "outros"
 )
 
+// Limites de embalagem alinhados aos minimos/maximos de encomendas dos Correios (PAC/SEDEX).
+// O peso e da peca embalada, em gramas; as dimensoes, em centimetros.
+const (
+	PesoMinGramas    = 1
+	PesoMaxGramas    = 30000
+	AlturaMinCm      = 2
+	LarguraMinCm     = 11
+	ComprimentoMinCm = 16
+	DimensaoMaxCm    = 105
+)
+
 func CategoriaValida(categoria string) bool {
 	switch strings.ToLower(strings.TrimSpace(categoria)) {
 	case CategoriaVestidos, CategoriaCamisetas, CategoriaCalcas,
@@ -67,6 +78,10 @@ type Anuncio struct {
 	Cor               string            `json:"cor"`
 	EstadoConservacao EstadoConservacao `json:"estado_conservacao"`
 	PrecoCentavos     int64             `json:"preco_centavos"`
+	PesoGramas        int               `json:"peso_gramas"`
+	AlturaCm          int               `json:"altura_cm"`
+	LarguraCm         int               `json:"largura_cm"`
+	ComprimentoCm     int               `json:"comprimento_cm"`
 	Status            StatusAnuncio     `json:"status"`
 	Fotos             []Foto            `json:"fotos"`
 	CriadoEm          time.Time         `json:"criado_em"`
@@ -110,6 +125,13 @@ func (a Anuncio) ValidarNovo() error {
 	}
 	if a.PrecoCentavos <= 0 {
 		campos["preco"] = "Informe um preço maior que zero."
+	}
+	if a.PesoGramas < PesoMinGramas || a.PesoGramas > PesoMaxGramas {
+		campos["peso"] = "Informe o peso da peça embalada em gramas (1 a 30000)."
+	}
+	if a.AlturaCm < AlturaMinCm || a.LarguraCm < LarguraMinCm || a.ComprimentoCm < ComprimentoMinCm ||
+		a.AlturaCm > DimensaoMaxCm || a.LarguraCm > DimensaoMaxCm || a.ComprimentoCm > DimensaoMaxCm {
+		campos["dimensoes"] = "Informe dimensões válidas: altura ≥ 2cm, largura ≥ 11cm, comprimento ≥ 16cm (máx. 105cm)."
 	}
 	if !a.EstadoConservacao.Valido() {
 		campos["estado_conservacao"] = "Selecione um estado de conservação válido."

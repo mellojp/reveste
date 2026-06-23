@@ -187,6 +187,54 @@ document.addEventListener("focusout", (event) => {
   updateRegistrationProgress(input.form, input.closest("[data-registration-section]"));
 });
 
+// Autofill de endereço a partir do CEP. Funciona em qualquer formulário com um campo
+// name="cep" (cadastro, perfil e endereços), consultando o backend (/v1/cep) para manter
+// a CSP restrita e reaproveitar a validação do domínio.
+const cepConsultado = new WeakMap();
+
+document.addEventListener("input", (event) => {
+  const cepInput = event.target.closest('input[name="cep"]');
+  if (cepInput) autofillEnderecoPorCEP(cepInput);
+});
+
+async function autofillEnderecoPorCEP(input) {
+  const form = input.form;
+  if (!form) return;
+  const digits = input.value.replace(/\D/g, "");
+  if (digits.length !== 8) return;
+  if (cepConsultado.get(input) === digits) return;
+  cepConsultado.set(input, digits);
+
+  input.setAttribute("aria-busy", "true");
+  try {
+    const response = await fetch(`/v1/cep/${digits}`, { headers: { Accept: "application/json" } });
+    if (!response.ok) {
+      // CEP inexistente ou provedor fora do ar: o usuário preenche manualmente.
+      cepConsultado.delete(input);
+      return;
+    }
+    const endereco = await response.json();
+    preencherCampoEndereco(form, "logradouro", endereco.logradouro);
+    preencherCampoEndereco(form, "bairro", endereco.bairro);
+    preencherCampoEndereco(form, "cidade", endereco.cidade);
+    preencherCampoEndereco(form, "estado", endereco.estado);
+    const numero = form.elements.numero;
+    if (numero && !numero.value.trim()) numero.focus({ preventScroll: true });
+  } catch {
+    cepConsultado.delete(input);
+  } finally {
+    input.removeAttribute("aria-busy");
+  }
+}
+
+function preencherCampoEndereco(form, nome, valor) {
+  if (!valor) return;
+  const campo = form.elements[nome];
+  if (!campo) return;
+  campo.value = valor;
+  clearClientError(campo);
+}
+
 document.addEventListener("focusin", (event) => {
   const section = event.target.closest("[data-register-form] [data-registration-section]");
   if (section) updateRegistrationProgress(section.closest("form"), section);

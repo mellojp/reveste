@@ -64,6 +64,7 @@ func TestControladoresCadastroAnuncioCarrinho(t *testing.T) {
 		Titulo: "Jaqueta jeans", Descricao: "Jaqueta jeans em excelente estado",
 		Categoria: anuncios.CategoriaCasacos, Tamanho: "m", Cor: "Azul",
 		EstadoConservacao: anuncios.EstadoSeminovo, PrecoCentavos: 12_000,
+		PesoGramas: 800, AlturaCm: 5, LarguraCm: 30, ComprimentoCm: 40,
 		URLsFotos: []string{"https://reveste-test.public.blob.vercel-storage.com/1.jpg", "https://reveste-test.public.blob.vercel-storage.com/2.jpg"},
 	})
 	if err != nil {
@@ -301,6 +302,7 @@ func TestGerenciamentoDeAnuncioExigeProprietarioEDisponibilidade(t *testing.T) {
 		Titulo: "Titulo atualizado", Descricao: "Descricao atualizada e valida",
 		Categoria: anuncios.CategoriaCamisetas, Tamanho: "g", Cor: "Branco",
 		EstadoConservacao: anuncios.EstadoUsado, PrecoCentavos: 12_000,
+		PesoGramas: 400, AlturaCm: 3, LarguraCm: 25, ComprimentoCm: 35,
 		URLsFotos: []string{"https://reveste-test.public.blob.vercel-storage.com/3.jpg", "https://reveste-test.public.blob.vercel-storage.com/4.jpg"},
 	}
 

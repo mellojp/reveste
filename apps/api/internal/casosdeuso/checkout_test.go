@@ -35,9 +35,37 @@ func (p pagamentoFake) Processar(
 	}, nil
 }
 
+type freteFake struct {
+	valorCentavos int64
+	err           error
+	origemVista   string
+	destinoVisto  string
+}
+
+func (f *freteFake) Cotar(
+	_ context.Context,
+	origemCEP, destinoCEP string,
+	_ []casosdeuso.ItemFrete,
+) (casosdeuso.CotacaoFrete, error) {
+	f.origemVista = origemCEP
+	f.destinoVisto = destinoCEP
+	if f.err != nil {
+		return casosdeuso.CotacaoFrete{}, f.err
+	}
+	return casosdeuso.CotacaoFrete{ValorCentavos: f.valorCentavos, Provedor: "fake"}, nil
+}
+
 func novoCheckout(store *Store, pagamento casosdeuso.ProcessadorPagamento) *casosdeuso.ControladorCheckout {
+	return novoCheckoutComFrete(store, pagamento, nil)
+}
+
+func novoCheckoutComFrete(
+	store *Store,
+	pagamento casosdeuso.ProcessadorPagamento,
+	cotador casosdeuso.CotadorFrete,
+) *casosdeuso.ControladorCheckout {
 	return casosdeuso.NovoControladorCheckout(
-		store, store, store, store, store, pagamento,
+		store, store, store, store, store, pagamento, cotador,
 		&geradorSequencial{},
 		relogioFixo{agora: time.Date(2026, 6, 10, 12, 0, 0, 0, time.UTC)},
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
@@ -110,6 +138,51 @@ func TestCheckoutFinalizaCompraEReservaItem(t *testing.T) {
 	pedidos, err := checkout.ListarPedidos(context.Background(), "comprador-1")
 	if err != nil || len(pedidos) != 1 {
 		t.Fatalf("ListarPedidos() = %d pedidos, erro %v; esperado 1", len(pedidos), err)
+	}
+}
+
+func TestCheckoutUsaFreteCotado(t *testing.T) {
+	store := newTestStore()
+	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
+	// o vendedor precisa de endereco principal para servir de origem da cotacao.
+	store.usuarios["vendedor-1"] = cadastros.Usuario{
+		ID: "vendedor-1", Nome: "Vendedor Teste",
+		EnderecoPrincipal: cadastros.Endereco{CEP: "01310100", Cidade: "São Paulo", Estado: "SP"},
+	}
+	cotador := &freteFake{valorCentavos: 3_500}
+	checkout := novoCheckoutComFrete(store, pagamentoFake{aprovar: true}, cotador)
+
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	if err != nil {
+		t.Fatalf("FinalizarCompra() erro = %v", err)
+	}
+	pedido := compra.Pedidos[0]
+	if pedido.ValorFreteCentavos != 3_500 {
+		t.Fatalf("frete = %d; esperado 3500 (cotado)", pedido.ValorFreteCentavos)
+	}
+	if compra.ValorFinalPagoCentavos != 13_500 { // 10000 itens + 3500 frete
+		t.Fatalf("total pago = %d; esperado 13500", compra.ValorFinalPagoCentavos)
+	}
+	if cotador.origemVista != "01310100" || cotador.destinoVisto != "49000000" {
+		t.Fatalf("CEPs de cotacao inesperados: origem=%q destino=%q", cotador.origemVista, cotador.destinoVisto)
+	}
+}
+
+func TestCheckoutCaiNoFreteContingenciaQuandoCotacaoFalha(t *testing.T) {
+	store := newTestStore()
+	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
+	store.usuarios["vendedor-1"] = cadastros.Usuario{
+		ID: "vendedor-1", EnderecoPrincipal: cadastros.Endereco{CEP: "01310100"},
+	}
+	cotador := &freteFake{err: common.ErrCotacaoFreteIndisponivel}
+	checkout := novoCheckoutComFrete(store, pagamentoFake{aprovar: true}, cotador)
+
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	if err != nil {
+		t.Fatalf("FinalizarCompra() erro = %v", err)
+	}
+	if compra.Pedidos[0].ValorFreteCentavos != 1990 {
+		t.Fatalf("frete = %d; esperado 1990 (contingência)", compra.Pedidos[0].ValorFreteCentavos)
 	}
 }
 

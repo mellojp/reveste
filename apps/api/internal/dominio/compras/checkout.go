@@ -19,6 +19,10 @@ type ItemCompravel struct {
 	Cor               string
 	EstadoConservacao anuncios.EstadoConservacao
 	PrecoCentavos     int64
+	PesoGramas        int
+	AlturaCm          int
+	LarguraCm         int
+	ComprimentoCm     int
 }
 
 // PoliticaCobranca define como a taxa de servico e o frete sao calculados no checkout.
@@ -45,6 +49,7 @@ type ParametrosCompra struct {
 	EnderecoEntrega   cadastros.Endereco
 	Itens             []ItemCompravel
 	Politica          PoliticaCobranca
+	FretePorVendedor  map[string]int64
 	ChaveIdempotencia string
 	Agora             time.Time
 	ExpiraEm          time.Time
@@ -87,7 +92,7 @@ func MontarCompra(p ParametrosCompra) (Compra, error) {
 			IDComprador:        p.IDComprador,
 			IDVendedor:         idVendedor,
 			Status:             StatusPedidoAguardandoPagamento,
-			ValorFreteCentavos: p.Politica.FretePorPedidoCentavos,
+			ValorFreteCentavos: p.FretePorVendedor[idVendedor],
 			NomeDestinatario:   p.NomeDestinatario,
 			EnderecoEntrega:    p.EnderecoEntrega,
 			CriadoEm:           p.Agora,

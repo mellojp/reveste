@@ -12,12 +12,15 @@ import (
 )
 
 type Config struct {
-	DatabaseURL     string
-	HTTPAddress     string
-	VercelBlobToken string
-	BlobPublicHost  string
-	ConfiarProxy    bool
-	IntervaloJobs   time.Duration
+	DatabaseURL      string
+	HTTPAddress      string
+	VercelBlobToken  string
+	BlobPublicHost   string
+	ConfiarProxy     bool
+	IntervaloJobs    time.Duration
+	MelhorEnvioToken string
+	MelhorEnvioURL   string
+	MelhorEnvioUA    string
 }
 
 func Load() (Config, error) {
@@ -53,6 +56,17 @@ func Load() (Config, error) {
 			return Config{}, fmt.Errorf("JOBS_INTERVAL deve ser uma duracao positiva")
 		}
 		cfg.IntervaloJobs = intervalo
+	}
+
+	// Cotacao de frete via Melhor Envio. Sem token, o checkout usa o frete de contingencia.
+	cfg.MelhorEnvioToken = strings.TrimSpace(os.Getenv("MELHORENVIO_TOKEN"))
+	cfg.MelhorEnvioURL = strings.TrimSpace(os.Getenv("MELHORENVIO_URL"))
+	if cfg.MelhorEnvioURL == "" {
+		cfg.MelhorEnvioURL = "https://sandbox.melhorenvio.com.br"
+	}
+	cfg.MelhorEnvioUA = strings.TrimSpace(os.Getenv("MELHORENVIO_USER_AGENT"))
+	if cfg.MelhorEnvioUA == "" {
+		cfg.MelhorEnvioUA = "ReVeste (contato@reveste.com.br)"
 	}
 	return cfg, nil
 }

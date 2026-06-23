@@ -25,6 +25,7 @@ type ControladorCheckout struct {
 	checkout     OperacoesCheckout
 	notificacoes RegistroNotificacoes
 	pagamentos   ProcessadorPagamento
+	frete        CotadorFrete
 	ids          GeradorID
 	relogio      Relogio
 	politica     compras.PoliticaCobranca
@@ -37,13 +38,15 @@ func NovoControladorCheckout(
 	checkout OperacoesCheckout,
 	notificacoes RegistroNotificacoes,
 	pagamentos ProcessadorPagamento,
+	frete CotadorFrete,
 	ids GeradorID,
 	relogio Relogio,
 	politica compras.PoliticaCobranca,
 ) *ControladorCheckout {
 	return &ControladorCheckout{
 		usuarios: usuarios, anuncios: anuncios, carrinhos: carrinhos,
-		checkout: checkout, notificacoes: notificacoes, pagamentos: pagamentos, ids: ids, relogio: relogio,
+		checkout: checkout, notificacoes: notificacoes, pagamentos: pagamentos,
+		frete: frete, ids: ids, relogio: relogio,
 		politica: politica,
 	}
 }
@@ -209,6 +212,8 @@ func (c *ControladorCheckout) montarCompraDoCarrinho(
 		append([]string{carrinho.ID, versaoCarrinho}, idsAnuncios...),
 	)
 
+	fretePorVendedor := c.cotarFretesPorVendedor(ctx, itens, enderecoEntrega.CEP)
+
 	agora := c.relogio.Agora()
 	compra, err := compras.MontarCompra(compras.ParametrosCompra{
 		IDCompra:          c.ids.Novo(),
@@ -217,6 +222,7 @@ func (c *ControladorCheckout) montarCompraDoCarrinho(
 		EnderecoEntrega:   enderecoEntrega,
 		Itens:             itens,
 		Politica:          c.politica,
+		FretePorVendedor:  fretePorVendedor,
 		ChaveIdempotencia: chave,
 		Agora:             agora,
 		ExpiraEm:          agora.Add(validadeCompra),
@@ -259,7 +265,61 @@ func (c *ControladorCheckout) itensCompraveis(
 			Cor:               anuncio.Cor,
 			EstadoConservacao: anuncio.EstadoConservacao,
 			PrecoCentavos:     anuncio.PrecoCentavos,
+			PesoGramas:        anuncio.PesoGramas,
+			AlturaCm:          anuncio.AlturaCm,
+			LarguraCm:         anuncio.LarguraCm,
+			ComprimentoCm:     anuncio.ComprimentoCm,
 		})
 	}
 	return itens, nil
+}
+
+// cotarFretesPorVendedor cota o frete de cada vendedor (um pedido por vendedor), agrupando
+// os itens e usando o CEP do vendedor como origem e o CEP de entrega como destino. Falhas de
+// cotacao caem no frete de contingencia, para que a indisponibilidade do provedor de frete
+// nunca bloqueie o checkout.
+func (c *ControladorCheckout) cotarFretesPorVendedor(
+	ctx context.Context,
+	itens []compras.ItemCompravel,
+	destinoCEP string,
+) map[string]int64 {
+	itensPorVendedor := make(map[string][]compras.ItemCompravel)
+	for _, item := range itens {
+		itensPorVendedor[item.IDVendedor] = append(itensPorVendedor[item.IDVendedor], item)
+	}
+	fretes := make(map[string]int64, len(itensPorVendedor))
+	for idVendedor, itensVendedor := range itensPorVendedor {
+		fretes[idVendedor] = c.cotarFreteVendedor(ctx, idVendedor, destinoCEP, itensVendedor)
+	}
+	return fretes
+}
+
+func (c *ControladorCheckout) cotarFreteVendedor(
+	ctx context.Context,
+	idVendedor, destinoCEP string,
+	itensVendedor []compras.ItemCompravel,
+) int64 {
+	contingencia := c.politica.FretePorPedidoCentavos
+	if c.frete == nil {
+		return contingencia
+	}
+	vendedor, err := c.usuarios.BuscarUsuarioPorID(ctx, idVendedor)
+	if err != nil || vendedor.EnderecoPrincipal.CEP == "" {
+		return contingencia
+	}
+	itensFrete := make([]ItemFrete, 0, len(itensVendedor))
+	for _, item := range itensVendedor {
+		itensFrete = append(itensFrete, ItemFrete{
+			PesoGramas:    item.PesoGramas,
+			AlturaCm:      item.AlturaCm,
+			LarguraCm:     item.LarguraCm,
+			ComprimentoCm: item.ComprimentoCm,
+			ValorCentavos: item.PrecoCentavos,
+		})
+	}
+	cotacao, err := c.frete.Cotar(ctx, vendedor.EnderecoPrincipal.CEP, destinoCEP, itensFrete)
+	if err != nil {
+		return contingencia
+	}
+	return cotacao.ValorCentavos
 }

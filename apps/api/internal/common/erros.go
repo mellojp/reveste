@@ -16,6 +16,12 @@ var (
 	ErrCarrinhoVazio         = errors.New("carrinho sem itens para finalizar")
 	ErrSemItensDisponiveis   = errors.New("nenhum item do carrinho esta disponivel")
 	ErrPagamentoRecusado     = errors.New("pagamento recusado pelo provedor")
+	// ErrConsultaCEPIndisponivel indica falha transitoria ao consultar o provedor de CEP
+	// (timeout, indisponibilidade). O CEP inexistente usa ErrNaoEncontrado.
+	ErrConsultaCEPIndisponivel = errors.New("consulta de cep indisponivel")
+	// ErrCotacaoFreteIndisponivel indica falha ao cotar o frete no provedor externo. O caso
+	// de uso de checkout trata esse erro aplicando um valor de frete de contingencia.
+	ErrCotacaoFreteIndisponivel = errors.New("cotacao de frete indisponivel")
 )
 
 type ErroValidacao struct {

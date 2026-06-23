@@ -38,6 +38,10 @@ type EntradaAnuncio struct {
 	Cor               string
 	EstadoConservacao dominioanuncios.EstadoConservacao
 	PrecoCentavos     int64
+	PesoGramas        int
+	AlturaCm          int
+	LarguraCm         int
+	ComprimentoCm     int
 	URLsFotos         []string
 }
 
@@ -87,7 +91,10 @@ func (c *ControladorAnuncio) CriarAnuncio(
 		ID: c.ids.Novo(), IDVendedor: idVendedor, Titulo: entrada.Titulo,
 		Descricao: entrada.Descricao, Categoria: entrada.Categoria, Tamanho: entrada.Tamanho,
 		Cor: entrada.Cor, EstadoConservacao: entrada.EstadoConservacao,
-		PrecoCentavos: entrada.PrecoCentavos, Status: dominioanuncios.StatusAnuncioDisponivel,
+		PrecoCentavos: entrada.PrecoCentavos,
+		PesoGramas:    entrada.PesoGramas, AlturaCm: entrada.AlturaCm,
+		LarguraCm: entrada.LarguraCm, ComprimentoCm: entrada.ComprimentoCm,
+		Status:   dominioanuncios.StatusAnuncioDisponivel,
 		CriadoEm: agora, AtualizadoEm: agora,
 	}
 	for indice, url := range entrada.URLsFotos {
@@ -172,6 +179,10 @@ func (c *ControladorAnuncio) AtualizarAnuncio(
 	atual.Cor = entrada.Cor
 	atual.EstadoConservacao = entrada.EstadoConservacao
 	atual.PrecoCentavos = entrada.PrecoCentavos
+	atual.PesoGramas = entrada.PesoGramas
+	atual.AlturaCm = entrada.AlturaCm
+	atual.LarguraCm = entrada.LarguraCm
+	atual.ComprimentoCm = entrada.ComprimentoCm
 	atual.AtualizadoEm = c.relogio.Agora()
 	atual.Fotos = make([]dominioanuncios.Foto, 0, len(entrada.URLsFotos))
 	for indice, url := range entrada.URLsFotos {
