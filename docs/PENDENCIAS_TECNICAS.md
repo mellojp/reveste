@@ -10,8 +10,9 @@ impacto sobre uma futura implantacao real.
   reconciliacao de respostas desconhecidas ou timeouts;
 - substituir o reembolso simulado por reembolso real e implementar o repasse ao
   vendedor;
-- executar migracoes por uma ferramenta versionada no deploy, sem depender de
-  `docker-entrypoint-initdb.d`;
+- ~~executar migracoes por uma ferramenta versionada no deploy, sem depender de
+  `docker-entrypoint-initdb.d`~~ (feito: `apps/back/cmd/migrate`, golang-migrate com
+  migracoes embarcadas; falta executa-la como etapa do pipeline de deploy real);
 - mover os jobs temporais para um executor unico ou adicionar coordenacao
   distribuida. Hoje cada instancia da API executa os jobs;
 - adicionar observabilidade para checkout, pagamentos, jobs, reembolsos e

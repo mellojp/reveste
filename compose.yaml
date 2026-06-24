@@ -14,10 +14,23 @@ services:
       retries: 10
     volumes:
       - dados_postgres:/var/lib/postgresql/data
-      - ./db/migrations/001_modelo_inicial.up.sql:/docker-entrypoint-initdb.d/001_modelo_inicial.sql:ro
-      - ./db/migrations/002_anuncio_unico_por_item.up.sql:/docker-entrypoint-initdb.d/002_anuncio_unico_por_item.sql:ro
-      - ./db/migrations/003_categorias_anuncio.up.sql:/docker-entrypoint-initdb.d/003_categorias_anuncio.sql:ro
-      - ./db/migrations/004_tentativas_login.up.sql:/docker-entrypoint-initdb.d/004_tentativas_login.sql:ro
+
+  # Aplica as migrações versionadas com a ferramenta embarcada (apps/back/cmd/migrate),
+  # substituindo o antigo docker-entrypoint-initdb.d. Roda uma vez após o Postgres ficar
+  # saudável e encerra. Reexecutar é seguro: migrações já aplicadas são ignoradas.
+  migrate:
+    image: golang:1.25-alpine
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgres://reveste:reveste@postgres:5432/reveste?sslmode=disable
+    command: ["go", "run", "./apps/back/cmd/migrate", "up"]
+    volumes:
+      - .:/app
+      - cache_go_mod:/go/pkg/mod
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   dados_postgres:
+  cache_go_mod:

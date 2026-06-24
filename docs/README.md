@@ -58,9 +58,10 @@ quando `TEST_DATABASE_URL` esta definida:
 TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable
 ```
 
-O `compose.yaml` aplica as migracoes `up` em ordem apenas na criacao inicial do
-volume PostgreSQL. Em ambiente ja inicializado, novas migracoes precisam ser
-executadas explicitamente.
+As migracoes sao aplicadas pela ferramenta versionada `apps/back/cmd/migrate`, que
+embarca os arquivos de `db/migrations` no binario e usa o golang-migrate com o driver
+pgx/v5. No `compose.yaml`, o servico `migrate` executa `migrate up` automaticamente
+assim que o PostgreSQL fica saudavel. Detalhes e comandos ficam na secao "Migracoes".
 
 ## Execucao local
 
@@ -84,11 +85,11 @@ O store publico deve ser exclusivo para fotos publicas dos anuncios. Conteudo
 restrito ou sensivel deve usar outro store privado. A politica completa e os
 controles pendentes estao em `docs/ALINHAMENTO_IMPLEMENTACAO.md`.
 
-Inicie o banco e a API:
+Inicie o banco (o servico `migrate` aplica as migracoes pendentes e encerra) e a API:
 
 ```text
 docker compose up -d
-go run ./apps/api/cmd/api
+go run ./apps/back/cmd/api
 ```
 
 O frontend fica disponivel em `http://localhost:8080`.
@@ -108,14 +109,32 @@ Endpoints de monitoramento:
 - `GET /saude`: liveness do processo;
 - `GET /saude/prontidao`: readiness com verificacao da conexao PostgreSQL.
 
-Para aplicar uma migracao em um volume criado antes dela (exemplos: categorias e o
-`id_pedido` das notificacoes):
+## Migracoes
+
+As migracoes ficam em `db/migrations` no formato do golang-migrate
+(`NNN_nome.up.sql` aplica, `NNN_nome.down.sql` reverte) e sao embarcadas no binario
+`apps/back/cmd/migrate`. A URL do banco vem de `DATABASE_URL` (`.env` ou ambiente).
+
+Comandos:
 
 ```text
-docker compose exec -T postgres psql -v ON_ERROR_STOP=1 \
-  -U reveste -d reveste -f /dev/stdin < db/migrations/003_categorias_anuncio.up.sql
-docker compose exec -T postgres psql -v ON_ERROR_STOP=1 \
-  -U reveste -d reveste -f /dev/stdin < db/migrations/005_notificacao_pedido.up.sql
+go run ./apps/back/cmd/migrate up             # aplica todas as pendentes
+go run ./apps/back/cmd/migrate down 1         # reverte a ultima
+go run ./apps/back/cmd/migrate goto 4         # migra para uma versao especifica
+go run ./apps/back/cmd/migrate version        # mostra a versao atual
+go run ./apps/back/cmd/migrate force 4        # fixa a versao sem executar (baseline)
+```
+
+No `compose.yaml` o servico `migrate` roda `up` automaticamente. Para criar uma nova
+migracao, adicione o par `NNN_nome.up.sql` / `NNN_nome.down.sql` com o proximo numero.
+
+Para adotar a ferramenta em um banco criado antes dela (pelo antigo
+`docker-entrypoint-initdb.d`, que aplicava apenas ate a migracao 004), fixe a versao
+ja aplicada uma unica vez e siga com `up`:
+
+```text
+go run ./apps/back/cmd/migrate force 4
+go run ./apps/back/cmd/migrate up
 ```
 
 Para executar todos os testes, incluindo a integracao PostgreSQL:
@@ -131,7 +150,7 @@ node --test apps/front/tests/*.test.mjs
 Os testes seguem uma estrutura hibrida:
 
 ```text
-apps/api/
+apps/back/
 |-- internal/
 |   |-- dominio/.../*_test.go
 |   |-- casosdeuso/*_test.go
@@ -146,15 +165,15 @@ apps/api/
 
 - testes unitarios permanecem junto ao pacote testado, conforme a convencao Go;
 - testes do adaptador HTTP e de persistencia PostgreSQL ficam em
-  `apps/api/tests/integration`;
+  `apps/back/tests/integration`;
 - fixtures compartilhadas por um conjunto de integracao ficam em arquivos
   `*_support_test.go` no mesmo pacote de testes;
 - futuros testes de navegador e fluxos completos devem ficar em
-  `apps/api/tests/e2e`.
+  `apps/back/tests/e2e`.
 
 Para executar apenas as integracoes:
 
 ```text
 TEST_DATABASE_URL=postgres://reveste:reveste@localhost:5432/reveste?sslmode=disable \
-  go test ./apps/api/tests/integration
+  go test ./apps/back/tests/integration
 ```

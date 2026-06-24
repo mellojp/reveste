@@ -58,7 +58,7 @@ O frontend continua sem etapa de build e e servido pela propria API. O pacote
 GET e comandos POST chamam os mesmos controladores de casos de uso, preenchem um
 `contextoDocumento` e respondem templates Go com escape contextual de HTML.
 
-Os templates ficam em `apps/api/internal/web/templates`, os estilos e assets em
+Os templates ficam em `apps/back/internal/web/templates`, os estilos e assets em
 `apps/front`, e o HTMX 2.0.8 e versionado localmente em
 `apps/front/js/htmx.min.js`. Navegacao, filtros, autenticacao, perfil, anuncios e
 carrinho usam HTML do servidor. O modulo `apps/front/js/web.js` cobre somente
@@ -236,8 +236,8 @@ livres existentes antes de criar a constraint.
   exclusao de anuncio proprio do catalogo e listagem em "Meus anuncios".
 
 Os testes unitarios ficam junto aos pacotes. Testes HTTP e PostgreSQL que exercitam
-adaptadores completos ficam centralizados em `apps/api/tests/integration`. Futuros
-testes de navegador e fluxos completos devem usar `apps/api/tests/e2e`.
+adaptadores completos ficam centralizados em `apps/back/tests/integration`. Futuros
+testes de navegador e fluxos completos devem usar `apps/back/tests/e2e`.
 
 ## Correspondencia dos controladores
 
