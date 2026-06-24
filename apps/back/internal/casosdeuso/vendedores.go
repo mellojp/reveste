@@ -52,15 +52,18 @@ func (c *ControladorVendedor) Reativar(ctx context.Context, idVendedor string) e
 	}
 
 	chave := fmt.Sprintf("reativacao-%s-%d", idVendedor, usuario.ItensNaoEnviados)
-	resultado, err := c.pagamentos.Processar(ctx, SolicitacaoPagamento{
+	cobranca, err := c.pagamentos.CriarCobranca(ctx, SolicitacaoPagamento{
 		IDCompra:          chave,
 		ValorCentavos:     c.taxa,
 		ChaveIdempotencia: chave,
+		EmailPagador:      usuario.Email,
 	})
 	if err != nil {
 		return err
 	}
-	if !resultado.Aprovado {
+	// A reativacao assume cobranca sincrona (o MVP usa o provedor simulado). Com um provedor
+	// real assincrono, este fluxo precisara do mesmo tratamento por webhook usado no checkout.
+	if cobranca.Status != CobrancaAprovada {
 		return common.ErrPagamentoRecusado
 	}
 

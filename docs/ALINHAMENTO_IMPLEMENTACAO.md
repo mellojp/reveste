@@ -159,8 +159,8 @@ O fluxo adotado e:
 4. o navegador envia o arquivo diretamente ao Vercel Blob;
 5. as URLs retornadas sao enviadas na criacao do anuncio.
 
-Os adaptadores ficam em `internal/storage/vercel` e
-`internal/storage/postgres`: o primeiro persiste objetos externos; o segundo
+Os adaptadores ficam em `internal/adaptadores/vercel` e
+`internal/adaptadores/postgres`: o primeiro persiste objetos externos; o segundo
 persiste dados relacionais. A porta `ArmazenamentoArquivos` mantem o caso de uso
 independente do provedor e permite trocar Vercel Blob por S3 no futuro.
 
@@ -247,7 +247,7 @@ testes de navegador e fluxos completos devem usar `apps/back/tests/e2e`.
 | Adaptador/controller HTTP | `internal/http.API` e seus handlers |
 | Entidades e regras de dominio | `internal/dominio/*` |
 | Portas de saida | interfaces em `casosdeuso/contratos.go` |
-| Adaptadores de persistencia | `storage/postgres.Store` e `storage/vercel.Storage` |
+| Adaptadores de persistencia | `adaptadores/postgres.Store` e `adaptadores/vercel.Storage` |
 
 Os controladores de aplicacao coordenam casos de uso e nao conhecem HTTP ou
 PostgreSQL. Os handlers HTTP traduzem o protocolo; o store PostgreSQL implementa
@@ -266,7 +266,7 @@ precisam ser implementados nas proximas fases.
 pedido como enviado (itens -> enviado, entrega -> postado, pedido -> aguardando_entrega); o
 comprador confirma o recebimento (itens -> recebido, entrega -> entregue, pedido -> finalizado)
 e avalia o vendedor de um pedido finalizado. Todas as transicoes sao atomicas em
-`storage/postgres.MarcarPedidoEnviado`/`ConfirmarRecebimentoPedido`, com autorizacao por
+`adaptadores/postgres.MarcarPedidoEnviado`/`ConfirmarRecebimentoPedido`, com autorizacao por
 vendedor/comprador via `WHERE` de propriedade e status. `ProcessarItensVencidos` marca como
 `nao_enviado` os itens cujo prazo expirou, cancela o pedido, marca a entrega como falha,
 registra reembolso simulado dos itens e do frete, incrementa o contador do vendedor e o
@@ -288,7 +288,7 @@ confiavel); por padrao a aplicacao confia apenas em `r.TLS`/`r.RemoteAddr`.
 
 O caso de uso `casosdeuso.ControladorCheckout` le o carrinho, projeta os itens disponiveis e
 monta a `Compra` (um `Pedido` por vendedor com snapshot dos itens). Antes de chamar a porta
-`ProcessadorPagamento`, `storage/postgres.IniciarCompra` cria a intencao e muda os anuncios
+`ProcessadorPagamento`, `adaptadores/postgres.IniciarCompra` cria a intencao e muda os anuncios
 de `disponivel` para `reservado` em uma transacao. Somente o vencedor dessa reserva pode chegar
 ao provedor financeiro.
 
@@ -301,6 +301,20 @@ mesma chave no provedor, permitindo recuperar uma confirmacao sem duplicar a cob
 A taxa de servico e a comissao da plataforma, descontada do repasse ao vendedor; o frete e
 um valor fixo por pedido cobrado do comprador. A chave inclui comprador, carrinho, versao do
 carrinho e anuncios.
+
+A porta `ProcessadorPagamento` e assincrona por design: `CriarCobranca` devolve uma `Cobranca`
+com status `aprovada`, `recusada` ou `pendente`. O provedor simulado do MVP responde de forma
+sincrona (`aprovada`/`recusada`), entao `FinalizarCompra` confirma a venda na hora. Um provedor
+real (PIX, cartao) devolve `pendente` com as instrucoes de pagamento (PIX/redirect): os itens
+seguem reservados e a venda so se confirma quando o webhook do provedor chama
+`ControladorCheckout.ConfirmarPagamentoExterno`, que e idempotente e tolera reentregas. Se o
+pagamento nao for concluido, a intencao expira em 30 minutos e libera a reserva.
+
+O adaptador do Mercado Pago (`adaptadores/pagamentos.MercadoPago`) implementa esse fluxo com
+cobrancas PIX e e ativado quando `MERCADOPAGO_ACCESS_TOKEN` esta definido; sem ele, o checkout
+usa o provedor simulado (sincrono). O webhook chega em `POST /webhooks/pagamento`, isento de
+CSRF e sessao, com a autenticidade garantida pela verificacao da assinatura `x-signature`. Falta
+a reconciliacao periodica (consultar pagamentos presos em pendente) e o split/repasse ao vendedor.
 
 ## Diferencas intencionais em relacao ao diagrama
 

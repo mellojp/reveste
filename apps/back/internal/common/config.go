@@ -21,6 +21,11 @@ type Config struct {
 	MelhorEnvioToken string
 	MelhorEnvioURL   string
 	MelhorEnvioUA    string
+
+	MercadoPagoToken          string
+	MercadoPagoWebhookSecret  string
+	MercadoPagoURL            string
+	MercadoPagoNotificacaoURL string
 }
 
 func Load() (Config, error) {
@@ -68,6 +73,16 @@ func Load() (Config, error) {
 	if cfg.MelhorEnvioUA == "" {
 		cfg.MelhorEnvioUA = "ReVeste (contato@reveste.com.br)"
 	}
+
+	// Pagamento via Mercado Pago. Sem MERCADOPAGO_ACCESS_TOKEN, o checkout usa o provedor
+	// simulado (sincrono) e o webhook nao e exposto.
+	cfg.MercadoPagoToken = strings.TrimSpace(os.Getenv("MERCADOPAGO_ACCESS_TOKEN"))
+	cfg.MercadoPagoWebhookSecret = strings.TrimSpace(os.Getenv("MERCADOPAGO_WEBHOOK_SECRET"))
+	cfg.MercadoPagoURL = strings.TrimSpace(os.Getenv("MERCADOPAGO_URL"))
+	if cfg.MercadoPagoURL == "" {
+		cfg.MercadoPagoURL = "https://api.mercadopago.com"
+	}
+	cfg.MercadoPagoNotificacaoURL = strings.TrimSpace(os.Getenv("MERCADOPAGO_NOTIFICATION_URL"))
 	return cfg, nil
 }
 

@@ -14,21 +14,22 @@ type verificadorProntidao interface {
 }
 
 type API struct {
-	cadastros    *casosdeuso.ControladorCadastro
-	anuncios     *casosdeuso.ControladorAnuncio
-	compras      *casosdeuso.ControladorCarrinho
-	checkout     *casosdeuso.ControladorCheckout
-	pedidos      *casosdeuso.ControladorPedidos
-	vendedores   *casosdeuso.ControladorVendedor
-	notificacoes *casosdeuso.ControladorNotificacoes
-	conversas    *casosdeuso.ControladorConversas
-	uploads      *casosdeuso.ControladorUpload
-	cep          *casosdeuso.ControladorCEP
-	prontidao    verificadorProntidao
-	logger       *slog.Logger
-	hostBlob     string
-	limitador    *transporte.LimitadorLogin
-	confiarProxy bool
+	cadastros        *casosdeuso.ControladorCadastro
+	anuncios         *casosdeuso.ControladorAnuncio
+	compras          *casosdeuso.ControladorCarrinho
+	checkout         *casosdeuso.ControladorCheckout
+	pedidos          *casosdeuso.ControladorPedidos
+	vendedores       *casosdeuso.ControladorVendedor
+	notificacoes     *casosdeuso.ControladorNotificacoes
+	conversas        *casosdeuso.ControladorConversas
+	uploads          *casosdeuso.ControladorUpload
+	cep              *casosdeuso.ControladorCEP
+	prontidao        verificadorProntidao
+	logger           *slog.Logger
+	hostBlob         string
+	limitador        *transporte.LimitadorLogin
+	confiarProxy     bool
+	webhookPagamento WebhookPagamento
 }
 
 func NovaAPI(
@@ -47,24 +48,26 @@ func NovaAPI(
 	hostBlob string,
 	limitador *transporte.LimitadorLogin,
 	confiarProxy bool,
+	webhookPagamento WebhookPagamento,
 	paginasHTML nethttp.Handler,
 ) nethttp.Handler {
 	api := &API{
-		cadastros:    cadastros,
-		anuncios:     anuncios,
-		compras:      compras,
-		checkout:     checkout,
-		pedidos:      pedidos,
-		vendedores:   vendedores,
-		notificacoes: notificacoes,
-		conversas:    conversas,
-		uploads:      uploads,
-		cep:          cep,
-		prontidao:    prontidao,
-		logger:       logger,
-		hostBlob:     hostBlob,
-		limitador:    limitador,
-		confiarProxy: confiarProxy,
+		cadastros:        cadastros,
+		anuncios:         anuncios,
+		compras:          compras,
+		checkout:         checkout,
+		pedidos:          pedidos,
+		vendedores:       vendedores,
+		notificacoes:     notificacoes,
+		conversas:        conversas,
+		uploads:          uploads,
+		cep:              cep,
+		prontidao:        prontidao,
+		logger:           logger,
+		hostBlob:         hostBlob,
+		limitador:        limitador,
+		confiarProxy:     confiarProxy,
+		webhookPagamento: webhookPagamento,
 	}
 	mux := nethttp.NewServeMux()
 
@@ -80,6 +83,7 @@ func NovaAPI(
 	api.registrarRotasConversas(mux)
 	api.registrarRotasUploads(mux)
 	api.registrarRotasCEP(mux)
+	api.registrarRotasWebhooks(mux)
 	api.registrarRotasFrontend(mux, paginasHTML)
 
 	return api.comRecuperacao(api.comSeguranca(api.comJSON(api.comProtecaoCSRF(mux))))

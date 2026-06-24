@@ -66,7 +66,8 @@ func (a *API) comProtecaoCSRF(proximo nethttp.Handler) nethttp.Handler {
 			(r.URL.Path == "/v1/sessoes" || r.URL.Path == "/entrar") &&
 			!strings.EqualFold(r.Header.Get("X-Reveste-Session-Transport"), "bearer")
 		formularioWeb := !strings.HasPrefix(r.URL.Path, "/v1/") &&
-			!strings.HasPrefix(r.URL.Path, "/saude")
+			!strings.HasPrefix(r.URL.Path, "/saude") &&
+			!strings.HasPrefix(r.URL.Path, "/webhooks/")
 		_, autenticacaoPorCookie := tokenDaRequisicao(r)
 		if !autenticacaoPorCookie && !loginDoNavegador && !formularioWeb {
 			proximo.ServeHTTP(w, r)

@@ -38,7 +38,7 @@ interfaces definidas em `casosdeuso/contratos.go`.
 
 Eles nao sao controllers HTTP/MVC. O pacote `internal/http` e o adaptador de
 entrada: decodifica a requisicao, chama um controlador de aplicacao e converte o
-resultado em resposta HTTP. Os pacotes `storage/postgres` e `storage/vercel` sao
+resultado em resposta HTTP. Os pacotes `adaptadores/postgres` e `adaptadores/vercel` sao
 adaptadores de saida que implementam as interfaces exigidas pelos controladores.
 
 O adaptador PostgreSQL permanece em um unico pacote e usa o tipo compartilhado
@@ -46,7 +46,7 @@ O adaptador PostgreSQL permanece em um unico pacote e usa o tipo compartilhado
 `anuncios.go`, `carrinhos.go` e `sessoes.go`. Conexao e configuracao ficam em
 `store.go`, enquanto a traducao de erros do driver fica em `erros.go`.
 
-O adaptador Vercel Blob fica em `storage/vercel` e implementa o armazenamento
+O adaptador Vercel Blob fica em `adaptadores/vercel` e implementa o armazenamento
 externo dos arquivos de imagem.
 
 Os erros compartilhados pela aplicacao ficam em `internal/common/erros.go`.
@@ -154,7 +154,7 @@ apps/back/
 |-- internal/
 |   |-- dominio/.../*_test.go
 |   |-- casosdeuso/*_test.go
-|   `-- storage/vercel/*_test.go
+|   `-- adaptadores/vercel/*_test.go
 `-- tests/
     `-- integration/
         |-- http_support_test.go

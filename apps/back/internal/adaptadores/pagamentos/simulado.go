@@ -9,9 +9,10 @@ import (
 
 const provedorSimulado = "simulado"
 
-// Simulado e um ProcessadorPagamento que aprova as cobrancas de forma deterministica.
-// Serve ao MVP enquanto um gateway real (Stripe, Mercado Pago) nao e integrado: a porta
-// ProcessadorPagamento permite substitui-lo sem alterar o caso de uso.
+// Simulado e um ProcessadorPagamento sincrono que aprova as cobrancas de forma
+// deterministica. Serve ao MVP enquanto um gateway real (Mercado Pago, Pagar.me, Stripe)
+// nao e integrado: a porta ProcessadorPagamento permite substitui-lo sem alterar o caso de
+// uso. Por ser sincrono, devolve Aprovada (ou Recusada) na hora, sem instrucoes de pagamento.
 type Simulado struct {
 	// Recusar inverte a decisao para exercitar o caminho de pagamento recusado.
 	Recusar bool
@@ -22,12 +23,16 @@ func NovoSimulado() *Simulado {
 	return &Simulado{}
 }
 
-func (s *Simulado) Processar(
+func (s *Simulado) CriarCobranca(
 	_ context.Context,
 	solicitacao casosdeuso.SolicitacaoPagamento,
-) (casosdeuso.ResultadoPagamento, error) {
-	return casosdeuso.ResultadoPagamento{
-		Aprovado:             !s.Recusar,
+) (casosdeuso.Cobranca, error) {
+	status := casosdeuso.CobrancaAprovada
+	if s.Recusar {
+		status = casosdeuso.CobrancaRecusada
+	}
+	return casosdeuso.Cobranca{
+		Status:               status,
 		Provedor:             provedorSimulado,
 		IdentificadorExterno: provedorSimulado + "_" + solicitacao.ChaveIdempotencia,
 	}, nil

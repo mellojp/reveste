@@ -149,20 +149,49 @@ type SolicitacaoPagamento struct {
 	IDCompra          string
 	ValorCentavos     int64
 	ChaveIdempotencia string
+	// EmailPagador identifica o pagador junto ao provedor (exigido por alguns meios, como
+	// PIX no Mercado Pago). Pode ficar vazio com provedores que nao o requerem.
+	EmailPagador string
 }
 
-type ResultadoPagamento struct {
-	Aprovado             bool
+// StatusCobranca e o desfecho de uma cobranca no provedor financeiro.
+type StatusCobranca string
+
+const (
+	// CobrancaPendente: o provedor aceitou a intencao, mas o comprador ainda nao concluiu o
+	// pagamento (ex.: PIX aguardando, cartao em analise). A confirmacao chega depois por
+	// webhook, em ControladorCheckout.ConfirmarPagamentoExterno.
+	CobrancaPendente StatusCobranca = "pendente"
+	// CobrancaAprovada: pagamento confirmado de forma sincrona (ex.: provedor simulado).
+	CobrancaAprovada StatusCobranca = "aprovada"
+	// CobrancaRecusada: o provedor recusou a cobranca.
+	CobrancaRecusada StatusCobranca = "recusada"
+)
+
+// InstrucoesPagamento traz o que o comprador precisa para concluir um pagamento pendente.
+// Fica vazio quando a cobranca ja nasce aprovada (provedores sincronos).
+type InstrucoesPagamento struct {
+	Tipo         string `json:"tipo,omitempty"`           // "pix", "redirect" ou vazio
+	PixCopiaCola string `json:"pix_copia_cola,omitempty"` // payload PIX copia-e-cola
+	PixQRCode    string `json:"pix_qr_code,omitempty"`    // QR Code do PIX (imagem base64 ou payload)
+	URLPagamento string `json:"url_pagamento,omitempty"`  // pagina de pagamento do provedor
+}
+
+// Cobranca e a resposta do provedor a uma solicitacao de pagamento.
+type Cobranca struct {
+	Status               StatusCobranca
 	Provedor             string
 	IdentificadorExterno string
+	Instrucoes           InstrucoesPagamento
 }
 
-// ProcessadorPagamento abstrai o provedor financeiro. Implementacoes devem tratar
-// ChaveIdempotencia como idempotency key no provedor: repeticoes da mesma intencao podem
-// ocorrer para recuperar uma resposta apos falha transitoria e nao podem cobrar novamente.
-// O MVP usa um adaptador simulado.
+// ProcessadorPagamento abstrai o provedor financeiro. CriarCobranca inicia a cobranca:
+// provedores sincronos (ex.: o simulado do MVP) devolvem Aprovada ou Recusada na hora;
+// provedores reais (PIX, cartao) devolvem Pendente mais as instrucoes de pagamento, e a
+// confirmacao chega depois por webhook. ChaveIdempotencia deve ser tratada como idempotency
+// key no provedor: repeticoes da mesma intencao recuperam a cobranca sem cobrar novamente.
 type ProcessadorPagamento interface {
-	Processar(context.Context, SolicitacaoPagamento) (ResultadoPagamento, error)
+	CriarCobranca(context.Context, SolicitacaoPagamento) (Cobranca, error)
 }
 
 // ItemFrete descreve uma peca a transportar, usada na cotacao de frete.

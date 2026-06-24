@@ -14,7 +14,7 @@ import (
 	"reveste/apps/back/internal/dominio/compras"
 	"reveste/apps/back/internal/dominio/interacao"
 	httptransport "reveste/apps/back/internal/http"
-	"reveste/apps/back/internal/storage/pagamentos"
+	"reveste/apps/back/internal/adaptadores/pagamentos"
 	"reveste/apps/back/internal/transporte"
 	"reveste/apps/back/internal/web"
 )
@@ -406,7 +406,7 @@ func novoHandler() nethttp.Handler {
 		panic(err)
 	}
 	return httptransport.NovaAPI(
-		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, cepCU, operacoes, logger, hostBlobTeste, limitador, true, paginasHTML,
+		cadastrosCU, anunciosCU, comprasCU, uploadsCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, cepCU, operacoes, logger, hostBlobTeste, limitador, true, nil, paginasHTML,
 	)
 }
 

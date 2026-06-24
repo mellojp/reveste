@@ -51,15 +51,28 @@ func NovoControladorCheckout(
 	}
 }
 
+// ResultadoCheckout e o retorno de FinalizarCompra. Embute a compra (aprovada, quando o
+// provedor confirma de forma sincrona, ou pendente, quando aguarda confirmacao por webhook)
+// e, no caso pendente, as instrucoes para o comprador concluir o pagamento (PIX/redirect).
+type ResultadoCheckout struct {
+	compras.Compra
+	Instrucoes InstrucoesPagamento `json:"instrucoes_pagamento,omitempty"`
+}
+
 // FinalizarCompra reserva os itens antes de chamar o provedor financeiro. Assim, uma
 // disputa concorrente e resolvida no PostgreSQL antes de qualquer cobranca.
+//
+// Com um provedor sincrono (o simulado do MVP) a venda e confirmada na hora. Com um provedor
+// real, a cobranca nasce pendente: os itens seguem reservados, FinalizarCompra devolve as
+// instrucoes de pagamento e a venda so se confirma quando o webhook chama
+// ConfirmarPagamentoExterno (ou ate a intencao expirar e liberar a reserva).
 func (c *ControladorCheckout) FinalizarCompra(
 	ctx context.Context,
 	idComprador, idEndereco string,
-) (compras.Compra, error) {
-	compra, chave, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
+) (ResultadoCheckout, error) {
+	compra, chave, emailComprador, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
 	if err != nil {
-		return compras.Compra{}, err
+		return ResultadoCheckout{}, err
 	}
 
 	pagamento := compras.Pagamento{
@@ -72,37 +85,85 @@ func (c *ControladorCheckout) FinalizarCompra(
 	}
 	intencao, criada, err := c.checkout.IniciarCompra(ctx, compra, pagamento, idComprador)
 	if err != nil {
-		return compras.Compra{}, err
+		return ResultadoCheckout{}, err
 	}
 	if !criada {
 		switch intencao.Status {
 		case compras.StatusCompraAprovada:
-			return intencao, nil
+			return ResultadoCheckout{Compra: intencao}, nil
 		case compras.StatusCompraRecusada:
-			return compras.Compra{}, common.ErrPagamentoRecusado
+			return ResultadoCheckout{}, common.ErrPagamentoRecusado
 		case compras.StatusCompraExpirada, compras.StatusCompraCancelada:
-			return compras.Compra{}, common.ErrTransicaoInvalida
+			return ResultadoCheckout{}, common.ErrTransicaoInvalida
 		}
+		// Intencao ainda pendente (aguardando_pagamento): recria a cobranca (idempotente no
+		// provedor) para recuperar as instrucoes de pagamento.
 	}
 
-	resultado, err := c.pagamentos.Processar(ctx, SolicitacaoPagamento{
+	cobranca, err := c.pagamentos.CriarCobranca(ctx, SolicitacaoPagamento{
 		IDCompra:          intencao.ID,
 		ValorCentavos:     intencao.ValorFinalPagoCentavos,
 		ChaveIdempotencia: chave,
+		EmailPagador:      emailComprador,
 	})
 	if err != nil {
 		_ = c.checkout.RecusarCompra(ctx, chave, "", "", c.relogio.Agora())
+		return ResultadoCheckout{}, err
+	}
+
+	switch cobranca.Status {
+	case CobrancaRecusada:
+		if err := c.checkout.RecusarCompra(ctx, chave, cobranca.Provedor, cobranca.IdentificadorExterno, c.relogio.Agora()); err != nil {
+			return ResultadoCheckout{}, err
+		}
+		return ResultadoCheckout{}, common.ErrPagamentoRecusado
+	case CobrancaPendente:
+		return ResultadoCheckout{Compra: intencao, Instrucoes: cobranca.Instrucoes}, nil
+	default: // CobrancaAprovada (provedor sincrono)
+		confirmada, err := c.confirmarVenda(ctx, chave, cobranca.Provedor, cobranca.IdentificadorExterno)
+		if err != nil {
+			return ResultadoCheckout{}, err
+		}
+		return ResultadoCheckout{Compra: confirmada}, nil
+	}
+}
+
+// ConfirmarPagamentoExterno aplica o desfecho de uma cobranca assincrona. E o ponto de
+// entrada do webhook do provedor financeiro (e, futuramente, da reconciliacao): aprovado=true
+// confirma a venda; false libera a reserva e registra a recusa. E idempotente — uma intencao
+// ja concluida e devolvida sem reprocessar, tolerando reentregas do webhook.
+func (c *ControladorCheckout) ConfirmarPagamentoExterno(
+	ctx context.Context,
+	chave, provedor, identificadorExterno string,
+	aprovado bool,
+) (compras.Compra, error) {
+	intencao, err := c.checkout.BuscarCompraPorChave(ctx, chave)
+	if err != nil {
 		return compras.Compra{}, err
 	}
-	if !resultado.Aprovado {
-		if err := c.checkout.RecusarCompra(ctx, chave, resultado.Provedor, resultado.IdentificadorExterno, c.relogio.Agora()); err != nil {
+	switch intencao.Status {
+	case compras.StatusCompraAprovada:
+		return intencao, nil
+	case compras.StatusCompraRecusada, compras.StatusCompraExpirada, compras.StatusCompraCancelada:
+		return compras.Compra{}, common.ErrTransicaoInvalida
+	}
+	if !aprovado {
+		if err := c.checkout.RecusarCompra(ctx, chave, provedor, identificadorExterno, c.relogio.Agora()); err != nil {
 			return compras.Compra{}, err
 		}
 		return compras.Compra{}, common.ErrPagamentoRecusado
 	}
+	return c.confirmarVenda(ctx, chave, provedor, identificadorExterno)
+}
 
+// confirmarVenda conclui uma intencao aprovada: vende os itens, aprova compra e pagamento,
+// avanca os pedidos e limpa o carrinho; em seguida notifica os vendedores.
+func (c *ControladorCheckout) confirmarVenda(
+	ctx context.Context,
+	chave, provedor, identificadorExterno string,
+) (compras.Compra, error) {
 	confirmada, err := c.checkout.ConfirmarCompraAprovada(
-		ctx, chave, resultado.Provedor, resultado.IdentificadorExterno, c.relogio.Agora(),
+		ctx, chave, provedor, identificadorExterno, c.relogio.Agora(),
 	)
 	if err != nil {
 		return compras.Compra{}, err
@@ -160,7 +221,7 @@ func (c *ControladorCheckout) ResumoCheckout(
 	ctx context.Context,
 	idComprador, idEndereco string,
 ) (compras.Compra, error) {
-	compra, _, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
+	compra, _, _, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
 	return compra, err
 }
 
@@ -171,35 +232,35 @@ func (c *ControladorCheckout) ResumoCheckout(
 func (c *ControladorCheckout) montarCompraDoCarrinho(
 	ctx context.Context,
 	idComprador, idEndereco string,
-) (compras.Compra, string, error) {
+) (compras.Compra, string, string, error) {
 	comprador, err := c.usuarios.BuscarUsuarioPorID(ctx, idComprador)
 	if err != nil {
-		return compras.Compra{}, "", err
+		return compras.Compra{}, "", "", err
 	}
 
 	enderecoEntrega := comprador.EnderecoPrincipal
 	if idEndereco != "" {
 		escolhido, err := c.usuarios.BuscarEndereco(ctx, idComprador, idEndereco)
 		if err != nil {
-			return compras.Compra{}, "", err
+			return compras.Compra{}, "", "", err
 		}
 		enderecoEntrega = escolhido
 	}
 
 	carrinho, err := c.carrinhos.ObterOuCriarCarrinho(ctx, c.ids.Novo(), idComprador, c.relogio.Agora())
 	if err != nil {
-		return compras.Compra{}, "", err
+		return compras.Compra{}, "", "", err
 	}
 	if len(carrinho.IDsAnuncios) == 0 {
-		return compras.Compra{}, "", common.ErrCarrinhoVazio
+		return compras.Compra{}, "", "", common.ErrCarrinhoVazio
 	}
 
 	itens, err := c.itensCompraveis(ctx, carrinho.IDsAnuncios, idComprador)
 	if err != nil {
-		return compras.Compra{}, "", err
+		return compras.Compra{}, "", "", err
 	}
 	if len(itens) == 0 {
-		return compras.Compra{}, "", common.ErrSemItensDisponiveis
+		return compras.Compra{}, "", "", common.ErrSemItensDisponiveis
 	}
 
 	idsAnuncios := make([]string, 0, len(itens))
@@ -230,9 +291,9 @@ func (c *ControladorCheckout) montarCompraDoCarrinho(
 		GerarID:           c.ids.Novo,
 	})
 	if err != nil {
-		return compras.Compra{}, "", err
+		return compras.Compra{}, "", "", err
 	}
-	return compra, chave, nil
+	return compra, chave, comprador.Email, nil
 }
 
 // itensCompraveis projeta os anuncios do carrinho que estao disponiveis e nao pertencem

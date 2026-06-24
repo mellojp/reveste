@@ -10,8 +10,8 @@ import (
 	"reveste/apps/back/internal/common"
 	"reveste/apps/back/internal/dominio/compras"
 	"reveste/apps/back/internal/dominio/interacao"
-	"reveste/apps/back/internal/storage/pagamentos"
-	"reveste/apps/back/internal/storage/postgres"
+	"reveste/apps/back/internal/adaptadores/pagamentos"
+	"reveste/apps/back/internal/adaptadores/postgres"
 )
 
 func checkoutDeTeste(store *postgres.Store) *casosdeuso.ControladorCheckout {

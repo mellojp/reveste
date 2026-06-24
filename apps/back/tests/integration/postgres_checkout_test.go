@@ -19,21 +19,21 @@ import (
 	"reveste/apps/back/internal/dominio/anuncios"
 	"reveste/apps/back/internal/dominio/cadastros"
 	"reveste/apps/back/internal/dominio/compras"
-	"reveste/apps/back/internal/storage/pagamentos"
-	"reveste/apps/back/internal/storage/postgres"
+	"reveste/apps/back/internal/adaptadores/pagamentos"
+	"reveste/apps/back/internal/adaptadores/postgres"
 )
 
 type pagamentoContado struct {
 	chamadas atomic.Int32
 }
 
-func (p *pagamentoContado) Processar(
+func (p *pagamentoContado) CriarCobranca(
 	_ context.Context,
 	solicitacao casosdeuso.SolicitacaoPagamento,
-) (casosdeuso.ResultadoPagamento, error) {
+) (casosdeuso.Cobranca, error) {
 	p.chamadas.Add(1)
-	return casosdeuso.ResultadoPagamento{
-		Aprovado:             true,
+	return casosdeuso.Cobranca{
+		Status:               casosdeuso.CobrancaAprovada,
 		Provedor:             "contado",
 		IdentificadorExterno: "contado-" + solicitacao.ChaveIdempotencia,
 	}, nil

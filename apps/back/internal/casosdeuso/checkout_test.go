@@ -18,21 +18,31 @@ import (
 
 type pagamentoFake struct {
 	aprovar  bool
+	pendente bool
 	chamadas *atomic.Int32
 }
 
-func (p pagamentoFake) Processar(
+func (p pagamentoFake) CriarCobranca(
 	_ context.Context,
 	solicitacao casosdeuso.SolicitacaoPagamento,
-) (casosdeuso.ResultadoPagamento, error) {
+) (casosdeuso.Cobranca, error) {
 	if p.chamadas != nil {
 		p.chamadas.Add(1)
 	}
-	return casosdeuso.ResultadoPagamento{
-		Aprovado:             p.aprovar,
+	cobranca := casosdeuso.Cobranca{
 		Provedor:             "fake",
 		IdentificadorExterno: "ext-" + solicitacao.ChaveIdempotencia,
-	}, nil
+	}
+	switch {
+	case p.pendente:
+		cobranca.Status = casosdeuso.CobrancaPendente
+		cobranca.Instrucoes = casosdeuso.InstrucoesPagamento{Tipo: "pix", PixCopiaCola: "00020126-fake"}
+	case p.aprovar:
+		cobranca.Status = casosdeuso.CobrancaAprovada
+	default:
+		cobranca.Status = casosdeuso.CobrancaRecusada
+	}
+	return cobranca, nil
 }
 
 type freteFake struct {
@@ -303,6 +313,68 @@ func TestCheckoutPagamentoRecusadoNaoReservaItem(t *testing.T) {
 	}
 	if store.anuncios["a1"].Status != anuncios.StatusAnuncioDisponivel {
 		t.Fatalf("anuncio nao deveria ter sido reservado: %v", store.anuncios["a1"].Status)
+	}
+}
+
+func TestCheckoutPendenteReservaEConfirmaPorWebhook(t *testing.T) {
+	store := newTestStore()
+	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
+	checkout := novoCheckout(store, pagamentoFake{pendente: true})
+
+	// Provedor assincrono: a compra fica aguardando pagamento e o item segue reservado.
+	resultado, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	if err != nil {
+		t.Fatalf("FinalizarCompra() erro = %v", err)
+	}
+	if resultado.Status != compras.StatusCompraAguardandoPagamento {
+		t.Fatalf("status = %v; esperado aguardando_pagamento", resultado.Status)
+	}
+	if resultado.Instrucoes.Tipo != "pix" || resultado.Instrucoes.PixCopiaCola == "" {
+		t.Fatalf("instrucoes de pagamento ausentes: %+v", resultado.Instrucoes)
+	}
+	if store.anuncios["a1"].Status != anuncios.StatusAnuncioReservado {
+		t.Fatalf("item deveria estar reservado aguardando pagamento: %v", store.anuncios["a1"].Status)
+	}
+
+	// Chega o webhook do provedor confirmando o pagamento.
+	confirmada, err := checkout.ConfirmarPagamentoExterno(
+		context.Background(), resultado.ChaveIdempotencia, "fake", "ext-pago", true,
+	)
+	if err != nil {
+		t.Fatalf("ConfirmarPagamentoExterno() erro = %v", err)
+	}
+	if confirmada.Status != compras.StatusCompraAprovada {
+		t.Fatalf("status apos webhook = %v; esperado aprovada", confirmada.Status)
+	}
+	if store.anuncios["a1"].Status != anuncios.StatusAnuncioVendido {
+		t.Fatalf("item deveria estar vendido apos a confirmacao: %v", store.anuncios["a1"].Status)
+	}
+	// Reentrega do webhook (idempotencia): nao reprocessa nem falha.
+	if _, err := checkout.ConfirmarPagamentoExterno(
+		context.Background(), resultado.ChaveIdempotencia, "fake", "ext-pago", true,
+	); err != nil {
+		t.Fatalf("reentrega do webhook deveria ser idempotente, erro = %v", err)
+	}
+}
+
+func TestConfirmarPagamentoExternoRecusadoLiberaReserva(t *testing.T) {
+	store := newTestStore()
+	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
+	checkout := novoCheckout(store, pagamentoFake{pendente: true})
+
+	resultado, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	if err != nil {
+		t.Fatalf("FinalizarCompra() erro = %v", err)
+	}
+
+	_, err = checkout.ConfirmarPagamentoExterno(
+		context.Background(), resultado.ChaveIdempotencia, "fake", "ext-recusado", false,
+	)
+	if !errors.Is(err, common.ErrPagamentoRecusado) {
+		t.Fatalf("erro = %v; esperado ErrPagamentoRecusado", err)
+	}
+	if store.anuncios["a1"].Status != anuncios.StatusAnuncioDisponivel {
+		t.Fatalf("reserva deveria ter sido liberada apos recusa: %v", store.anuncios["a1"].Status)
 	}
 }
 

@@ -309,7 +309,7 @@ integrar servicos externos de alta complexidade.
 |           |   |-- cadastro.go
 |           |   |-- anuncios.go
 |           |   `-- carrinho.go
-|           |-- storage/
+|           |-- adaptadores/
 |           |-- http/
 |           `-- common/
 |-- contracts/

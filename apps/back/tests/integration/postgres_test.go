@@ -14,7 +14,7 @@ import (
 
 	"reveste/apps/back/internal/dominio/anuncios"
 	"reveste/apps/back/internal/dominio/cadastros"
-	"reveste/apps/back/internal/storage/postgres"
+	"reveste/apps/back/internal/adaptadores/postgres"
 )
 
 func TestIntegracaoFluxoPersistencia(t *testing.T) {

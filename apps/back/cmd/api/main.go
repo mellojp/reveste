@@ -11,16 +11,16 @@ import (
 	"syscall"
 	"time"
 
+	"reveste/apps/back/internal/adaptadores/cep"
+	"reveste/apps/back/internal/adaptadores/frete"
+	"reveste/apps/back/internal/adaptadores/pagamentos"
+	"reveste/apps/back/internal/adaptadores/postgres"
+	"reveste/apps/back/internal/adaptadores/vercel"
 	"reveste/apps/back/internal/casosdeuso"
 	"reveste/apps/back/internal/common"
 	"reveste/apps/back/internal/dominio/cadastros"
 	"reveste/apps/back/internal/dominio/compras"
 	httptransport "reveste/apps/back/internal/http"
-	"reveste/apps/back/internal/storage/cep"
-	"reveste/apps/back/internal/storage/frete"
-	"reveste/apps/back/internal/storage/pagamentos"
-	"reveste/apps/back/internal/storage/postgres"
-	"reveste/apps/back/internal/storage/vercel"
 	"reveste/apps/back/internal/transporte"
 	"reveste/apps/back/internal/web"
 )
@@ -79,13 +79,29 @@ func executar(logger *slog.Logger) error {
 	} else {
 		cotadorFrete = frete.NovoFixo(fretePadraoCentavos)
 	}
+
+	// Provedor de pagamento: Mercado Pago quando configurado (com webhook), senao o simulado.
+	var processadorPagamento casosdeuso.ProcessadorPagamento
+	var webhookPagamento httptransport.WebhookPagamento
+	if cfg.MercadoPagoToken != "" {
+		mercadoPago := pagamentos.NovoMercadoPago(
+			cfg.MercadoPagoURL, cfg.MercadoPagoToken, cfg.MercadoPagoWebhookSecret, cfg.MercadoPagoNotificacaoURL,
+		)
+		processadorPagamento = mercadoPago
+		webhookPagamento = mercadoPago
+		logger.Info("pagamentos: Mercado Pago configurado")
+	} else {
+		processadorPagamento = pagamentos.NovoSimulado()
+		logger.Info("pagamentos: provedor simulado (defina MERCADOPAGO_ACCESS_TOKEN para usar o Mercado Pago)")
+	}
+
 	controladorCheckout := casosdeuso.NovoControladorCheckout(
 		database,
 		database,
 		database,
 		database,
 		database,
-		pagamentos.NovoSimulado(),
+		processadorPagamento,
 		cotadorFrete,
 		common.GeradorIDCriptografico{},
 		common.RelogioSistema{},
@@ -103,7 +119,7 @@ func executar(logger *slog.Logger) error {
 	)
 	controladorVendedor := casosdeuso.NovoControladorVendedor(
 		database,
-		pagamentos.NovoSimulado(),
+		processadorPagamento,
 		common.RelogioSistema{},
 		cadastros.TaxaReativacaoCentavos,
 	)
@@ -150,6 +166,7 @@ func executar(logger *slog.Logger) error {
 			cfg.BlobPublicHost,
 			limitadorLogin,
 			cfg.ConfiarProxy,
+			webhookPagamento,
 			paginasHTML,
 		),
 		ReadHeaderTimeout: 5 * time.Second,
