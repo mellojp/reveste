@@ -287,6 +287,62 @@ document.addEventListener("htmx:afterSwap", (event) => {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 });
 
+// Barra de progresso de navegacao. Toda requisicao HTMX (navegacao boosted e fragmentos)
+// acende uma barra no topo, dando feedback imediato enquanto o backend responde. A barra e
+// construida via DOM API (sem innerHTML) e ancorada no <html>, que nao e trocado no swap do
+// body, de modo que persiste entre as navegacoes. Um contador trata requisicoes simultaneas.
+const barraNavegacao = (() => {
+  let barra = null;
+  let pendentes = 0;
+  let atrasoInicio = null;
+  let limpeza = null;
+
+  function elemento() {
+    if (barra && barra.isConnected) return barra;
+    barra = document.createElement("div");
+    barra.className = "nav-progress";
+    barra.setAttribute("aria-hidden", "true");
+    document.documentElement.appendChild(barra);
+    return barra;
+  }
+  function iniciar() {
+    pendentes += 1;
+    if (pendentes > 1) return;
+    clearTimeout(atrasoInicio);
+    clearTimeout(limpeza);
+    // Atraso curto evita o "flash" da barra quando a resposta volta quase instantaneamente.
+    atrasoInicio = window.setTimeout(() => {
+      const el = elemento();
+      el.classList.remove("is-active", "is-done");
+      void el.offsetWidth; // reinicia a animacao CSS do zero a cada nova navegacao
+      el.classList.add("is-active");
+      document.documentElement.classList.add("navegando");
+    }, 90);
+  }
+  function terminar() {
+    pendentes = Math.max(0, pendentes - 1);
+    if (pendentes > 0) return;
+    clearTimeout(atrasoInicio);
+    document.documentElement.classList.remove("navegando");
+    const el = elemento();
+    if (!el.classList.contains("is-active")) return; // resposta instantanea: barra nem apareceu
+    el.classList.add("is-done"); // completa ate 100% e some; sobrepoe a animacao da fase ativa
+    limpeza = window.setTimeout(() => el.classList.remove("is-active", "is-done"), 450);
+  }
+  return { iniciar, terminar };
+})();
+// Ignora requisicoes de polling (ex.: o chat, com hx-trigger "every 5s") para a barra nao
+// piscar em segundo plano; ela so reflete acoes de navegacao/envio iniciadas pelo usuario.
+function ehPolling(elt) {
+  return (elt?.getAttribute?.("hx-trigger") || "").includes("every");
+}
+document.addEventListener("htmx:beforeRequest", (event) => {
+  if (!ehPolling(event.detail?.elt)) barraNavegacao.iniciar();
+});
+document.addEventListener("htmx:afterRequest", (event) => {
+  if (!ehPolling(event.detail?.elt)) barraNavegacao.terminar();
+});
+
 // Chat: mantem a conversa rolada ate a ultima mensagem. So rola automaticamente quando o
 // usuario ja estava no fim, para o polling nao interromper a leitura do historico.
 let chatPresoNoFim = true;

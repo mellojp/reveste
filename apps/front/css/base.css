@@ -68,6 +68,51 @@ h3 { font-size: 1.12rem; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 :focus-visible { outline: 3px solid rgba(201, 120, 89, .55); outline-offset: 3px; }
+
+/* Barra de progresso de navegacao: feedback durante requisicoes HTMX (navegacao boosted e
+   fragmentos). Como as paginas vem do servidor, o intervalo ate a resposta pode parecer
+   travamento; a barra deixa claro que algo esta carregando. Gerida por js/web.js. */
+.nav-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--moss), var(--clay));
+  box-shadow: 0 0 8px rgba(201, 120, 89, .5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform, opacity;
+}
+/* Fase indeterminada: UMA animacao continua avanca ate 90% desacelerando. Por ser uma unica
+   curva (e nao passos via JS), o crescimento e suave enquanto se espera a resposta. */
+.nav-progress.is-active {
+  opacity: 1;
+  animation: nav-progress-trickle 2s cubic-bezier(.1, .7, .3, 1) forwards;
+}
+/* Conclusao: completa ate 100% e some. Sobrepoe a animacao da fase anterior. */
+.nav-progress.is-done {
+  opacity: 0;
+  transform: scaleX(1);
+  animation: none;
+  transition: transform .18s ease-out, opacity .35s ease .12s;
+}
+@keyframes nav-progress-trickle {
+  from { transform: scaleX(.02); }
+  to { transform: scaleX(.9); }
+}
+html.navegando, html.navegando a { cursor: progress; }
+/* A barra continua animando mesmo com "reduzir movimento": e feedback funcional de
+   carregamento (linha fina horizontal), nao animacao decorativa. As regras abaixo tem
+   especificidade maior que o reset global `*`, vencendo o seu !important que zera as duracoes. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress.is-active {
+    animation-duration: 2s !important;
+    animation-iteration-count: 1 !important;
+  }
+  .nav-progress.is-done { transition-duration: .18s, .35s !important; }
+}
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
 .eyebrow {
