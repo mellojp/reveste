@@ -282,15 +282,22 @@
       {{end}}
 
       <section class="detail-panel payment-panel">
-        <div class="panel-heading"><div><span class="eyebrow">Pagamento</span><h2>Cartão de crédito</h2></div><span class="payment-badge">Simulado</span></div>
-        <div class="payment-card" aria-hidden="true"><span class="payment-card-chip"></span><span class="payment-card-number">4242 4242 4242 4242</span><div class="payment-card-row"><span>NOME SOBRENOME</span><span>12/30</span></div></div>
-        <fieldset class="payment-fields" disabled>
-          <label class="span-2">Número do cartão<input value="4242 4242 4242 4242" autocomplete="off"></label>
-          <label>Validade<input value="12/30" autocomplete="off"></label>
-          <label>CVV<input value="123" autocomplete="off"></label>
-          <label class="span-2">Nome impresso<input value="{{.UsuarioAutenticado.Nome}}" autocomplete="off"></label>
-        </fieldset>
-        <p class="payment-note">Ambiente de demonstração — nenhum pagamento real é feito e nenhum dado de cartão é enviado.</p>
+        <div class="panel-heading"><div><span class="eyebrow">Pagamento</span><h2>Como você prefere pagar?</h2></div>{{template "selo-mercadopago" .}}</div>
+        <div class="payment-options">
+          <form method="post" action="/checkout">
+            <button type="submit" class="payment-option">
+              <span class="payment-option-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 9-9 9-9-9z"/></svg></span>
+              <span class="payment-option-text"><strong>PIX</strong><small>Aprovação na hora via QR Code</small></span>
+              <span class="payment-option-arrow" aria-hidden="true">→</span>
+            </button>
+          </form>
+          <a class="payment-option" href="/checkout/cartao" hx-boost="false">
+            <span class="payment-option-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg></span>
+            <span class="payment-option-text"><strong>Cartão de crédito</strong><small>Parcele se quiser, aprovação imediata</small></span>
+            <span class="payment-option-arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p class="payment-note">Suas peças ficam reservadas enquanto você conclui o pagamento.</p>
       </section>
     </div>
 
@@ -299,10 +306,52 @@
       <div><span>Itens ({{len $compra.IDsAnuncios}})</span><strong>{{formatarDinheiro $compra.ValorTotalItensCentavos}}</strong></div>
       <div><span>Frete ({{len $compra.Pedidos}} {{if eq (len $compra.Pedidos) 1}}pacote{{else}}pacotes{{end}})</span><strong>{{formatarDinheiro $compra.ValorTotalFretesCentavos}}</strong></div>
       <div class="cart-total"><span>Total</span><strong>{{formatarDinheiro $compra.ValorFinalPagoCentavos}}</strong></div>
-      <form id="checkout-form" method="post" action="/checkout"><button class="button button-dark button-large" type="submit">Pagar e finalizar</button></form>
-      <p>Ao confirmar, as peças disponíveis são reservadas e o pagamento simulado é aprovado na hora.</p>
       <a class="text-link" href="/carrinho">Voltar à sacola</a>
     </aside>
+  </div>
+</section>{{end}}
+
+{{define "selo-mercadopago"}}<span class="powered-by">powered by <img class="mp-logo" src="/assets/mercadopago.png" alt="Mercado Pago"></span>{{end}}
+
+{{define "checkout-cartao"}}{{$compra := .ResumoCompra}}<section class="pix-page page-section compact-section">
+  <div class="pix-intro">
+    <span class="eyebrow">Pagamento com cartão</span>
+    <h1 class="pix-amount">{{formatarDinheiro $compra.ValorFinalPagoCentavos}}</h1>
+    <p>Preencha os dados do cartão. O pagamento é processado com segurança pelo Mercado Pago — os dados do cartão não passam pelo nosso servidor.</p>
+  </div>
+  {{if .MensagemTemporaria}}<div class="form-note">{{.MensagemTemporaria}}</div>{{end}}
+  <form id="form-cartao" class="card-form" method="post" action="/checkout/cartao"
+        data-card-form data-public-key="{{.ChavePublicaPagamento}}" data-amount="{{.ValorPagamentoReais}}">
+    <div id="cardPaymentBrick_container"></div>
+    <input type="hidden" name="token">
+    <input type="hidden" name="payment_method_id">
+    <input type="hidden" name="installments">
+    <input type="hidden" name="identification_type">
+    <input type="hidden" name="identification_number">
+  </form>
+  <div class="pix-actions">
+    {{template "selo-mercadopago" .}}
+    <a class="text-link pix-cancel" href="/checkout">Voltar e escolher outro meio</a>
+  </div>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <script src="/js/cartao.js"></script>
+</section>{{end}}
+
+{{define "pagamento"}}{{$compra := .PagamentoCompra}}{{$pix := .PagamentoInstrucoes}}<section class="pix-page page-section compact-section" hx-get="/checkout/pagamento/status" hx-trigger="every 5s" hx-swap="none">
+  <div class="pix-intro">
+    <span class="eyebrow">Pagamento via PIX</span>
+    <h1 class="pix-amount">{{formatarDinheiro $compra.ValorFinalPagoCentavos}}</h1>
+    <p>Escaneie o QR Code no app do seu banco ou copie o código. Confirmamos automaticamente assim que o pagamento cair.</p>
+  </div>
+  {{if .MensagemTemporaria}}<div class="form-note">{{.MensagemTemporaria}}</div>{{end}}
+  <div class="pix-card">
+    {{if $pix.PixQRCode}}<div class="pix-qr"><img src="data:image/png;base64,{{$pix.PixQRCode}}" alt="QR Code para pagamento PIX" width="208" height="208"></div>{{end}}
+    {{if $pix.PixCopiaCola}}<div class="pix-code"><input type="text" value="{{$pix.PixCopiaCola}}" readonly aria-label="Código PIX copia e cola"><button type="button" class="button button-outline" data-copy="{{$pix.PixCopiaCola}}" data-copy-label="Copiar">Copiar</button></div>{{end}}
+    <p class="pix-status"><span class="pix-pulse" aria-hidden="true"></span>Aguardando confirmação do pagamento…</p>
+  </div>
+  <div class="pix-actions">
+    {{if $pix.URLPagamento}}<a class="text-link" href="{{$pix.URLPagamento}}" target="_blank" rel="noopener">Abrir no Mercado Pago</a>{{end}}
+    <form method="post" action="/checkout/pagamento/cancelar"><button class="text-link pix-cancel" type="submit">Cancelar e voltar à sacola</button></form>
   </div>
 </section>{{end}}
 

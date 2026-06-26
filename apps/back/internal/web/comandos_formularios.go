@@ -11,6 +11,7 @@ import (
 	"reveste/apps/back/internal/common"
 	"reveste/apps/back/internal/dominio/anuncios"
 	"reveste/apps/back/internal/dominio/cadastros"
+	"reveste/apps/back/internal/dominio/compras"
 )
 
 func (a *AdaptadorPaginas) processarLogin(w nethttp.ResponseWriter, r *nethttp.Request) {
@@ -168,13 +169,54 @@ func (a *AdaptadorPaginas) processarRemocaoCarrinho(w nethttp.ResponseWriter, r 
 
 func (a *AdaptadorPaginas) processarCheckout(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
 	_ = r.ParseForm()
-	_, err := a.controladorCheckout.FinalizarCompra(r.Context(), sessao.IDUsuario, r.FormValue("id_endereco"))
+	resultado, err := a.controladorCheckout.FinalizarCompra(r.Context(), sessao.IDUsuario, r.FormValue("id_endereco"), nil)
 	if err != nil {
 		destino := adicionarMensagemNaURL("/carrinho", mensagemFalhaCheckout(err))
 		a.responderRedirecionamento(w, r, destino)
 		return
 	}
-	a.responderRedirecionamento(w, r, "/meus-pedidos?comprado=1")
+	// Provedor sincrono que ja aprovou na hora: vai direto para os pedidos. Caso contrario
+	// (cobranca pendente, ex.: PIX), segue para a tela dedicada de pagamento ate o webhook confirmar.
+	if resultado.Compra.Status == compras.StatusCompraAprovada {
+		a.responderRedirecionamento(w, r, "/meus-pedidos?comprado=1")
+		return
+	}
+	a.responderRedirecionamento(w, r, "/checkout/pagamento")
+}
+
+func (a *AdaptadorPaginas) processarCheckoutCartao(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	_ = r.ParseForm()
+	cartao := &casosdeuso.DadosCartao{
+		Token:           r.FormValue("token"),
+		MetodoPagamento: r.FormValue("payment_method_id"),
+		Parcelas:        inteiroDoFormulario(r.FormValue("installments")),
+		TipoDocumento:   r.FormValue("identification_type"),
+		NumeroDocumento: r.FormValue("identification_number"),
+	}
+	if cartao.Token == "" || cartao.MetodoPagamento == "" {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/checkout/cartao", "Não foi possível ler os dados do cartão. Tente novamente."))
+		return
+	}
+	resultado, err := a.controladorCheckout.FinalizarCompra(r.Context(), sessao.IDUsuario, r.FormValue("id_endereco"), cartao)
+	if err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/checkout/cartao", mensagemFalhaCheckout(err)))
+		return
+	}
+	// Cartao aprova de forma sincrona; em casos raros (em analise) a cobranca fica pendente e o
+	// comprador acompanha na tela de pagamento.
+	if resultado.Compra.Status == compras.StatusCompraAprovada {
+		a.responderRedirecionamento(w, r, "/meus-pedidos?comprado=1")
+		return
+	}
+	a.responderRedirecionamento(w, r, "/checkout/pagamento")
+}
+
+func (a *AdaptadorPaginas) processarCancelamentoPagamento(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	if _, err := a.controladorCheckout.CancelarPagamentoPendente(r.Context(), sessao.IDUsuario); err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/checkout/pagamento", "Não foi possível cancelar o pagamento."))
+		return
+	}
+	a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/carrinho", "Pagamento cancelado. Seus itens continuam na sacola."))
 }
 
 func (a *AdaptadorPaginas) processarLeituraNotificacoes(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {

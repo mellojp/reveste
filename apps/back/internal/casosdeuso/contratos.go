@@ -101,6 +101,9 @@ type OperacoesCarrinhos interface {
 // seguintes confirmam ou desfazem a intencao de forma transacional e idempotente.
 type OperacoesCheckout interface {
 	BuscarCompraPorChave(context.Context, string) (compras.Compra, error)
+	// BuscarCompraPendenteDoComprador devolve a compra do comprador que ainda aguarda pagamento
+	// (a mais recente), ou ErrNaoEncontrado. Sustenta a tela dedicada de pagamento.
+	BuscarCompraPendenteDoComprador(context.Context, string) (compras.Compra, error)
 	// IniciarCompra reserva os anuncios (disponivel -> reservado) e grava compra,
 	// pedidos, itens, entregas e pagamento pendentes. O bool informa se esta chamada
 	// criou a intencao; chamadas concorrentes com a mesma chave recebem a existente.
@@ -152,6 +155,23 @@ type SolicitacaoPagamento struct {
 	// EmailPagador identifica o pagador junto ao provedor (exigido por alguns meios, como
 	// PIX no Mercado Pago). Pode ficar vazio com provedores que nao o requerem.
 	EmailPagador string
+	// NomePagador e o nome do comprador, enviado ao provedor junto a cobranca (recomendado
+	// pelo Mercado Pago). No sandbox do Mercado Pago, o primeiro nome controla o desfecho do
+	// pagamento de teste: "APRO" aprova, "CONT" mantem pendente e "OTHE" recusa.
+	NomePagador string
+	// Cartao, quando presente, faz a cobranca por cartao (token gerado no frontend) em vez de PIX.
+	// Nulo => PIX. O numero do cartao nunca chega ao backend; so o token.
+	Cartao *DadosCartao
+}
+
+// DadosCartao traz o token do cartao (gerado no frontend pelo SDK do provedor, padrao PCI) e os
+// dados nao sensiveis necessarios para criar a cobranca por cartao.
+type DadosCartao struct {
+	Token           string
+	MetodoPagamento string // bandeira/payment_method_id (ex.: "master", "visa")
+	Parcelas        int
+	TipoDocumento   string // ex.: "CPF" (opcional)
+	NumeroDocumento string // opcional
 }
 
 // StatusCobranca e o desfecho de uma cobranca no provedor financeiro.
@@ -192,6 +212,14 @@ type Cobranca struct {
 // key no provedor: repeticoes da mesma intencao recuperam a cobranca sem cobrar novamente.
 type ProcessadorPagamento interface {
 	CriarCobranca(context.Context, SolicitacaoPagamento) (Cobranca, error)
+}
+
+// ReconciliadorPagamento e opcional: provedores assincronos podem implementa-lo para que o sistema
+// consulte o status atual de uma cobranca (pela chave de idempotencia) diretamente no provedor,
+// sem depender da entrega do webhook. Usado como fallback no polling da tela de pagamento.
+// encontrada=false quando o provedor ainda nao tem cobranca para a chave.
+type ReconciliadorPagamento interface {
+	ReconciliarCobranca(ctx context.Context, chave string) (status StatusCobranca, provedor, identificadorExterno string, encontrada bool, err error)
 }
 
 // ItemFrete descreve uma peca a transportar, usada na cotacao de frete.

@@ -218,6 +218,10 @@ func (operacoesHTTP) BuscarCompraPorChave(context.Context, string) (compras.Comp
 	return compras.Compra{}, common.ErrNaoEncontrado
 }
 
+func (operacoesHTTP) BuscarCompraPendenteDoComprador(context.Context, string) (compras.Compra, error) {
+	return compras.Compra{}, common.ErrNaoEncontrado
+}
+
 func (operacoesHTTP) IniciarCompra(_ context.Context, compra compras.Compra, _ compras.Pagamento, _ string) (compras.Compra, bool, error) {
 	return compra, true, nil
 }
@@ -401,7 +405,7 @@ func novoHandler() nethttp.Handler {
 	limitador := transporte.NovoLimitadorLogin(transporte.NovoRegistroMemoria())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	// confiarProxy = true: os testes simulam HTTPS via X-Forwarded-Proto, como atrás de um proxy.
-	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, limitador, true, logger)
+	paginasHTML, err := web.NovoAdaptadorPaginas(cadastrosCU, anunciosCU, comprasCU, checkoutCU, pedidosCU, vendedoresCU, notificacoesCU, conversasCU, limitador, true, "", logger)
 	if err != nil {
 		panic(err)
 	}

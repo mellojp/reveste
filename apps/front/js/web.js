@@ -126,6 +126,12 @@ document.addEventListener("submit", async (event) => {
       form.append(input);
     }
     form.dataset.uploadReady = "true";
+    // Quando todas as fotos já têm URL (ex.: edição reaproveitando as existentes), o laço
+    // acima não aguarda nada e todo o handler corre de forma síncrona dentro do despacho do
+    // submit atual. Chamar requestSubmit() aqui seria reentrante e o navegador o ignora em
+    // silêncio (botão trava, nenhuma requisição). Cede um tick para submeter já fora do
+    // despacho original — no fluxo de criação o await do upload já garantia isso.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     form.requestSubmit();
   } catch (error) {
     showUploadStatus(form, error.message || "Não foi possível enviar as fotos.", true);
@@ -145,6 +151,22 @@ document.addEventListener("change", (event) => {
   }
   input.value = "";
   renderPhotos(editor);
+});
+
+document.addEventListener("click", async (event) => {
+  const copiar = event.target.closest("[data-copy]");
+  if (copiar) {
+    try {
+      await navigator.clipboard.writeText(copiar.dataset.copy);
+      const rotulo = copiar.dataset.copyLabel || copiar.textContent;
+      copiar.textContent = "Copiado!";
+      copiar.disabled = true;
+      setTimeout(() => { copiar.textContent = rotulo; copiar.disabled = false; }, 1800);
+    } catch {
+      /* clipboard indisponível: o usuário ainda pode selecionar e copiar manualmente */
+    }
+    return;
+  }
 });
 
 document.addEventListener("click", (event) => {

@@ -2,6 +2,7 @@ package casosdeuso
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -69,8 +70,9 @@ type ResultadoCheckout struct {
 func (c *ControladorCheckout) FinalizarCompra(
 	ctx context.Context,
 	idComprador, idEndereco string,
+	cartao *DadosCartao,
 ) (ResultadoCheckout, error) {
-	compra, chave, emailComprador, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
+	compra, chave, emailComprador, nomeComprador, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
 	if err != nil {
 		return ResultadoCheckout{}, err
 	}
@@ -105,6 +107,8 @@ func (c *ControladorCheckout) FinalizarCompra(
 		ValorCentavos:     intencao.ValorFinalPagoCentavos,
 		ChaveIdempotencia: chave,
 		EmailPagador:      emailComprador,
+		NomePagador:       nomeComprador,
+		Cartao:            cartao,
 	})
 	if err != nil {
 		_ = c.checkout.RecusarCompra(ctx, chave, "", "", c.relogio.Agora())
@@ -208,6 +212,106 @@ func (c *ControladorCheckout) ListarPedidos(
 	return pedidos, nil
 }
 
+// PagamentoPendente devolve a compra do comprador que aguarda pagamento e as instrucoes para
+// concluí-lo (QR Code PIX), recuperando a cobranca de forma idempotente no provedor — a chave de
+// idempotencia garante que o provedor devolva a mesma cobranca, sem cobrar de novo. Sustenta a
+// tela dedicada de pagamento. Devolve ok=false quando nao ha nada aguardando pagamento (por já ter
+// sido confirmado pelo webhook, cancelado ou expirado).
+func (c *ControladorCheckout) PagamentoPendente(
+	ctx context.Context,
+	idComprador string,
+) (ResultadoCheckout, bool, error) {
+	compra, err := c.checkout.BuscarCompraPendenteDoComprador(ctx, idComprador)
+	if errors.Is(err, common.ErrNaoEncontrado) {
+		return ResultadoCheckout{}, false, nil
+	}
+	if err != nil {
+		return ResultadoCheckout{}, false, err
+	}
+	comprador, err := c.usuarios.BuscarUsuarioPorID(ctx, idComprador)
+	if err != nil {
+		return ResultadoCheckout{}, false, err
+	}
+	cobranca, err := c.pagamentos.CriarCobranca(ctx, SolicitacaoPagamento{
+		IDCompra:          compra.ID,
+		ValorCentavos:     compra.ValorFinalPagoCentavos,
+		ChaveIdempotencia: compra.ChaveIdempotencia,
+		EmailPagador:      comprador.Email,
+		NomePagador:       comprador.Nome,
+	})
+	if err != nil {
+		return ResultadoCheckout{}, false, err
+	}
+	return ResultadoCheckout{Compra: compra, Instrucoes: cobranca.Instrucoes}, true, nil
+}
+
+// ReconciliarPagamentoPendente consulta o provedor pelo status atual da compra que aguarda
+// pagamento e aplica o desfecho (confirma ou recusa), sem depender do webhook. E o fallback que
+// sustenta a confirmacao mesmo quando a notificacao do provedor nao chega. No-op se o provedor nao
+// suportar reconciliacao ou nao houver pagamento pendente. Desfechos conhecidos/idempotentes
+// (ja concluido, recusado) nao sao tratados como erro.
+func (c *ControladorCheckout) ReconciliarPagamentoPendente(ctx context.Context, idComprador string) error {
+	reconciliador, ok := c.pagamentos.(ReconciliadorPagamento)
+	if !ok {
+		return nil
+	}
+	compra, err := c.checkout.BuscarCompraPendenteDoComprador(ctx, idComprador)
+	if errors.Is(err, common.ErrNaoEncontrado) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	status, provedor, idExterno, encontrada, err := reconciliador.ReconciliarCobranca(ctx, compra.ChaveIdempotencia)
+	if err != nil || !encontrada {
+		return err
+	}
+	switch status {
+	case CobrancaAprovada:
+		_, err = c.ConfirmarPagamentoExterno(ctx, compra.ChaveIdempotencia, provedor, idExterno, true)
+	case CobrancaRecusada:
+		_, err = c.ConfirmarPagamentoExterno(ctx, compra.ChaveIdempotencia, provedor, idExterno, false)
+	default:
+		return nil
+	}
+	if errors.Is(err, common.ErrPagamentoRecusado) ||
+		errors.Is(err, common.ErrTransicaoInvalida) ||
+		errors.Is(err, common.ErrNaoEncontrado) {
+		return nil
+	}
+	return err
+}
+
+// TemPagamentoPendente informa, de forma barata (sem chamar o provedor), se o comprador ainda
+// tem uma compra aguardando pagamento. Serve para o polling de status da tela de pagamento.
+func (c *ControladorCheckout) TemPagamentoPendente(ctx context.Context, idComprador string) (bool, error) {
+	_, err := c.checkout.BuscarCompraPendenteDoComprador(ctx, idComprador)
+	if errors.Is(err, common.ErrNaoEncontrado) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CancelarPagamentoPendente desfaz a intencao de compra que aguarda pagamento, liberando a reserva
+// dos anuncios (que voltam a disponivel e seguem na sacola). Devolve ok=false quando nao havia
+// pagamento pendente. E idempotente em relacao a desfechos ja aplicados.
+func (c *ControladorCheckout) CancelarPagamentoPendente(ctx context.Context, idComprador string) (bool, error) {
+	compra, err := c.checkout.BuscarCompraPendenteDoComprador(ctx, idComprador)
+	if errors.Is(err, common.ErrNaoEncontrado) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if err := c.checkout.RecusarCompra(ctx, compra.ChaveIdempotencia, "manual", "", c.relogio.Agora()); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // ProcessarExpiracoes libera reservas de intencoes cujo pagamento nao foi concluido.
 // Deve ser executado periodicamente pelo processo de jobs.
 func (c *ControladorCheckout) ProcessarExpiracoes(ctx context.Context) (int, error) {
@@ -221,7 +325,7 @@ func (c *ControladorCheckout) ResumoCheckout(
 	ctx context.Context,
 	idComprador, idEndereco string,
 ) (compras.Compra, error) {
-	compra, _, _, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
+	compra, _, _, _, err := c.montarCompraDoCarrinho(ctx, idComprador, idEndereco)
 	return compra, err
 }
 
@@ -232,35 +336,35 @@ func (c *ControladorCheckout) ResumoCheckout(
 func (c *ControladorCheckout) montarCompraDoCarrinho(
 	ctx context.Context,
 	idComprador, idEndereco string,
-) (compras.Compra, string, string, error) {
+) (compras.Compra, string, string, string, error) {
 	comprador, err := c.usuarios.BuscarUsuarioPorID(ctx, idComprador)
 	if err != nil {
-		return compras.Compra{}, "", "", err
+		return compras.Compra{}, "", "", "", err
 	}
 
 	enderecoEntrega := comprador.EnderecoPrincipal
 	if idEndereco != "" {
 		escolhido, err := c.usuarios.BuscarEndereco(ctx, idComprador, idEndereco)
 		if err != nil {
-			return compras.Compra{}, "", "", err
+			return compras.Compra{}, "", "", "", err
 		}
 		enderecoEntrega = escolhido
 	}
 
 	carrinho, err := c.carrinhos.ObterOuCriarCarrinho(ctx, c.ids.Novo(), idComprador, c.relogio.Agora())
 	if err != nil {
-		return compras.Compra{}, "", "", err
+		return compras.Compra{}, "", "", "", err
 	}
 	if len(carrinho.IDsAnuncios) == 0 {
-		return compras.Compra{}, "", "", common.ErrCarrinhoVazio
+		return compras.Compra{}, "", "", "", common.ErrCarrinhoVazio
 	}
 
 	itens, err := c.itensCompraveis(ctx, carrinho.IDsAnuncios, idComprador)
 	if err != nil {
-		return compras.Compra{}, "", "", err
+		return compras.Compra{}, "", "", "", err
 	}
 	if len(itens) == 0 {
-		return compras.Compra{}, "", "", common.ErrSemItensDisponiveis
+		return compras.Compra{}, "", "", "", common.ErrSemItensDisponiveis
 	}
 
 	idsAnuncios := make([]string, 0, len(itens))
@@ -291,9 +395,9 @@ func (c *ControladorCheckout) montarCompraDoCarrinho(
 		GerarID:           c.ids.Novo,
 	})
 	if err != nil {
-		return compras.Compra{}, "", "", err
+		return compras.Compra{}, "", "", "", err
 	}
-	return compra, chave, comprador.Email, nil
+	return compra, chave, comprador.Email, comprador.Nome, nil
 }
 
 // itensCompraveis projeta os anuncios do carrinho que estao disponiveis e nao pertencem

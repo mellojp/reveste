@@ -41,7 +41,7 @@ func TestIntegracaoCicloDePedidoCompleto(t *testing.T) {
 		t.Fatalf("AdicionarAnuncioAoCarrinho() erro = %v", err)
 	}
 
-	compra, err := checkoutDeTeste(store).FinalizarCompra(ctx, compradorID, "")
+	compra, err := checkoutDeTeste(store).FinalizarCompra(ctx, compradorID, "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -122,7 +122,7 @@ func TestIntegracaoProcessarItensVencidosBloqueiaVendedor(t *testing.T) {
 			t.Fatalf("AdicionarAnuncioAoCarrinho(%d) erro = %v", i, err)
 		}
 	}
-	if _, err := checkoutDeTeste(store).FinalizarCompra(ctx, compradorID, ""); err != nil {
+	if _, err := checkoutDeTeste(store).FinalizarCompra(ctx, compradorID, "", nil); err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
 

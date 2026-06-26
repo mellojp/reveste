@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	nethttp "net/http"
 	"net/url"
 	"strconv"
@@ -233,6 +234,62 @@ func (a *AdaptadorPaginas) exibirCheckout(w nethttp.ResponseWriter, r *nethttp.R
 		contexto.EnderecosUsuario = enderecos
 	}
 	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+// exibirCheckoutCartao mostra o formulario de cartao (Card Payment Brick do Mercado Pago, que
+// tokeniza os dados no navegador). Sem chave publica configurada, o cartao fica indisponivel.
+func (a *AdaptadorPaginas) exibirCheckoutCartao(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	if a.chavePublicaPagamento == "" {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/checkout", "Pagamento com cartão indisponível no momento."))
+		return
+	}
+	resumo, err := a.controladorCheckout.ResumoCheckout(r.Context(), sessao.IDUsuario, "")
+	if err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/carrinho", mensagemFalhaCheckout(err)))
+		return
+	}
+	contexto := a.prepararContextoDocumento(r, "Pagamento com cartão", conteudoCheckoutCartao)
+	contexto.ResumoCompra = &resumo
+	contexto.ChavePublicaPagamento = a.chavePublicaPagamento
+	contexto.ValorPagamentoReais = fmt.Sprintf("%d.%02d", resumo.ValorFinalPagoCentavos/100, resumo.ValorFinalPagoCentavos%100)
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+// exibirPagamento mostra a tela dedicada de pagamento da compra pendente do comprador (QR Code
+// PIX e copia-e-cola), onde ele permanece ate o webhook confirmar ou ate cancelar manualmente.
+// Sem pagamento pendente (ja confirmado/cancelado), encaminha para os pedidos.
+func (a *AdaptadorPaginas) exibirPagamento(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	resultado, pendente, err := a.controladorCheckout.PagamentoPendente(r.Context(), sessao.IDUsuario)
+	if err != nil {
+		a.responderRedirecionamento(w, r, adicionarMensagemNaURL("/carrinho", "Não foi possível carregar o pagamento."))
+		return
+	}
+	if !pendente {
+		a.responderRedirecionamento(w, r, "/meus-pedidos")
+		return
+	}
+	contexto := a.prepararContextoDocumento(r, "Pagamento", conteudoPagamento)
+	compra := resultado.Compra
+	contexto.PagamentoCompra = &compra
+	contexto.PagamentoInstrucoes = resultado.Instrucoes
+	a.responderDocumentoHTML(w, nethttp.StatusOK, contexto)
+}
+
+// exibirStatusPagamento e consultado em polling pela tela de pagamento. Enquanto houver pagamento
+// pendente devolve 204 (continua aguardando); quando deixa de haver (confirmado/cancelado/expirado),
+// redireciona o navegador para os pedidos via HX-Location.
+func (a *AdaptadorPaginas) exibirStatusPagamento(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {
+	// Reconcilia com o provedor a cada checagem: se o pagamento ja foi aprovado/recusado la, a
+	// venda e confirmada aqui mesmo sem depender da entrega do webhook (best-effort).
+	if err := a.controladorCheckout.ReconciliarPagamentoPendente(r.Context(), sessao.IDUsuario); err != nil {
+		a.logger.Warn("reconciliacao de pagamento falhou", "erro", err)
+	}
+	pendente, err := a.controladorCheckout.TemPagamentoPendente(r.Context(), sessao.IDUsuario)
+	if err == nil && pendente {
+		w.WriteHeader(nethttp.StatusNoContent)
+		return
+	}
+	a.responderRedirecionamento(w, r, "/meus-pedidos")
 }
 
 func (a *AdaptadorPaginas) exibirEnderecos(w nethttp.ResponseWriter, r *nethttp.Request, sessao sessaoNavegador) {

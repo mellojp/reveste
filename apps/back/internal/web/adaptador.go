@@ -27,6 +27,7 @@ type AdaptadorPaginas struct {
 	logger                  *slog.Logger
 	limitador               *transporte.LimitadorLogin
 	confiarProxy            bool
+	chavePublicaPagamento   string
 }
 
 func NovoAdaptadorPaginas(
@@ -40,6 +41,7 @@ func NovoAdaptadorPaginas(
 	controladorConversas *casosdeuso.ControladorConversas,
 	limitador *transporte.LimitadorLogin,
 	confiarProxy bool,
+	chavePublicaPagamento string,
 	logger *slog.Logger,
 ) (nethttp.Handler, error) {
 	tmpl, err := template.New("web").
@@ -61,6 +63,7 @@ func NovoAdaptadorPaginas(
 		logger:                  logger,
 		limitador:               limitador,
 		confiarProxy:            confiarProxy,
+		chavePublicaPagamento:   chavePublicaPagamento,
 	}
 	mux := nethttp.NewServeMux()
 	adaptador.registrarConsultasPaginas(mux)
@@ -86,6 +89,9 @@ func (a *AdaptadorPaginas) registrarConsultasPaginas(mux *nethttp.ServeMux) {
 	mux.HandleFunc("GET /vender", a.exigirSessao(a.exibirPublicacaoAnuncio))
 	mux.HandleFunc("GET /carrinho", a.exigirSessao(a.exibirCarrinhoUsuario))
 	mux.HandleFunc("GET /checkout", a.exigirSessao(a.exibirCheckout))
+	mux.HandleFunc("GET /checkout/cartao", a.exigirSessao(a.exibirCheckoutCartao))
+	mux.HandleFunc("GET /checkout/pagamento", a.exigirSessao(a.exibirPagamento))
+	mux.HandleFunc("GET /checkout/pagamento/status", a.exigirSessao(a.exibirStatusPagamento))
 	mux.HandleFunc("GET /meus-pedidos", a.exigirSessao(a.exibirPedidosUsuario))
 	mux.HandleFunc("GET /meus-pedidos/{idPedido}", a.exigirSessao(a.exibirDetalhePedido))
 	mux.HandleFunc("GET /minhas-vendas", a.exigirSessao(a.exibirVendasUsuario))
@@ -107,6 +113,8 @@ func (a *AdaptadorPaginas) registrarComandosFormularios(mux *nethttp.ServeMux) {
 	mux.HandleFunc("POST /carrinho/itens", a.exigirSessao(a.processarInclusaoCarrinho))
 	mux.HandleFunc("POST /carrinho/itens/{idAnuncio}/remover", a.exigirSessao(a.processarRemocaoCarrinho))
 	mux.HandleFunc("POST /checkout", a.exigirSessao(a.processarCheckout))
+	mux.HandleFunc("POST /checkout/cartao", a.exigirSessao(a.processarCheckoutCartao))
+	mux.HandleFunc("POST /checkout/pagamento/cancelar", a.exigirSessao(a.processarCancelamentoPagamento))
 	mux.HandleFunc("POST /notificacoes/lidas", a.exigirSessao(a.processarLeituraNotificacoes))
 	mux.HandleFunc("POST /notificacoes/limpar", a.exigirSessao(a.processarLimpezaNotificacoes))
 	mux.HandleFunc("POST /notificacoes/{idNotificacao}/remover", a.exigirSessao(a.processarRemocaoNotificacao))

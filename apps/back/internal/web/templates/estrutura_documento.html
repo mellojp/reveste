@@ -29,6 +29,8 @@
       {{else if eq .Conteudo "formulario-anuncio"}}{{template "formulario-anuncio" .}}
       {{else if eq .Conteudo "carrinho"}}{{template "carrinho" .}}
       {{else if eq .Conteudo "checkout"}}{{template "checkout" .}}
+      {{else if eq .Conteudo "checkout-cartao"}}{{template "checkout-cartao" .}}
+      {{else if eq .Conteudo "pagamento"}}{{template "pagamento" .}}
       {{else if eq .Conteudo "meus-pedidos"}}{{template "meus-pedidos" .}}
       {{else if eq .Conteudo "detalhe-pedido"}}{{template "detalhe-pedido" .}}
       {{else if eq .Conteudo "minhas-vendas"}}{{template "minhas-vendas" .}}

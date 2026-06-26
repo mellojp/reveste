@@ -25,6 +25,8 @@ const (
 	conteudoFormularioAnuncio  = "formulario-anuncio"
 	conteudoCarrinhoUsuario    = "carrinho"
 	conteudoCheckout           = "checkout"
+	conteudoCheckoutCartao     = "checkout-cartao"
+	conteudoPagamento          = "pagamento"
 	conteudoPedidosUsuario     = "meus-pedidos"
 	conteudoDetalhePedido      = "detalhe-pedido"
 	conteudoVendasUsuario      = "minhas-vendas"
@@ -60,6 +62,10 @@ type contextoDocumento struct {
 	URLPedidoOrigem       string
 	ResumoCompra          *compras.Compra
 	CompraConfirmada      bool
+	PagamentoCompra       *compras.Compra
+	PagamentoInstrucoes   casosdeuso.InstrucoesPagamento
+	ChavePublicaPagamento string
+	ValorPagamentoReais   string
 	AvaliacaoVendedor     casosdeuso.MediaAvaliacoes
 	DetalheAnuncio        *casosdeuso.AnuncioDetalhado
 	PerfilVendedor        *casosdeuso.PerfilVendedorDetalhado

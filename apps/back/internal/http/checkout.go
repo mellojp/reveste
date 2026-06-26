@@ -17,7 +17,7 @@ func (a *API) finalizarCompra(w nethttp.ResponseWriter, r *nethttp.Request, idUs
 			return
 		}
 	}
-	compra, err := a.checkout.FinalizarCompra(r.Context(), idUsuario, entrada.IDEndereco)
+	compra, err := a.checkout.FinalizarCompra(r.Context(), idUsuario, entrada.IDEndereco, nil)
 	if err != nil {
 		a.escreverErro(w, err)
 		return

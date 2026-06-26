@@ -21,13 +21,30 @@ func (a *API) comJSON(proximo nethttp.Handler) nethttp.Handler {
 
 func (a *API) comSeguranca(proximo nethttp.Handler) nethttp.Handler {
 	return nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
-		origemImagens := "'self' blob:"
+		origemImagens := "'self' blob: data:"
 		if a.hostBlob != "" {
 			origemImagens += fmt.Sprintf(" https://%s", a.hostBlob)
 		}
+		scriptSrc := "'self'"
+		styleSrc := "'self'"
+		connectSrc := "'self' https://vercel.com"
+		frameSrc := ""
+		// Apenas na tela de cartao liberamos o SDK e os iframes/recursos do Mercado Pago (Card
+		// Payment Brick). O restante do site mantem a CSP estrita.
+		if r.URL.Path == "/checkout/cartao" {
+			// O Card Payment Brick injeta scripts inline, busca recursos (i18n) do http2.mlstatic.com
+			// e roda fingerprint antifraude contra os dominios do Mercado Pago/Mercado Livre
+			// (connect + img). Liberamos amplamente esses dominios so nesta rota.
+			mp := "https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://http2.mlstatic.com"
+			scriptSrc += " https://sdk.mercadopago.com https://http2.mlstatic.com 'unsafe-inline'"
+			styleSrc += " 'unsafe-inline' https://http2.mlstatic.com"
+			connectSrc += " " + mp
+			frameSrc = "frame-src https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com; "
+			origemImagens += " " + mp
+		}
 		csp := fmt.Sprintf(
-			"default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src %s; connect-src 'self' https://vercel.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; media-src 'none'; worker-src 'none'; manifest-src 'none'",
-			origemImagens,
+			"default-src 'none'; script-src %s; style-src %s; font-src 'self'; img-src %s; connect-src %s; %sobject-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; media-src 'none'; worker-src 'self' blob:; manifest-src 'none'",
+			scriptSrc, styleSrc, origemImagens, connectSrc, frameSrc,
 		)
 		if a.requisicaoHTTPS(r) {
 			csp += "; upgrade-insecure-requests"

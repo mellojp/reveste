@@ -26,6 +26,7 @@ type Config struct {
 	MercadoPagoWebhookSecret  string
 	MercadoPagoURL            string
 	MercadoPagoNotificacaoURL string
+	MercadoPagoPublicKey      string
 }
 
 func Load() (Config, error) {
@@ -83,6 +84,9 @@ func Load() (Config, error) {
 		cfg.MercadoPagoURL = "https://api.mercadopago.com"
 	}
 	cfg.MercadoPagoNotificacaoURL = strings.TrimSpace(os.Getenv("MERCADOPAGO_NOTIFICATION_URL"))
+	// Chave publica usada no frontend (SDK MercadoPago.js) para tokenizar o cartao com seguranca
+	// (PCI). E publica por natureza; nao confundir com o Access Token.
+	cfg.MercadoPagoPublicKey = strings.TrimSpace(os.Getenv("MERCADOPAGO_PUBLIC_KEY"))
 	return cfg, nil
 }
 

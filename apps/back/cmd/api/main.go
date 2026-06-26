@@ -142,6 +142,7 @@ func executar(logger *slog.Logger) error {
 		controladorConversas,
 		limitadorLogin,
 		cfg.ConfiarProxy,
+		cfg.MercadoPagoPublicKey,
 		logger,
 	)
 	if err != nil {

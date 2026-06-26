@@ -520,6 +520,20 @@ func (r *Store) BuscarCompraPorChave(ctx context.Context, chave string) (compras
 	return compra, nil
 }
 
+func (r *Store) BuscarCompraPendenteDoComprador(ctx context.Context, idComprador string) (compras.Compra, error) {
+	if err := ctx.Err(); err != nil {
+		return compras.Compra{}, err
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, compra := range r.comprasPorChave {
+		if compra.IDComprador == idComprador && compra.Status == compras.StatusCompraAguardandoPagamento {
+			return compra, nil
+		}
+	}
+	return compras.Compra{}, common.ErrNaoEncontrado
+}
+
 func (r *Store) IniciarCompra(
 	ctx context.Context,
 	compra compras.Compra,

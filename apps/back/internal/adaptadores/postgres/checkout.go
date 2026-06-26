@@ -240,11 +240,9 @@ func (s *Store) finalizarCompraPendente(
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	statusCompra := "recusada"
-	statusPedido := "cancelado"
 	statusPagamento := "recusado"
 	if expirada {
 		statusCompra = "expirada"
-		statusPedido = "expirado"
 	}
 	var idCompra, idComprador string
 	var atual compras.StatusCompra
@@ -275,10 +273,20 @@ func (s *Store) finalizarCompraPendente(
 	`, idCompra, statusCompra, agora); err != nil {
 		return mapDatabaseError(err)
 	}
+	// Remove a arvore de pedidos da intencao terminal. Como item_pedido tem UNIQUE(id_anuncio),
+	// deixar essas linhas travaria o anuncio para sempre: ele volta a 'disponivel' mas nunca mais
+	// poderia ser comprado. A compra e o pagamento permanecem como registro do desfecho.
 	if _, err := tx.Exec(ctx, `
-		UPDATE pedido SET status = $2, atualizado_em = $3
-		WHERE id_compra = $1 AND status = 'aguardando_pagamento'
-	`, idCompra, statusPedido, agora); err != nil {
+		DELETE FROM item_pedido WHERE id_pedido IN (SELECT id FROM pedido WHERE id_compra = $1)
+	`, idCompra); err != nil {
+		return mapDatabaseError(err)
+	}
+	if _, err := tx.Exec(ctx, `
+		DELETE FROM entrega WHERE id_pedido IN (SELECT id FROM pedido WHERE id_compra = $1)
+	`, idCompra); err != nil {
+		return mapDatabaseError(err)
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM pedido WHERE id_compra = $1`, idCompra); err != nil {
 		return mapDatabaseError(err)
 	}
 	if _, err := tx.Exec(ctx, `
@@ -341,6 +349,34 @@ func (s *Store) BuscarCompraPorChave(ctx context.Context, chave string) (compras
 		FROM compra
 		WHERE chave_idempotencia = $1
 	`, chave).Scan(
+		&compra.ID, &compra.IDComprador, &compra.Status, &compra.ValorTotalItensCentavos,
+		&compra.ValorTotalFretesCentavos, &compra.ValorTaxaServicoCentavos,
+		&compra.ValorFinalPagoCentavos, &compra.ChaveIdempotencia, &compra.ExpiraEm,
+		&compra.CriadaEm,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return compras.Compra{}, common.ErrNaoEncontrado
+	}
+	if err != nil {
+		return compras.Compra{}, mapDatabaseError(err)
+	}
+	compra.Pedidos, err = s.buscarPedidos(ctx, `p.id_compra = $1`, compra.ID)
+	return compra, err
+}
+
+// BuscarCompraPendenteDoComprador devolve a compra mais recente do comprador que ainda aguarda
+// pagamento, ou ErrNaoEncontrado quando nao ha nenhuma. Sustenta a tela dedicada de pagamento.
+func (s *Store) BuscarCompraPendenteDoComprador(ctx context.Context, idComprador string) (compras.Compra, error) {
+	var compra compras.Compra
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, id_comprador, status, valor_itens_centavos, valor_fretes_centavos,
+		       valor_taxa_servico_centavos, valor_total_centavos, chave_idempotencia,
+		       expira_em, criado_em
+		FROM compra
+		WHERE id_comprador = $1 AND status = 'aguardando_pagamento'
+		ORDER BY criado_em DESC
+		LIMIT 1
+	`, idComprador).Scan(
 		&compra.ID, &compra.IDComprador, &compra.Status, &compra.ValorTotalItensCentavos,
 		&compra.ValorTotalFretesCentavos, &compra.ValorTaxaServicoCentavos,
 		&compra.ValorFinalPagoCentavos, &compra.ChaveIdempotencia, &compra.ExpiraEm,

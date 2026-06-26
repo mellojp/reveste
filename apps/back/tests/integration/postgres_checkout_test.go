@@ -148,7 +148,7 @@ func TestIntegracaoCheckoutPersisteCompraEReservaItem(t *testing.T) {
 		compras.PoliticaCobranca{TaxaServicoPercentual: 10, FretePorPedidoCentavos: 1990},
 	)
 
-	compra, err := checkout.FinalizarCompra(ctx, compradorID, "")
+	compra, err := checkout.FinalizarCompra(ctx, compradorID, "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -223,7 +223,7 @@ func TestIntegracaoCheckoutConcorrenteVendeItemUmaVez(t *testing.T) {
 		grupo.Add(1)
 		go func(idComprador string) {
 			defer grupo.Done()
-			_, err := checkout.FinalizarCompra(ctx, idComprador, "")
+			_, err := checkout.FinalizarCompra(ctx, idComprador, "", nil)
 			resultados <- err
 		}(comprador)
 	}

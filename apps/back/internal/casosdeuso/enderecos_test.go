@@ -87,7 +87,7 @@ func TestCheckoutUsaEnderecoEscolhido(t *testing.T) {
 	}}
 	checkout := novoCheckout(store, pagamentoFake{aprovar: true})
 
-	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "endereco-sp")
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "endereco-sp", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}

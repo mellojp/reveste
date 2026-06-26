@@ -106,7 +106,7 @@ func TestCheckoutFinalizaCompraEReservaItem(t *testing.T) {
 	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
 	checkout := novoCheckout(store, pagamentoFake{aprovar: true})
 
-	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -162,7 +162,7 @@ func TestCheckoutUsaFreteCotado(t *testing.T) {
 	cotador := &freteFake{valorCentavos: 3_500}
 	checkout := novoCheckoutComFrete(store, pagamentoFake{aprovar: true}, cotador)
 
-	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -187,7 +187,7 @@ func TestCheckoutCaiNoFreteContingenciaQuandoCotacaoFalha(t *testing.T) {
 	cotador := &freteFake{err: common.ErrCotacaoFreteIndisponivel}
 	checkout := novoCheckoutComFrete(store, pagamentoFake{aprovar: true}, cotador)
 
-	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -237,7 +237,7 @@ func TestCheckoutVendeItemUmaVezSobConcorrencia(t *testing.T) {
 		grupo.Add(1)
 		go func(idComprador string) {
 			defer grupo.Done()
-			_, err := checkout.FinalizarCompra(context.Background(), idComprador, "")
+			_, err := checkout.FinalizarCompra(context.Background(), idComprador, "", nil)
 			resultados <- err
 		}(comprador)
 	}
@@ -273,7 +273,7 @@ func TestCheckoutCarrinhoVazio(t *testing.T) {
 	store.usuarios["comprador-1"] = cadastros.Usuario{ID: "comprador-1", Nome: "Comprador"}
 	checkout := novoCheckout(store, pagamentoFake{aprovar: true})
 
-	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if !errors.Is(err, common.ErrCarrinhoVazio) {
 		t.Fatalf("erro = %v; esperado ErrCarrinhoVazio", err)
 	}
@@ -284,7 +284,7 @@ func TestCheckoutSemItensDisponiveis(t *testing.T) {
 	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioReservado)
 	checkout := novoCheckout(store, pagamentoFake{aprovar: true})
 
-	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if !errors.Is(err, common.ErrSemItensDisponiveis) {
 		t.Fatalf("erro = %v; esperado ErrSemItensDisponiveis", err)
 	}
@@ -296,7 +296,7 @@ func TestCheckoutIgnoraProprioAnuncio(t *testing.T) {
 	semearCheckout(store, "comprador-1", "a1", "comprador-1", 10_000, anuncios.StatusAnuncioDisponivel)
 	checkout := novoCheckout(store, pagamentoFake{aprovar: true})
 
-	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if !errors.Is(err, common.ErrSemItensDisponiveis) {
 		t.Fatalf("erro = %v; esperado ErrSemItensDisponiveis", err)
 	}
@@ -307,7 +307,7 @@ func TestCheckoutPagamentoRecusadoNaoReservaItem(t *testing.T) {
 	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
 	checkout := novoCheckout(store, pagamentoFake{aprovar: false})
 
-	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	_, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if !errors.Is(err, common.ErrPagamentoRecusado) {
 		t.Fatalf("erro = %v; esperado ErrPagamentoRecusado", err)
 	}
@@ -322,7 +322,7 @@ func TestCheckoutPendenteReservaEConfirmaPorWebhook(t *testing.T) {
 	checkout := novoCheckout(store, pagamentoFake{pendente: true})
 
 	// Provedor assincrono: a compra fica aguardando pagamento e o item segue reservado.
-	resultado, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	resultado, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -362,7 +362,7 @@ func TestConfirmarPagamentoExternoRecusadoLiberaReserva(t *testing.T) {
 	semearCheckout(store, "comprador-1", "a1", "vendedor-1", 10_000, anuncios.StatusAnuncioDisponivel)
 	checkout := novoCheckout(store, pagamentoFake{pendente: true})
 
-	resultado, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	resultado, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
@@ -391,7 +391,7 @@ func TestCheckoutIdempotenteRetornaCompraExistente(t *testing.T) {
 	}
 	checkout := novoCheckout(store, pagamentoFake{aprovar: true})
 
-	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "")
+	compra, err := checkout.FinalizarCompra(context.Background(), "comprador-1", "", nil)
 	if err != nil {
 		t.Fatalf("FinalizarCompra() erro = %v", err)
 	}
