@@ -135,8 +135,12 @@
   color: white;
   background: var(--sage-dark);
 }
+.auth-visual > div { container-type: inline-size; }
 .auth-visual .eyebrow { color: var(--sage); }
-.auth-visual h1 { max-width: 620px; font-size: clamp(2.8rem, 5.2vw, 5.4rem); }
+/* Fonte proporcional a largura da coluna (nao da viewport). O coeficiente e alto o bastante
+   para a maior palavra ("descoberta") quase preencher a linha: assim cada palavra fica em sua
+   propria linha (como no design original), sem cortar no overflow nem quebrar no meio. */
+.auth-visual h1 { max-width: 100%; font-size: clamp(3.6rem, 17cqi, 3.2rem); }
 .auth-visual p { margin: 0; color: var(--sage); }
 .auth-content { display: grid; overflow: hidden; padding: clamp(2rem, 7vw, 7rem); justify-items: center; align-items: start; background: var(--surface); overflow-anchor: none; }
 .auth-content.is-resizing { transition: height .4s cubic-bezier(0.3, 0, 0.2, 1); }
