@@ -1,7 +1,19 @@
+/* Hero preso ao rolar: a camada de papel (.home-cover) sobe deslizando por cima, deixando o
+   verde como uma parte interna atras. Cantos arredondados no topo da camada revelam um filete
+   de verde ao subir. */
 .home-hero {
+  position: sticky;
+  top: 76px;
+  z-index: 0;
   overflow: hidden;
   color: white;
   background: var(--moss);
+}
+.home-cover {
+  position: relative;
+  z-index: 1;
+  background: var(--paper);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 .home-hero-inner {
   display: grid;
@@ -50,7 +62,21 @@
 .home-benefits { display: grid; width: min(1180px, calc(100% - 2rem)); margin: auto; padding: 2.2rem 0; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
 .home-benefits > div { display: grid; padding: 1rem clamp(1rem, 3vw, 2.5rem); grid-template-columns: auto 1fr; gap: .2rem 1rem; border-right: 1px solid var(--line); }
 .home-benefits > div:last-child { border-right: 0; }
-.home-benefits strong { grid-row: 1 / 3; color: var(--clay); font-family: var(--serif); font-size: 1.5rem; font-style: italic; }
+.home-benefits strong {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  grid-row: 1 / 3;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 3px 3px 6px rgba(120, 98, 68, .28), inset -3px -3px 6px rgba(255, 255, 255, .95);
+  color: var(--clay);
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-style: italic;
+}
 .home-benefits span { font-weight: 700; }
 .home-benefits p { margin: 0; color: var(--muted); font-size: .78rem; }
 .home-categories { padding-bottom: 2rem; border-bottom: 0; }
@@ -65,6 +91,7 @@
 
 .catalog-header { padding-bottom: 2.5rem; text-align: center; }
 .catalog-header h1 { margin-bottom: .8rem; font-size: clamp(2.8rem, 5vw, 5rem); }
+.catalog-header h1 .verde { color: var(--sage-dark); }
 .catalog-header p { color: var(--muted); }
 .catalog-layout { display: grid; padding-top: 0; grid-template-columns: 240px 1fr; gap: 3rem; }
 .filter-mobile-toggle { display: none; }
@@ -291,12 +318,36 @@ body:has(.auth-page) #page { view-transition-name: none; }
 .panel-number { color: var(--clay); font-family: var(--serif); font-size: 1.5rem; font-style: italic; }
 .panel-content h2 { margin-bottom: .4rem; font-size: 2rem; }
 .panel-content > p { margin-bottom: 1.5rem; color: var(--muted); }
-.photo-drop { min-height: 180px; place-items: center; align-content: center; border: 1px dashed #aeb4a8; border-radius: var(--radius-sm); color: var(--sage-dark); background: #f5f6f1; text-align: center; cursor: pointer; }
-.compact-drop { min-height: 110px; }
+/* Grade unica: miniaturas (via display:contents) e o botao de adicionar dividem a mesma grade. */
+.photo-uploader { display: grid; margin-top: 1rem; grid-template-columns: repeat(5, 1fr); gap: .7rem; }
+.photo-preview { display: contents; }
+.photo-drop {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  align-content: center;
+  gap: .3rem;
+  padding: .7rem;
+  border: 1px dashed #c7c0ae;
+  border-radius: var(--radius-sm);
+  color: var(--sage-dark);
+  background: #f6f3ec;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.photo-drop:hover { border-color: var(--clay); background: #f2ede2; box-shadow: 0 0 0 4px rgba(201, 120, 89, .1); }
+/* Nenhuma foto: o botao ocupa a linha inteira e cresce (estado "vazio"). */
+.photo-uploader[data-photo-count="0"] .photo-drop { grid-column: 1 / -1; aspect-ratio: auto; min-height: 180px; }
+/* Cinco fotos: limite atingido, o botao some. */
+.photo-uploader[data-photo-count="5"] .photo-drop { display: none; }
+/* Estado compacto (1 a 4 fotos): esconde a dica e encolhe rotulo e icone. */
+.photo-uploader:not([data-photo-count="0"]) .photo-drop small { display: none; }
+.photo-uploader:not([data-photo-count="0"]) .photo-drop strong { font-size: .78rem; line-height: 1.15; }
+.photo-uploader:not([data-photo-count="0"]) .upload-icon { width: 30px; height: 30px; font-size: 1.2rem; }
 .photo-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.photo-drop small { color: var(--muted); font-weight: 400; }
+.photo-drop small { color: var(--muted); font-weight: 400; font-size: .74rem; }
 .upload-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; color: white; background: var(--moss); font-size: 1.5rem; }
-.photo-preview { display: grid; margin-top: 1rem; grid-template-columns: repeat(5, 1fr); gap: .7rem; }
 .photo-preview-item { position: relative; overflow: hidden; aspect-ratio: 1; border-radius: var(--radius-sm); background: var(--sand); animation: content-reveal .22s ease both; }
 .photo-preview-item img { width: 100%; height: 100%; object-fit: cover; }
 .photo-preview-item span { position: absolute; right: .4rem; bottom: .4rem; display: grid; width: 22px; height: 22px; place-items: center; border-radius: 50%; color: white; background: var(--ink); font-size: .7rem; }
@@ -328,6 +379,135 @@ body:has(.auth-page) #page { view-transition-name: none; }
 .price-field span { padding-left: 1rem; color: var(--muted); }
 .price-field input { border: 0; box-shadow: none; font-size: 1.3rem; font-weight: 700; }
 .form-submit { display: flex; padding: 1.4rem 0; align-items: center; justify-content: flex-end; gap: 1.5rem; }
+
+/* Fundo da pagina de anuncio: quente com leve brilho sage, para dar contraste ao neumorfismo
+   (um branco chapado "seca" o relevo). Aplicado so quando a pagina do editor esta presente. */
+body:has(.form-page) {
+  background:
+    radial-gradient(130% 90% at 12% -5%, rgba(64, 88, 68, .08), transparent 55%),
+    linear-gradient(180deg, #f2efe5, #ece8dd);
+}
+
+/* Numero do painel (01, 02...) como um disco neumorfico saliente, feito nem a referencia. */
+.editor-form .panel-number {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fcf9f3;
+  color: var(--clay);
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  font-style: italic;
+  box-shadow: -5px -5px 11px rgba(255, 255, 255, .95), 6px 6px 12px rgba(120, 98, 68, .45);
+}
+
+/* ===== Editor de anuncio: acabamento neumorfico + bordas duplas finas no hover =====
+   Descanso: cartao levemente elevado (luz clara no topo-esquerda, sombra marrom clara na
+   base-direita), sem borda. Hover: duas linhas finas (interna na borda, externa via outline
+   com respiro) que fazem fade-in/out rapido e percept.vel. Mantem os detalhes marrom claro. */
+.editor-form .form-panel {
+  border: 1px solid transparent;
+  background: #fcf9f3;
+  box-shadow: -13px -13px 24px rgba(255, 255, 255, .95), 16px 16px 32px rgba(120, 98, 68, .52);
+  outline: 1px solid transparent;
+  outline-offset: 3px;
+  transition: border-color .16s ease, outline-color .16s ease, box-shadow .22s ease;
+}
+.editor-form .form-panel:hover {
+  border-color: var(--clay-dark);
+  outline-color: rgba(201, 120, 89, .6);
+  box-shadow: -13px -13px 22px rgba(255, 255, 255, 1), 19px 19px 36px rgba(120, 98, 68, .58);
+}
+/* Campos: leve profundidade (inset) + a mesma borda dupla fina no hover. */
+.editor-form input,
+.editor-form select,
+.editor-form textarea,
+.editor-form .price-field {
+  border: 1px solid var(--line);
+  background: #fffefb;
+  box-shadow: inset 2px 2px 5px rgba(150, 126, 96, .09), inset -2px -2px 5px rgba(255, 255, 255, .65);
+  outline: 1px solid transparent;
+  outline-offset: 2px;
+  transition: border-color .16s ease, outline-color .16s ease, box-shadow .18s ease;
+}
+.editor-form input:hover,
+.editor-form select:hover,
+.editor-form textarea:hover,
+.editor-form .price-field:hover {
+  border-color: var(--clay-dark);
+  outline-color: rgba(201, 120, 89, .5);
+}
+.editor-form input:focus,
+.editor-form select:focus,
+.editor-form textarea:focus {
+  border-color: var(--sage-dark);
+  outline-color: transparent;
+  box-shadow: 0 0 0 3px rgba(64, 88, 68, .14);
+}
+.editor-form .price-field:focus-within {
+  border-color: var(--sage-dark);
+  outline-color: transparent;
+  box-shadow: 0 0 0 3px rgba(64, 88, 68, .14);
+}
+.editor-form .price-field input { border: 0; outline: none; box-shadow: none; background: transparent; }
+/* Miniaturas de foto: a mesma borda dupla fina no hover. */
+.editor-form .photo-preview-item {
+  outline: 1px solid transparent;
+  outline-offset: 3px;
+  transition: outline-color .16s ease, box-shadow .16s ease;
+}
+.editor-form .photo-preview-item:hover { outline-color: rgba(201, 120, 89, .45); box-shadow: 0 0 0 1px var(--clay); }
+
+/* Footer: sobe suavemente conforme entra na viewport, com animacao guiada pelo scroll (CSS
+   puro, sem JS). O @supports garante que navegadores sem scroll-timeline mostrem o rodape
+   normal (nunca preso escondido). Respeita prefers-reduced-motion. */
+@keyframes footer-rise {
+  from { opacity: 0; transform: translateY(38px); }
+  to { opacity: 1; transform: none; }
+}
+@supports (animation-timeline: view()) {
+  #site-footer {
+    animation: footer-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 22%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #site-footer { animation: none; opacity: 1; transform: none; }
+}
+
+/* Flourish do intro "Conte a historia da sua peca": traco verde sinuoso que se desenha
+   sozinho (esq -> dir) no espaco a direita do titulo, sem cruzar as letras. pathLength=1
+   deixa a animacao independente do tamanho real do traco. */
+.form-page .page-intro { position: relative; }
+.form-page .page-intro > *:not(.intro-flourish) { position: relative; z-index: 1; }
+.intro-flourish {
+  position: absolute;
+  z-index: 0;
+  top: 46%;
+  right: clamp(-24px, -1vw, 14px);
+  transform: translateY(-46%);
+  width: min(390px, 44%);
+  height: auto;
+  pointer-events: none;
+  overflow: visible;
+}
+.intro-flourish path {
+  fill: none;
+  stroke: var(--sage-dark);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: .5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: flourish-draw 1.7s var(--ease-premium) .25s forwards;
+}
+@keyframes flourish-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .intro-flourish path { animation: none; stroke-dashoffset: 0; }
+}
 
 .profile-heading { display: flex; flex-wrap: wrap; margin-bottom: 3rem; align-items: center; gap: 1.5rem; }
 .profile-heading h1 { margin-bottom: .3rem; font-size: clamp(2.2rem, 4vw, 3.4rem); }
@@ -385,13 +565,13 @@ body:has(.auth-page) #page { view-transition-name: none; }
   gap: 2rem;
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: var(--shadow-soft);
+  box-shadow: -16px -16px 32px rgba(255, 255, 255, .9), 20px 20px 44px rgba(120, 98, 68, .26);
 }
 .public-profile-header h1 { margin-bottom: .6rem; font-size: clamp(2.5rem, 5vw, 4.5rem); }
 .public-profile-header p { margin: 0; color: var(--muted); }
 .public-profile-stat { display: grid; min-width: 150px; text-align: center; }
 .public-profile-stat strong { color: var(--sage-dark); font-family: var(--serif); font-size: 3rem; line-height: 1; }
-.public-profile-stat span { margin-top: .4rem; color: var(--muted); font-size: .75rem; }
+.public-profile-stat span { margin-top: .4rem; color: var(--muted); font-size: .92rem; }
 
 .cart-layout { display: grid; grid-template-columns: 1fr 360px; gap: 3rem; }
 .cart-list { display: grid; align-content: start; gap: .85rem; }
@@ -797,7 +977,7 @@ body:has(.auth-page) #page { view-transition-name: none; }
   .registration-submit .button { width: 100%; }
   .form-panel { grid-template-columns: 1fr; }
   .panel-number { font-size: 1rem; }
-  .photo-preview { grid-template-columns: repeat(3, 1fr); }
+  .photo-uploader { grid-template-columns: repeat(3, 1fr); }
   .profile-heading { align-items: flex-start; }
   .notification-heading-actions { width: 100%; margin-left: 0; }
   .profile-avatar { width: 70px; height: 70px; font-size: 1.4rem; }

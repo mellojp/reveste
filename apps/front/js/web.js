@@ -742,13 +742,21 @@ function isValidCPF(value) {
 function initializeEditor(form) {
   if (editors.has(form)) return editors.get(form);
   const preview = form.querySelector("[data-photo-preview]");
+  const uploader = form.querySelector("[data-photo-uploader]");
   const photos = [...preview.querySelectorAll("[data-existing-photo]")].map((item) => ({
     url: item.dataset.existingPhoto,
     preview: item.dataset.existingPhoto,
   }));
-  const editor = { form, preview, photos };
+  const editor = { form, preview, uploader, photos };
   editors.set(form, editor);
+  updatePhotoCount(editor);
   return editor;
+}
+
+// Reflete a quantidade de fotos no container para o CSS decidir se o botao de adicionar
+// aparece grande (nenhuma foto), compacto (1 a 4) ou some (5 fotos, limite atingido).
+function updatePhotoCount(editor) {
+  editor.uploader?.setAttribute("data-photo-count", String(editor.photos.length));
 }
 
 function renderPhotos(editor) {
@@ -771,6 +779,7 @@ function renderPhotos(editor) {
     item.append(image, label, controls);
     return item;
   }));
+  updatePhotoCount(editor);
 }
 
 function photoButton(action, text, label, disabled = false) {
