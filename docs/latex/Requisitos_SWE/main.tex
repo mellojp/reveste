@@ -1,0 +1,663 @@
+\documentclass[
+	% -- opções da classe memoir --
+	article,			% indica que é um artigo acadêmico
+	11pt,				% tamanho da fonte
+	oneside,			% para impressão apenas no verso. Oposto a twoside
+	a4paper,			% tamanho do papel. 
+	% -- opções da classe abntex2 --
+	%chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+	%section=TITLE,		% títulos de seções convertidos em letras maiúsculas
+	%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
+	%subsubsection=TITLE % títulos de subsubseções convertidos em letras maiúsculas
+	% -- opções do pacote babel --
+	english,			% idioma adicional para hifenização
+	brazil,				% o último idioma é o principal do documento
+	sumario=tradicional
+	]{abntex2}
+
+% ---
+% PACOTES
+% ---
+
+% ---
+% Pacotes fundamentais 
+% ---
+\usepackage{lmodern}			% Usa a fonte Latin Modern
+\usepackage[T1]{fontenc}		% Selecao de codigos de fonte.
+\usepackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{nomencl} 			% Lista de simbolos
+\usepackage{color}				% Controle das cores
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{microtype} 			% para melhorias de justificação
+\usepackage[table]{xcolor}      % Para cor das células das tabelas
+\usepackage{enumitem}
+\usepackage{float}              % Para o posicionamento [H] da tabela
+\usepackage{longtable}          % Para tabelas longas
+% ---
+% Pacotes adicionais, usados apenas no âmbito do Modelo Canônico do abnteX2
+% ---
+\usepackage{lipsum}				% para geração de dummy text
+% ---
+		
+% ---
+% Pacotes de citações
+% ---
+\usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
+\usepackage[alf]{abntex2cite}	% Citações padrão ABNT
+% ---
+
+% ---
+% Configurações do pacote backref
+% Usado sem a opção hyperpageref de backref
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
+% Texto padrão antes do número das páginas
+\renewcommand{\backref}{}
+% Define os textos da citação
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}%
+% ---
+
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% ---
+\titulo{\textbf{Requisitos e Análise em Engenharia de Software:\\Sistema de Intermediação de Brechós}}
+\autor{
+    Caroline Santos, Beatriz Eduão, Ian Daniel 
+	\\[0.2cm] 
+	João Pedro M., Arthur Soares, Luiz Manoel
+}
+\local{Brasil}
+\data{Maio, 2026}
+% ---
+
+% ---
+% Configurações de aparência do PDF final
+
+% alterando o aspecto da cor azul
+\definecolor{blue}{RGB}{41,5,195}
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+        %pagebackref=true,
+		pdftitle={\@title}, 
+		pdfauthor={\@author},
+        pdfsubject={Modelo de artigo científico com abnTeX2},
+        pdfcreator={LaTeX with abnTeX2},
+		pdfkeywords={abnt}{latex}{abntex}{abntex2}{atigo científico}, 
+		colorlinks=true,            % false: boxed links; true: colored links
+        linkcolor=blue,             % color of internal links
+        citecolor=blue,             % color of links to bibliography
+        filecolor=magenta,          % color of file links
+		urlcolor=blue,
+		bookmarksdepth=4
+}
+\makeatother
+% --- 
+
+% ---
+% compila o indice
+% ---
+\makeindex
+% ---
+
+% ---
+% Altera as margens padrões
+% ---
+\setlrmarginsandblock{3cm}{3cm}{*}
+\setulmarginsandblock{3cm}{3cm}{*}
+\checkandfixthelayout
+% ---
+
+% --- 
+% Espaçamentos entre linhas e parágrafos 
+% --- 
+
+% O tamanho do parágrafo é dado por:
+\setlength{\parindent}{1.3cm}
+
+% Controle do espaçamento entre um parágrafo e outro:
+\setlength{\parskip}{0.2cm}
+
+% Espaçamento simples
+\SingleSpacing
+
+% ----
+% Início do documento
+% ----
+\begin{document}
+
+\frenchspacing 
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+\newcommand{\inst}{UNIVERSIDADE FEDERAL DE SERGIPE (UFS)}
+\newcommand{\centro}{CENTRO DE CIÊNCIAS EXATAS E TECNOLOGIA (CCET)}
+\newcommand{\dept}{DEPARTAMENTO DE COMPUTAÇÃO (DCOMP)}
+\newcommand{\disc}{ENGENHARIA DE SOFTWARE - COMP0503}
+
+\makeatletter
+\def\@maketitle{
+\newpage
+\null
+\vskip 2em
+\begin{center}
+    \normalsize
+    {\inst \par \centro \par \dept \par \disc \par}
+    \vskip 3em
+\let \footnote \thanks
+{\normalsize \@title \par}
+\vskip 3em
+{\normalsize \flushright
+    \lineskip .5em
+    \begin{tabular}[t]{c}
+    \@author
+    \end{tabular}\par}
+\vskip 1em
+\end{center}%
+\par
+\vskip 1.5em}
+\makeatother
+
+\maketitle
+
+\thispagestyle{empty}
+
+\begin{resumoumacoluna}[\normalsize \textsf{\textbf{RESUMO}}]
+Este documento compõe o projeto de Sistema de Intermediação de Brechós destinado à disciplina de Engenharia de Software na Universidade Federal de Sergipe (UFS), ministrada pelo Prof. Dr. Michel Soares. O objetivo principal se pauta em estabelecer uma análise sobre os requisitos de um sistema para gerenciamento de brechós no modelo C2C (\textit{Consumer-to-Consumer}), aplicando princípios da Engenharia de Requisitos. A documentação contempla estruturalmente o padrão estabelecido pela IEEE 830/1998 de práticas recomendadas para especificação de requisitos de Software.
+ 
+ \vspace{\onelineskip}
+ 
+ \noindent
+ \textbf{Palavras-chaves}: requisitos. análise. brechós. engenharia de requisitos. engenharia de software.
+\end{resumoumacoluna}
+
+\textual
+
+\clearpage
+\setcounter{page}{1}
+
+\section{Introdução}
+\label{sec:Introducao}
+
+\subsection{Propósito do documento}
+\label{sec:Proposito}
+
+O documento intenciona aplicar técnicas de Requisitos e Análise em projetos de Engenharia de Software sobre um Sistema de Intermediação de Brechós, no modelo C2C (Consumer-to-Consumer). Enquanto uma Especificação de Requisitos de Software (\textit{Software Requirements Specification} – SRS), a documentação em questão também visa definir de forma clara o próposito, as funcionalidades e as limitações do projeto.
+
+Para tal, a sua estrutura fundamenta-se no padrão IEEE 830/1998, o qual estabelece diretrizes e práticas recomendadas para a representação de requisitos de software de maneira organizada, consistente e completa, além de incorporar princípios gerais da Engenharia de Requisitos. O público esperado desta SRS abrange: equipe responsável pela implementação do sistema, equipe de testes e garantia de qualidade do sistema, gerentes de projeto, clientes e Stakeholders beneficiados pela iniciativa.
+
+Ao final deste documento, espera-se produzir uma ferramenta acurada e útil sobre as necessidades dos usuários, servindo como alicerce para as fases subsequentes do desenvolvimento do sistema proposto.
+
+\subsection{Escopo do produto}
+\label{sec:Escopo}
+
+\subsubsection{Produtos de software utilizados}
+\label{sec:Produtos}
+
+O desenvolvimento do Sistema de Intermediação de Brechós poderá utilizar ferramentas modernas de desenvolvimento web, banco de dados e versionamento de código. Entre os produtos de software utilizados, destacam-se ambientes de desenvolvimento integrados (IDEs), sistemas gerenciadores de banco de dados relacionais ou não relacionais, bibliotecas de interface gráfica para aplicações web e plataformas de hospedagem em nuvem.
+
+Além disso, o sistema poderá integrar serviços externos responsáveis pelo processamento de pagamentos, autenticação de usuários e armazenamento de imagens enviadas pelos anunciantes.
+
+\subsubsection{O que o sistema realiza (e o que não realiza)}
+\label{sec:Realiza}
+
+Respeitando a sua natureza C2C, o sistema deve intermediar o processo de compra e venda de peças de vestuário entre usuários, no qual os usuários podem exercer ambos papéis de anunciantes e/ou consumidores conforme sua preferência. O sistema deve automatizar a conexão entre usuários que desejam comprar e vender roupas usadas, promovendo os brechós, tradicionalmente manuais, como uma nova experiência organizada e intuitiva. Além disso, o sistema deve possibilitar o gerenciamento de informações pessoais do usuário (nome, e-mail, senha), permitir o anúncio de novos itens ou a exclusão de itens indisponíveis e implementar uma busca personalizada por categorias de peças de vestuário (camiseta, casaco, vestido).
+
+O sistema busca solucionar as problemáticas de: ineficiência no anúncio manual de peças de vestuário, dificuldade de descoberta de itens específicos pelos usuários, falha no canal de comunicação entre anunciantes e consumidores, inconsistência em catálagos de peças anunciadas e ausência de uma plataforma dedicada ao processo de compra e venda de roupas usadas em brechós.
+
+Nesse sentido, o propósito do sistema não é realizar a validação de qualidade, durabilidade ou integridade das roupas. O sistema também não é responsável por garantir que a peça de roupa sirva conforme o esperado ao cliente. Entretanto, o sistema deve permitir o upload de imagens fotográficas nos anúncios dos itens, cabendo ao usuário o julgamento de quais itens o convém.
+
+\subsubsection{Descrição da aplicação de software proposta}
+\label{sec:DescricaoAplicacao}
+
+Inicialmente, a aplicação deve funcionar por uma plataforma Web via navegador, com o fito de que os usuários a encontrem sem uma barreira inicial de instalação de um software específico, além de usufruir do alcance da Internet. A aplicação deve dispor de: interfaces práticas e intuitivas aos usuários, banco de dados, sistema de autenticação, gerenciamento de anúncios, integração com serviços de pagamento e mecanismos de pesquisa e filtragem de itens.
+
+O sistema deverá oferecer funcionalidades voltadas tanto para compradores quanto para vendedores, permitindo que usuários publiquem anúncios contendo imagens, descrição, preço, categoria e estado de conservação das peças anunciadas. Os compradores deverão poder pesquisar produtos, adicionar itens ao carrinho, realizar compras e se comunicar diretamente com vendedores através do chat interno da plataforma.
+
+A arquitetura da aplicação deverá priorizar escalabilidade, segurança e responsividade, permitindo o acesso em dispositivos desktop, tablets e smartphones.
+
+\subsection{Definições \& abreviações}
+\label{sec:Definicoes}
+
+\begin{enumerate}[label=\alph*)]
+    \item \textbf{Software Requirements Specification – SRS:} Especificação de Requisitos de Software.
+    \item \textbf{Consumer-to-Consumer – C2C:} Modelo de E-Commerce entre consumidores.
+    \item \textbf{Usuário:} Indivíduo que utiliza o sistema.
+    \item \textbf{Sistema:} Plataforma de intermediação de brechós.
+    \item \textbf{Plataforma:} Ambiente digital de uso dos usuários finais.
+    \item \textbf{Item:} Peça de vestuário anunciada.
+    \item \textbf{Anúncio:} Publicação de um item.
+    \item \textbf{Carrinho:} Lista de itens adicionados para compra.
+    \item \textbf{Chat:} Canal de comunicação entre usuários.
+\end{enumerate}
+
+\subsection{Referências}
+\label{sec:Referencias}
+
+IEEE Std 830-1998. IEEE Recommended Practice for Software Requirements Specifications. (1998)
+
+Roger S. Pressman \& Bruce R. Maxim. Software Engineering: A Practitioner's Approach. 8th Edition. (2014)
+
+
+\section{Descrição Geral}
+\label{sec:DescricaoGeral}
+
+\subsection{Perspectiva do produto}
+\label{sec:PerspectivaProduto}
+
+\subsubsection{Interfaces de Sistema}
+\label{sec:InterfaceSistema}
+
+O sistema de intermediação de brechós é um produto independente e totalmente contido. Ele não atua como um subsistema ou componente subordinado a um sistema maior. Todas as funcionalidades descritas neste documento representam a totalidade do ecossistema do produto.
+
+
+\subsubsection{Interfaces de Hardware}
+\label{sec:InterfaceHardware}
+
+Não se aplica. O sistema não exige integração direta ou controle de baixo nível com nenhum equipamento ou periférico físico específico.
+
+\subsubsection{Interfaces de Software}
+\label{sec:InterfaceSoftware}
+
+O sistema dependerá da integração com os seguintes softwares e serviços externos para o seu pleno funcionamento:
+
+\begin{itemize}
+    \item \textbf{Sistema Gerenciador de Banco de Dados (SGBD):}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} PostgreSQL
+        \item[ ] \textbf{Versão:} 17.0 em ambiente local via Docker Compose; compatível com PostgreSQL gerenciado em produção.
+        \item[ ] \textbf{Propósito:} Persistência estruturada e relacional dos dados do sistema, incluindo usuários, endereços, anúncios, fotos, carrinhos, compras, pedidos, entregas, pagamentos, reembolsos, conversas e notificações.
+        \item[ ] \textbf{Interface:} Comunicação realizada pelo \textit{backend} Go com o driver pgx/v5, operando localmente ou em servidor gerenciado pela porta TCP padrão 5432.
+    \end{itemize}
+    
+    \vspace{0.5em}
+    
+    \item \textbf{Gateway de Pagamentos:}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} Mercado Pago, com provedor simulado como contingência no ambiente acadêmico.
+        \item[ ] \textbf{Versão:} API REST do Mercado Pago.
+        \item[ ] \textbf{Propósito:} Processamento de cobranças, confirmação assíncrona por \textit{webhook}, pagamento simulado em ambiente sem credenciais e registro de reembolsos simulados. O \textit{split}/repasse financeiro real ao vendedor permanece fora do escopo implementado.
+        \item[ ] \textbf{Interface:} Integração remota via protocolo HTTPS (porta 443), com mensagens em JSON. A autenticidade do \textit{webhook} é validada por assinatura configurada no ambiente.
+    \end{itemize}
+    
+    \vspace{0.5em}
+
+    \item \textbf{Serviço de Armazenamento de Arquivos:}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} Vercel Blob.
+        \item[ ] \textbf{Versão:} API HTTP do Vercel Blob.
+        \item[ ] \textbf{Propósito:} Armazenamento persistente e distribuição pública das fotos dos anúncios. O PostgreSQL armazena apenas URLs públicas e metadados das imagens.
+        \item[ ] \textbf{Interface:} O \textit{backend} emite autorizações temporárias de upload para usuários autenticados; o navegador envia as imagens diretamente ao Blob store via HTTPS. O sistema aceita apenas URLs do host público configurado.
+    \end{itemize}
+
+    \vspace{0.5em}
+
+    \item \textbf{Serviços de Frete e Endereço:}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} Melhor Envio para cotação de frete, com frete fixo como contingência; ViaCEP para consulta de CEP.
+        \item[ ] \textbf{Propósito:} Cotar frete no checkout, validar endereços e preencher dados de endereço a partir do CEP informado.
+        \item[ ] \textbf{Interface:} Integração remota via HTTPS. Na ausência de credenciais do Melhor Envio, o sistema utiliza cotação fixa para manter o fluxo de compra executável.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Interfaces de Comunicação}
+\label{sec:InterfaceComunicacao}
+
+A comunicação entre cliente e servidor deverá ocorrer através do protocolo HTTPS, garantindo criptografia e segurança na troca de informações. A implementação atual utiliza renderização no servidor (SSR) com HTMX para navegação, formulários, notificações e conversa entre comprador e vendedor. O chat é persistido no PostgreSQL e atualizado por requisições HTTP; não há servidor WebSocket dedicado nem envio SMTP implementado nesta versão.
+
+\subsubsection{Restrições de Memória}
+\label{sec:RestricoesMemoria}
+
+O sistema deverá operar dentro de limites lógicos de memória primária e armazenamento para garantir a estabilidade da aplicação, evitar travamentos e otimizar os custos de infraestrutura:
+
+\begin{itemize}
+    \item \textbf{Limites de Upload (Armazenamento):} Para evitar a saturação do servidor e do banco de dados, o \textit{upload} de arquivos de mídia (como fotos para o cadastro de anúncios e avatares de perfil) deverá ser estritamente limitado a um tamanho máximo de 5MB por arquivo. O sistema permitirá um limite máximo de 5 imagens por anúncio.
+    
+    
+    \item \textbf{Paginação de Dados em Memória:} Para evitar a sobrecarga de memória RAM tanto no servidor quanto no navegador do usuário, listagens extensas de dados nunca devem ser carregadas integralmente na memória. Componentes como o \textit{Feed} de Anúncios, Histórico de Pedidos e o Chat devem utilizar paginação estrita (ex: carregar pacotes de 20 a 30 registros por requisição).
+\end{itemize}
+
+\subsubsection{Operações}
+\label{sec:Operacoes}
+
+O sistema deverá permitir operações de cadastro, autenticação, criação de anúncios, busca de produtos, adição ao carrinho, finalização de compras, troca de mensagens entre usuários e avaliação de vendedores.
+
+\subsubsection{Requisitos de Adaptação do Local}
+\label{sec:RequisitosLocal}
+
+O sistema deverá estar adaptado ao idioma português brasileiro, utilizando moeda em Real (R\$), formatos locais de data e compatibilidade com endereços nacionais.
+
+\subsection{Funções do produto}
+\label{sec:FuncoesProduto}
+
+As principais funções do Sistema de Intermediação de Brechós incluem:
+
+\begin{itemize}
+    \item Cadastro e autenticação de usuários;
+    \item Gerenciamento de perfil do usuário;
+    \item Publicação, edição e exclusão de anúncios;
+    \item Pesquisa e filtragem de produtos;
+    \item Comunicação entre compradores e vendedores;
+    \item Adição de produtos ao carrinho;
+    \item Processamento de compras;
+    \item Histórico de compras e vendas;
+    \item Gerenciamento de pedidos;
+    \item Upload de imagens para anúncios.
+\end{itemize}
+
+\subsection{Características do usuário}
+\label{sec:CaracteristicasUsuario}
+
+O sistema destina-se a um perfil de usuário que demonstre interesse em comprar e/ou vender peças de vestuário na plataforma. Um mesmo usuário pode atuar como comprador e vendedor de acordo com a sua preferência e, portanto, o sistema deve ser estruturado de forma a contemplar ambos casos de utilização. Espera-se que os usuários possuam um conhecimento básico a intermediário no uso de aplicações digitais, bem como um nível básico de familiaridade com plataformas de comércio eletrônico.
+
+Nesse contexto, a interface do sistema deve ser prática e intuitiva o suficiente para favorecer a plena realização das principais operações por usuários, a exemplo de busca por categoria ou compra de itens.
+
+\subsection{Restrições gerais}
+\label{RestricoesGeral}
+As restrições gerais do sistema são divididas sobre as seguintes categorias: Tecnológica, Operacional, Legal e de Integração. A tabela com a descrição das restrições e suas respectivas categorias encontra-se listada no Apêndice.
+
+\subsection{Suposições e dependências}
+\label{sec:Suposicoes}
+
+O sistema pressupõe que os usuários possuam acesso estável à Internet e dispositivos compatíveis com navegação web. Além disso, determinadas funcionalidades dependem de serviços externos, como gateways de pagamento, serviços de hospedagem de imagens, e gateways de rastreio de entregas.
+
+\section{Requisitos Específicos}
+\label{RequisitosEspecificos}
+
+\subsection{Requisitos funcionais}
+\label{RequisitosFuncionais}
+
+\begin{enumerate}[label=RF\arabic*:]
+
+    \item O sistema deve permitir o cadastro de Contas mediante o fornecimento obrigatório de Nome Completo, CPF, E-mail, Senha e Endereço Completo.
+
+    \item O sistema deve validar o CPF durante o cadastro.
+    
+    \item O sistema deve permitir autenticação de acesso via E-mail/CPF e Senha.
+
+    \item O sistema deve permitir que os usuários criem anúncios.
+
+    \item O sistema somente deve criar um anúncio mediante o fornecimento dos seguintes detalhes: Título, Descrição, Categoria, Tamanho, Cor, Estado de Conservação e Preço.
+
+    \item O sistema deve exigir que, no mínimo, duas fotografias sejam vinculadas a um anúncio.
+
+    \item O sistema deve permitir que, no máximo, cinco fotografias sejam vinculadas a um anúncio.
+
+    \item O sistema deve permitir edição de anúncios ativos.
+
+    \item O sistema deve permitir a exclusão de anúncios ativos. 
+
+    \item O sistema deve permitir a pesquisa de anúncios por filtros de Categoria, Tamanho, Faixa de Preço ou de Estado de Conservação.
+
+    \item O sistema deve permitir a pesquisa de anúncios por palavras-chave.
+
+    \item O sistema deve permitir a comunicação em tempo real via chat de mensagens entre usuários.
+
+    \item O sistema deve permitir a associação futura de dados financeiros do vendedor por meio de identificador opaco do provedor de pagamento, sem persistir dados bancários ou de cartão completos na aplicação.
+
+    \item O sistema deve gerenciar um carrinho de compras por usuário.
+
+    \item O sistema deve processar o pagamento do carrinho de compras em uma única transação financeira para o comprador, independentemente de os itens pertencerem a vendedores distintos.
+
+    \item O sistema deve validar os status dos itens de um carrinho na hora da finalização da compra.
+
+    \item O sistema deve permitir que os usuários gerenciem seus pedidos ativos, desde o acompanhamento do status do pedido de compra até o acompanhamento individual do status dos itens dentro do pedido.
+
+    \item O sistema deve exibir o histórico de compras concluídas do usuário.
+
+    \item O sistema deve exibir o histórico de vendas concluídas do usuário.
+
+    \item O sistema deve registrar a elegibilidade de repasse ao vendedor somente após a confirmação de entrega do item. O repasse financeiro real ainda não está automatizado na implementação atual.
+
+    \item O sistema deve permitir que o comprador confirme manualmente o recebimento do item adquirido. 
+
+    \item O sistema deve informar o código de rastreio para o pedido após o pedido ser alterado para \textit{Enviado}.
+
+    \item O sistema deve registrar o código de rastreio informado pelo vendedor e associá-lo ao pedido. A validação externa do rastreio e da compatibilidade entre CEPs permanece como evolução futura.
+
+    \item O sistema deve realizar o reembolso para o comprador do valor do item específico  (incluindo a taxa de serviço) caso o item receba o status de \textit{Não Enviado}. 
+
+    \item O sistema deve alterar automaticamente o status de um item de \textit{Não Enviado} para \textit{Suspenso} após o reembolso.
+
+    \item O sistema deve bloquear o vendedor de continuar com suas atividades após, no máximo, três pedidos não enviados.
+
+    \item O sistema deve permitir que o vendedor de um item altere o status desse item de \textit{Suspenso} para \textit{Disponível} mediante o pagamento de uma taxa proporcional ao valor da compra.
+
+    \item O usuário deve ser notificado quando receber uma mensagem no chat, quando realizar uma venda ou quando o status do seu pedido mudar.
+
+    \item O valor do frete deverá ser calculado individualmente para cada vendedor do carrinho (com base nos CEPs de origem e destino) e a soma desses fretes deverá compor o valor total pago pelo comprador no momento da compra.
+
+     \item O sistema calculará automaticamente uma taxa de serviço percentual sobre o valor total da venda dos itens de um pedido, registrando o valor líquido previsto ao vendedor após a conclusão do pedido.
+
+     \item O sistema deverá permitir que compradores avaliem (notas de 1 a 5 e comentários) os vendedores após a confirmação do recebimento do pedido.
+
+\end{enumerate}
+
+\subsection{Requisitos não-funcionais}
+\label{RequisitosNaoFuncionais}
+
+\begin{enumerate}[label=RNF\arabic*:]
+
+    \item O sistema deverá apresentar tempo de carregamento inferior a 3 segundos na renderização inicial do feed de anúncios.
+
+    \item O sistema deverá proteger a privacidade e os dados sensíveis dos usuários em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+
+    \item O sistema deverá salvar as senhas dos usuários com hash.
+
+    \item O sistema deverá garantir plena compatibilidade de uso nas versões mais recentes dos navegadores Google Chrome, Mozilla Firefox, Safari e Microsoft Edge.
+
+\end{enumerate}
+
+\subsection{Requisitos de interface}
+\label{RequisitosInterface}
+
+\begin{enumerate}[label=RI\arabic*:]
+
+    \item O sistema deverá apresentar alertas de confirmação para ações destrutivas (ex: exclusão de conta ou exclusão de anúncio).
+
+    \item O sistema deve limitar o tamanho dos arquivos de upload (imagens) a até 5MB.
+
+    \item Os formulários deverão validar dados e impedir o envio de requisições incompletas ao servidor.
+
+\end{enumerate}
+
+\subsection{Requisitos do domínio}
+\label{RequisitosDominio}
+
+\begin{enumerate}[label=RD\arabic*:]
+
+    \item Um único usuário poderá exercer simultaneamente os papéis de Comprador e Vendedor na plataforma, utilizando a mesma conta.
+
+    \item Todos os itens devem ser únicos, representando um único anúncio de peça de roupa.
+
+    \item Uma vez excluído, um item deixa de existir para sempre no catálogo público.
+
+    \item Um item só pode ser excluído ou alterado caso esteja no estado \textit{Disponível}.
+    
+    \item O ciclo de vida de um item deverá transitar estritamente pelos seguintes status: \textit{Disponível, Indisponível, Vendido, Enviado, Não Enviado, Suspenso e Recebido}.
+
+    \item Cada anúncio deverá estar associado, de maneira exclusiva, a um único perfil de vendedor e um único item.
+
+    \item Um usuário pode adicionar diversos itens ao seu carrinho de compras.
+
+    \item A finalização do carrinho de compras gerará um ou mais pedidos de compra, de forma que cada pedido agrupe exclusivamente os itens pertencentes a um único vendedor.
+
+     \item A adição de um item ao carrinho não garante a sua reserva física; a reserva do item no sistema deverá ocorrer exclusivamente no momento de geração do pedido de compra.
+
+    \item O ciclo de vida de um pedido de compra deverá transitar estritamente pelos seguintes status: \textit{Criado, Cancelado, Aguardando Envio, Aguardando Entrega e Finalizado}.
+
+    \item Um item inserido em um pedido deverá ser marcado temporariamente como \textit{Indisponível}, ficando oculto no catálogo público.
+
+    \item Caso todos os itens pertencentes a um mesmo pedido de compra assumam o status de \textit{Suspenso}, o pedido correspondente deverá ter seu status automaticamente alterado para \textit{Cancelado}.
+
+    \item Itens que assumirem o status de \textit{Suspenso} (devido à falha no envio) ficarão aptos a retornar ao status de \textit{Disponível} no catálogo exclusivamente após o pagamento da taxa pelo respectivo vendedor, independentemente do status geral do pedido de compra ao qual pertenciam.
+
+    \item Após a confirmação de pagamento, os itens da compra deverão assumir o status de \textit{Vendido}, permanecendo ocultos do catálogo público. Simultaneamente, os pedidos de compra correspondentes deverão receber o status de Aguardando Envios. 
+
+    \item Caso o vendedor de um item não altere o status do item para \textit{Enviado} no tempo mínimo de 7 dias, o item deve ser marcado como \textit{Não Enviado}.
+
+    \item Itens marcados como \textit{Suspenso} ficam ocultos do catálogo público. 
+
+    \item Quando todos os itens de um pedido forem marcados como \textit{Enviado} pelos seus respectivos vendedores ou \textit{Suspenso} pelo sistema, o pedido deve receber o status de \textit{Aguardando Entregas}.
+
+    \item O pedido de compra recebe o status de \textit{Finalizado} quando todos os itens do pedido são marcados como \textit{Recebido} pelo comprador ou \textit{Suspenso} pelo sistema.      
+
+    \item Caso o comprador não confirme o recebimento manualmente em até 15 dias corridos após o pedido ser marcado como \textit{Enviado}, o sistema poderá alterar o status do item para \textit{Recebido} automaticamente e registrar a elegibilidade de repasse ao vendedor.
+
+\end{enumerate}
+
+
+\clearpage
+\section{Apêndice}
+\label{Apendice}
+
+\begin{longtable}{|l|p{10cm}|}
+
+\caption{Restrições Gerais do Sistema} \\
+
+\hline
+\cellcolor{gray!30} \textbf{Categoria} &
+\cellcolor{gray!30} \textbf{Descrição da Restrição} \\
+\hline
+\endfirsthead
+
+\hline
+\cellcolor{gray!30} \textbf{Categoria} &
+\cellcolor{gray!30} \textbf{Descrição da Restrição} \\
+\hline
+\endhead
+
+Tecnológica & Ofertar compatibilidade com navegadores modernos: Chrome (ver. 147.0.7727.138), Firefox (ver. 150.0.2), Safari (ver. 26) e Microsoft Edge (ver. 148.0.3967.54). \\
+\hline
+
+Tecnológica & Limitação do tamanho máximo de imagens enviadas pelos usuários e uso de técnicas de compressão (Restrição de Memória). \\
+\hline
+
+Tecnológica & O acesso à plataforma dependerá de conexão com a Internet. \\
+\hline
+
+Operacional & O sistema deve estar sujeito ao acesso contínuo dos usuários, exceto em períodos de manutenção programada. \\
+\hline
+
+Operacional & O sistema deverá suportar o acesso de múltiplicos usuários simultaneamente. \\
+\hline
+
+Operacional & A plataforma é isenta de responsabilidade sobre a logística de envios, qualidade física e higienização das peças transacionadas. \\
+\hline
+
+Operacional & Adaptação somente ao idioma Português Brasileiro (PT-BR), moeda Real (R\$) e formatos locais de data e endereço. \\
+\hline
+
+Legal & Conformidade com a LGPD (Lei nº 13.709/2018) para armazenamento e tratamento de dados pessoais e sensíveis dos usuários. \\
+\hline
+
+Legal & Conformidade com o Código de Defesa do Consumidor (Lei nº 8.078/1990) para transparência e responsabilidade com os usuários. \\
+\hline
+
+Legal & Conformidade com o Marco Civil da Internet (Lei nº 12.965/2014) para proteção dos direitos dos usuários no sistema. \\
+\hline
+
+Legal & Presença obrigatória de Termos de Uso e Políticas de Privacidade na plataforma. \\
+\hline
+
+Organizacional & A documentação do sistema deve estar atualizada e relacionada com o software em produção. \\
+\hline
+
+Organizacional & As atividades do projeto devem seguir o cronograma estabelecido. \\
+\hline
+
+Organizacional & As equipe de desenvolvimento deve aplicar padronização sobre o código-fonte. \\
+\hline
+
+Organizacional & O projeto deve seguir as diretrizes e princípios da Engenharia de Software. \\
+\hline
+
+Integração & O sistema dependerá da disponibilidade de serviços externos (Gateways de pagamento e hospedagem em nuvem). \\
+\hline
+
+Integração & As integrações externas devem ser compatíveis com as tecnologias Web utilizadas para o sistema. \\
+\hline
+
+Integração & O processamento e validação de transações financeiras ocorrerão fora do sistema, via API de terceiros (Gateways de pagamento). \\
+\hline
+
+Integração & Dependência de serviços externos (hospedagem em nuvem) para armazenamento de imagens enviadas nos anúncios. \\
+\hline
+
+\end{longtable}
+
+
+
+% ----------------------------------------------------------
+% Índice
+% ----------------------------------------------------------
+\clearpage
+\section{Índice}
+\label{Indice}
+
+Introdução\dotfill \pageref{sec:Introducao}
+
+\hspace{1cm}Propósito do documento\dotfill \pageref{sec:Proposito}
+
+\hspace{1cm}Escopo do produto\dotfill \pageref{sec:Escopo}
+
+\hspace{2cm}Produtos de software utilizados\dotfill \pageref{sec:Produtos}
+
+\hspace{2cm}O que o sistema realiza (e o que não realiza)\dotfill \pageref{sec:Realiza}
+
+\hspace{2cm}Descrição da aplicação de software proposta\dotfill \pageref{sec:DescricaoAplicacao}
+
+\hspace{1cm}Definições \& abreviações\dotfill \pageref{sec:Definicoes}
+
+\hspace{1cm}Referências\dotfill \pageref{sec:Referencias}
+
+Descrição Geral\dotfill \pageref{sec:DescricaoGeral}
+
+\hspace{1cm}Perspectiva do produto\dotfill \pageref{sec:PerspectivaProduto}
+
+\hspace{2cm}Interfaces de Sistema\dotfill \pageref{sec:InterfaceSistema}
+
+\hspace{2cm}Interfaces de Hardware\dotfill \pageref{sec:InterfaceHardware}
+
+\hspace{2cm}Interfaces de Software\dotfill \pageref{sec:InterfaceSoftware}
+
+\hspace{2cm}Interfaces de Comunicação\dotfill \pageref{sec:InterfaceComunicacao}
+
+\hspace{2cm}Restrições de Memória\dotfill \pageref{sec:RestricoesMemoria}
+
+\hspace{2cm}Operações\dotfill \pageref{sec:Operacoes}
+
+\hspace{2cm}Requisitos de Adaptação do Local\dotfill \pageref{sec:RequisitosLocal}
+
+\hspace{1cm}Funções do produto\dotfill \pageref{sec:FuncoesProduto}
+
+\hspace{1cm}Características do usuário\dotfill \pageref{sec:CaracteristicasUsuario}
+
+\hspace{1cm}Restrições gerais\dotfill \pageref{RestricoesGeral}
+
+\hspace{1cm}Suposições e dependências\dotfill \pageref{sec:Suposicoes}
+
+Requisitos Específicos\dotfill \pageref{RequisitosEspecificos}
+
+\hspace{1cm}Requisitos funcionais\dotfill \pageref{RequisitosFuncionais}
+
+\hspace{1cm}Requisitos não-funcionais\dotfill \pageref{RequisitosNaoFuncionais}
+
+\hspace{1cm}Requisitos de interface\dotfill \pageref{RequisitosInterface}
+
+\hspace{1cm}Requisitos do domínio\dotfill \pageref{RequisitosDominio}
+
+Apêndice\dotfill \pageref{Apendice}
+
+Índice\dotfill \pageref{Indice}
+
+\end{document}
