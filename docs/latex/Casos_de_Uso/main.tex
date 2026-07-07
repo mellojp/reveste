@@ -1,0 +1,936 @@
+\documentclass[
+	% -- opções da classe memoir --
+	article,			% indica que é um artigo acadêmico
+	11pt,				% tamanho da fonte
+	oneside,			% para impressão apenas no verso. Oposto a twoside
+	a4paper,			% tamanho do papel. 
+	% -- opções da classe abntex2 --
+	%chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+	%section=TITLE,		% títulos de seções convertidos em letras maiúsculas
+	%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
+	%subsubsection=TITLE % títulos de subsubseções convertidos em letras maiúsculas
+	% -- opções do pacote babel --
+	english,			% idioma adicional para hifenização
+	brazil,				% o último idioma é o principal do documento
+	sumario=tradicional
+	]{abntex2}
+
+% ---
+% PACOTES
+% ---
+
+% ---
+% Pacotes fundamentais 
+% ---
+\usepackage{lmodern}			% Usa a fonte Latin Modern
+\usepackage[T1]{fontenc}		% Selecao de codigos de fonte.
+\usepackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{nomencl} 			% Lista de simbolos
+\usepackage{color}				% Controle das cores
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{microtype} 			% para melhorias de justificação
+\usepackage[table]{xcolor}      % Para cor das células das tabelas
+\usepackage{enumitem}
+\usepackage{float}              % Para o posicionamento [H] da tabela
+\usepackage{longtable}          % Para tabelas longas
+% ---
+% Pacotes adicionais, usados apenas no âmbito do Modelo Canônico do abnteX2
+% ---
+\usepackage{lipsum}				% para geração de dummy text
+% ---
+		
+% ---
+% Pacotes de citações
+% ---
+\usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
+\usepackage[alf]{abntex2cite}	% Citações padrão ABNT
+% ---
+
+% ---
+% Configurações do pacote backref
+% Usado sem a opção hyperpageref de backref
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
+% Texto padrão antes do número das páginas
+\renewcommand{\backref}{}
+% Define os textos da citação
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}%
+% ---
+
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% ---
+\titulo{\textbf{Especificação dos Casos de Uso:\\Sistema de Intermediação de Brechós}}
+\autor{
+    Caroline Santos, Beatriz Eduão, Ian Daniel 
+	\\[0.2cm] 
+	João Pedro M., Arthur Soares, Luiz Manoel
+}
+\local{Brasil}
+\data{Maio, 2026}
+% ---
+
+% ---
+% Configurações de aparência do PDF final
+
+% alterando o aspecto da cor azul
+\definecolor{blue}{RGB}{41,5,195}
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+        %pagebackref=true,
+		pdftitle={\@title}, 
+		pdfauthor={\@author},
+        pdfsubject={Modelo de artigo científico com abnTeX2},
+        pdfcreator={LaTeX with abnTeX2},
+		pdfkeywords={abnt}{latex}{abntex}{abntex2}{atigo científico}, 
+		colorlinks=true,            % false: boxed links; true: colored links
+        linkcolor=blue,             % color of internal links
+        citecolor=blue,             % color of links to bibliography
+        filecolor=magenta,          % color of file links
+		urlcolor=blue,
+		bookmarksdepth=4
+}
+\makeatother
+% --- 
+
+% ---
+% compila o indice
+% ---
+\makeindex
+% ---
+
+% ---
+% Altera as margens padrões
+% ---
+\setlrmarginsandblock{3cm}{3cm}{*}
+\setulmarginsandblock{3cm}{3cm}{*}
+\checkandfixthelayout
+% ---
+
+% --- 
+% Espaçamentos entre linhas e parágrafos 
+% --- 
+
+% O tamanho do parágrafo é dado por:
+\setlength{\parindent}{1.3cm}
+
+% Controle do espaçamento entre um parágrafo e outro:
+\setlength{\parskip}{0.2cm}
+
+% Espaçamento simples
+\SingleSpacing
+
+% ----
+% Início do documento
+% ----
+\begin{document}
+
+\frenchspacing 
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+\newcommand{\inst}{UNIVERSIDADE FEDERAL DE SERGIPE (UFS)}
+\newcommand{\centro}{CENTRO DE CIÊNCIAS EXATAS E TECNOLOGIA (CCET)}
+\newcommand{\dept}{DEPARTAMENTO DE COMPUTAÇÃO (DCOMP)}
+\newcommand{\disc}{ENGENHARIA DE SOFTWARE - COMP0503}
+
+\makeatletter
+\def\@maketitle{
+\newpage
+\null
+\vskip 2em
+\begin{center}
+    \normalsize
+    {\inst \par \centro \par \dept \par \disc \par}
+    \vskip 3em
+\let \footnote \thanks
+{\normalsize \@title \par}
+\vskip 3em
+{\normalsize \flushright
+    \lineskip .5em
+    \begin{tabular}[t]{c}
+    \@author
+    \end{tabular}\par}
+\vskip 1em
+\end{center}%
+\par
+\vskip 1.5em}
+\makeatother
+
+\maketitle
+
+\thispagestyle{empty}
+
+\begin{resumoumacoluna}[\normalsize \textsf{\textbf{RESUMO}}]
+Este documento compõe o projeto de Sistema de Intermediação de Brechós destinado à disciplina de Engenharia de Software na Universidade Federal de Sergipe (UFS), ministrada pelo Prof. Dr. Michel Soares. O objetivo principal deste artefato é detalhar o comportamento do sistema no modelo C2C (Consumer-to-Consumer) por meio da Especificação de Casos de Uso. A partir dos requisitos previamente consolidados, a documentação descreve de forma estruturada as interações entre os atores e a plataforma, mapeando as pré-condições, pós-condições, fluxos principais e alternativos de cada funcionalidade. Dessa forma, o documento visa traduzir as necessidades do negócio em fluxos lógicos de interação, estabelecendo uma base sólida para nortear as fases subsequentes de projeto, implementação e testes do software.
+ 
+ \vspace{\onelineskip}
+ 
+ \noindent
+ \textbf{Palavras-chaves}: casos de uso. análise. brechós. engenharia de software.
+\end{resumoumacoluna}
+
+
+
+\textual
+
+\clearpage
+\setcounter{page}{1}
+
+\section{Introdução}
+Este documento tem como objetivo aplicar técnicas de Modelagem Comportamental e Análise de Engenharia de Software ao projeto de um Sistema de Intermediação de Brechós no modelo C2C (Consumer-to-Consumer). Como uma Especificação de Casos de Uso, visa detalhar de forma clara as interações entre os atores e o sistema para a realização das funcionalidades propostas, delimitando o escopo operacional da plataforma.
+Sua estrutura fundamenta-se nos princípios da Unified Modeling Language (UML) e em boas práticas de especificação de requisitos comportamentais, estabelecendo diretrizes para a representação do software de maneira organizada, consistente e orientada ao usuário. O público-alvo desta especificação abrange: a equipe de desenvolvimento, a equipe de testes e qualidade, os gerentes de projeto e os demais stakeholders envolvidos na iniciativa.
+Ao final, espera-se produzir um guia comportamental preciso e útil, descrevendo os fluxos principal, alternativo e de exceção das operações da plataforma, servindo como base para as fases de arquitetura, desenvolvimento e validação do sistema.
+
+\section{Casos de Uso}
+\label{sec:CasosDeUso}
+
+Os casos de uso do sistema foram organizados em módulos funcionais, visando facilitar a compreensão das responsabilidades e fluxos principais da plataforma.
+
+\subsection{Atores do Sistema}
+\label{sec:AtoresSistema}
+
+\subsubsection{Atores Principais}
+\begin{itemize}
+    \item \textbf{Usuário:} Representa qualquer usuário autenticado.
+    \begin{itemize}
+        \item \textbf{Especializações:} Comprador, Vendedor.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Atores Externos}
+\begin{itemize}
+    \item \textbf{Gateway de Pagamento:} Responsável por processamento de cobranças e confirmação de pagamento. Na implementação atual, o Mercado Pago é utilizado quando configurado e um provedor simulado mantém o fluxo acadêmico executável.
+    \item \textbf{Gateway de Frete / Logística:} Responsável por cálculo de frete. Na implementação atual, o Melhor Envio é usado quando configurado e há frete fixo de contingência.
+    \item \textbf{Sistema de Notificações:} Responsável por registrar notificações internas, alertas de mensagens e atualização de pedidos.
+\end{itemize}
+
+% ---------------------------------------------------
+% Módulo de Conta
+% ---------------------------------------------------
+\subsection{Módulo de Conta}
+
+\subsubsection{UC01 – Cadastrar Usuário}
+\label{uc:01}
+\noindent\textbf{Objetivo:} Permitir que um usuário realize seu cadastro na plataforma para utilizar os recursos de compra e venda.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} O usuário não pode possuir cadastro ativo na plataforma.\\
+\textbf{Pós-condições:} Conta de usuário criada com sucesso. Usuário apto a autenticar-se no sistema.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a tela de cadastro.
+    \item O sistema solicita os seguintes dados obrigatórios: Nome completo, CPF, E-mail, Senha e Endereço completo.
+    \item O usuário preenche os dados solicitados.
+    \item O sistema valida o preenchimento dos campos obrigatórios.
+    \item O sistema valida o formato e a autenticidade do CPF informado.
+    \item O sistema verifica se já existe usuário cadastrado com o CPF ou e-mail informado.
+    \item O sistema registra os dados do usuário.
+    \item O sistema confirma a realização do cadastro.
+    \item O usuário é redirecionado para a tela de autenticação.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Campos obrigatórios não preenchidos}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica campos obrigatórios não preenchidos.
+        \item 4b. O sistema informa os campos inválidos.
+        \item 4c. O usuário corrige os dados.
+        \item 4d. O fluxo retorna ao passo 4.
+    \end{itemize}
+    
+    \item \textbf{FA2 – CPF inválido}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 5a. O sistema identifica CPF inválido.
+        \item 5b. O sistema informa a inconsistência ao usuário.
+        \item 5c. O usuário corrige o CPF informado.
+        \item 5d. O fluxo retorna ao passo 5.
+    \end{itemize}
+
+    \item \textbf{FA3 – CPF ou e-mail já cadastrados}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica duplicidade de CPF ou e-mail.
+        \item 6b. O sistema informa que já existe conta vinculada aos dados fornecidos.
+        \item 6c. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF1, RF2, RI3
+
+% ---------------------------------------------------
+
+\subsubsection{UC02 – Autenticar Usuário}
+\label{uc:02}
+\noindent\textbf{Objetivo:} Permitir que usuários autenticados acessem a plataforma.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Usuário previamente cadastrado.\\
+\textbf{Pós-condições:} Sessão autenticada iniciada.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a tela de login.
+    \item O sistema solicita e-mail/CPF e senha.
+    \item O usuário informa suas credenciais.
+    \item O sistema valida as credenciais fornecidas.
+    \item O sistema autentica o usuário.
+    \item O sistema redireciona o usuário para a página inicial autenticada.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Credenciais inválidas}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica credenciais inválidas.
+        \item 4b. O sistema informa falha de autenticação.
+        \item 4c. O usuário pode tentar autenticar-se novamente.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF3
+
+% ---------------------------------------------------
+% Módulo de Anúncios e Catálogo
+% ---------------------------------------------------
+\subsection{Módulo de Anúncios e Catálogo}
+
+\subsubsection{UC03 – Gerenciar Anúncios}
+\label{uc:03}
+\noindent\textbf{Objetivo:} Permitir que vendedores criem, editem e excluam anúncios de peças de roupa.\\
+\textbf{Atores:} Vendedor\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado.\\
+\textbf{Pós-condições:} Anúncio criado, atualizado ou removido do catálogo público.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal – Criar Anúncio:}
+\begin{enumerate}[label=\arabic*.]
+    \item O vendedor acessa a funcionalidade de gerenciamento de anúncios.
+    \item O sistema apresenta o formulário de anúncio.
+    \item O vendedor informa: título, descrição, fotografias, categoria, tamanho, estado de conservação e valor.
+    \item O sistema valida os dados preenchidos.
+    \item O sistema valida a quantidade mínima de fotografias.
+    \item O sistema valida a quantidade máxima de cinco imagens e o tamanho máximo permitido de cada arquivo.
+    \item O sistema registra o anúncio associado ao vendedor.
+    \item O sistema define o status inicial do item como \textit{Disponível}.
+    \item O sistema publica o anúncio no catálogo.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Dados obrigatórios inválidos}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica campos inválidos ou incompletos.
+        \item 4b. O sistema informa os erros encontrados.
+        \item 4c. O vendedor corrige os dados.
+        \item 4d. O fluxo retorna ao passo 4.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Quantidade insuficiente de imagens}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 5a. O sistema identifica menos de duas fotografias.
+        \item 5b. O sistema informa a inconsistência.
+        \item 5c. O vendedor adiciona novas imagens.
+        \item 5d. O fluxo retorna ao passo 5.
+    \end{itemize}
+
+    \item \textbf{FA3 – Imagem acima do limite permitido}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica arquivo acima de 5MB.
+        \item 6b. O sistema informa o erro ao usuário.
+        \item 6c. O vendedor substitui a imagem.
+        \item 6d. O fluxo retorna ao passo 6.
+    \end{itemize}
+
+    \item \textbf{FA4 – Editar anúncio}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O vendedor seleciona um anúncio já existente.
+        \item 1b. O sistema valida se o item está no estado \textit{Disponível}.
+        \item 1c. O sistema apresenta os dados atuais do anúncio.
+        \item 1d. O vendedor altera os dados desejados.
+        \item 1e. O sistema valida os dados alterados.
+        \item 1f. O sistema atualiza o anúncio.
+        \item 1g. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA5 – Exclusão de anúncio}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O vendedor seleciona um anúncio existente.
+        \item 1b. O sistema valida se o item está no estado \textit{Disponível}.
+        \item 1c. O sistema apresenta alerta de confirmação da exclusão.
+        \item 1d. O vendedor confirma a exclusão.
+        \item 1e. O sistema remove o anúncio do catálogo público.
+        \item 1f. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA6 – Tentativa de alteração de item indisponível}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O sistema identifica que o item não está no estado \textit{Disponível}.
+        \item 1b. O sistema bloqueia a operação.
+        \item 1c. O sistema informa a impossibilidade da alteração.
+        \item 1d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF4, RF5, RI1, RI2, RI3, RD2, RD3, RD4, RD5, RD6
+
+% ---------------------------------------------------
+
+\subsubsection{UC04 – Buscar e Filtrar Anúncios}
+\label{uc:08}
+\noindent\textbf{Objetivo:} Permitir que os usuários pesquisem e encontrem anúncios específicos no catálogo público através de palavras-chave e filtros.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Baixa\\
+\textbf{Pré-condições:} Nenhuma. O catálogo público deve estar acessível.\\
+\textbf{Pós-condições:} Lista de anúncios exibida de acordo com os critérios selecionados.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a funcionalidade de busca da plataforma.
+    \item O usuário informa palavras-chave referentes ao título ou descrição do item.
+    \item O usuário seleciona filtros opcionais: categoria, tamanho, faixa de preço, estado de conservação.
+    \item O sistema processa os critérios informados.
+    \item O sistema exclui da busca todos os itens que não estejam no status \textit{Disponível}.
+    \item O sistema apresenta os resultados encontrados ao usuário.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Nenhum resultado encontrado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica que nenhum anúncio corresponde aos critérios informados.
+        \item 4b. O sistema informa ao usuário que não há resultados disponíveis.
+        \item 4c. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Critérios de filtro inválidos}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica critérios de busca inválidos ou inconsistentes.
+        \item 3b. O sistema informa o erro ao usuário.
+        \item 3c. O usuário corrige os critérios informados.
+        \item 3d. O fluxo retorna ao passo 4.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF6, RF7, RNF1, RD5, RD11, RD16, RD17
+
+% ---------------------------------------------------
+% Módulo de Compras e Pedidos
+% ---------------------------------------------------
+\subsection{Módulo de Compras e Pedidos}
+
+\subsubsection{UC05 – Gerenciar Itens do Carrinho}
+\label{uc:09}
+\noindent\textbf{Objetivo:} Permitir que o comprador adicione e remova itens do seu carrinho de compras antes da finalização da compra.\\
+\textbf{Atores:} Comprador\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado.\\
+\textbf{Pós-condições:} Carrinho persistido com os itens selecionados pelo comprador.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal – Adicionar Item:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador visualiza um anúncio no catálogo público.
+    \item O comprador aciona a opção de adicionar o item ao carrinho.
+    \item O sistema valida se o item está no status \textit{Disponível}.
+    \item O sistema adiciona o item ao carrinho do usuário sem realizar sua reserva física.
+    \item O sistema informa que o item foi adicionado com sucesso.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Remover item do carrinho}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O comprador acessa o carrinho de compras.
+        \item 1b. O comprador aciona a opção de remover um item específico.
+        \item 1c. O sistema remove o item do carrinho do usuário.
+        \item 1d. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Tentativa de adicionar item indisponível}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica que o item não está mais no status \textit{Disponível}.
+        \item 3b. O sistema bloqueia a adição do item ao carrinho.
+        \item 3c. O sistema informa a indisponibilidade ao comprador.
+        \item 3d. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA3 – Item já presente no carrinho}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica que o item já está presente no carrinho do comprador.
+        \item 2b. O sistema informa que o item já foi adicionado anteriormente.
+        \item 2c. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF10, RD7, RD9
+
+% ---------------------------------------------------
+
+\subsubsection{UC06 – Finalizar Compra}
+\label{uc:04}
+\noindent\textbf{Objetivo:} Permitir que o comprador finalize os itens presentes no carrinho de compras através de uma única transação financeira.\\
+\textbf{Atores:} Comprador, Gateway de Pagamento, Gateway de Frete\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Usuário autenticado. Carrinho contendo ao menos um item.\\
+\textbf{Pós-condições:} Pedidos de compra gerados. Pagamento processado. Itens marcados como \textit{Vendido}. Pedidos atualizados para \textit{Aguardando Envios}.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador acessa o carrinho de compras.
+    \item O sistema agrupa os itens por vendedor.
+    \item O sistema valida a disponibilidade atual dos itens do carrinho.
+    \item O sistema calcula o frete individual para cada vendedor.
+    \item O sistema calcula o valor total da compra.
+    \item O sistema apresenta o resumo da compra ao comprador.
+    \item O comprador confirma a finalização da compra.
+    \item O sistema cria os pedidos agrupados por vendedor.
+    \item O sistema altera temporariamente os itens para o status \textit{Indisponível}.
+    \item O sistema envia a solicitação de pagamento ao gateway de pagamento.
+    \item O gateway processa o pagamento.
+    \item O gateway retorna aprovação da transação.
+    \item O sistema altera os itens para o status \textit{Vendido}.
+    \item O sistema altera os pedidos para o status \textit{Aguardando Envios}.
+    \item O sistema registra a retenção dos valores pagos.
+    \item O sistema notifica os vendedores sobre a venda realizada.
+    \item O sistema exibe confirmação da compra ao comprador.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Item indisponível}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica item indisponível.
+        \item 3b. O sistema remove o item da compra.
+        \item 3c. O sistema informa a indisponibilidade ao comprador.
+        \item 3d. O fluxo retorna ao passo 2.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Falha no cálculo de frete}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O gateway de frete não responde ou retorna erro.
+        \item 4b. O sistema informa indisponibilidade temporária do cálculo de frete.
+        \item 4c. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA3 – Pagamento recusado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 12a. O gateway recusa o pagamento.
+        \item 12b. O sistema mantém os pedidos em \textit{Aguardando Pagamento}.
+        \item 12c. O sistema retorna os itens ao status \textit{Disponível}.
+        \item 12d. O sistema informa a falha ao comprador.
+    \end{itemize}
+
+    \item \textbf{FA4 – Expiração do pagamento}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 12a. O comprador não conclui o pagamento dentro do período de 1 hora.
+        \item 12b. O sistema altera os pedidos para \textit{Expirado}.
+        \item 12c. O sistema retorna os itens ao status \textit{Disponível}.
+        \item 12d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF10, RF11, RF12, RF15, RF23, RF24, RD7, RD8, RD9, RD10, RD11, RD12, RD15
+
+% ---------------------------------------------------
+% Módulo de Logística e Pós-Venda
+% ---------------------------------------------------
+\subsection{Módulo de Logística e Pós-Venda}
+
+\subsubsection{UC07 – Informar Código de Rastreio}
+\label{uc:05}
+\noindent\textbf{Objetivo:} Permitir que o vendedor informe o código de rastreio referente ao envio dos itens pertencentes a um pedido.\\
+\textbf{Atores:} Vendedor, Gateway de Logística\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Pedido no status \textit{Aguardando Envios}. Vendedor vinculado ao pedido.\\
+\textbf{Pós-condições:} Itens do vendedor marcados como \textit{Enviado}. Pedido atualizado conforme estado dos itens.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O vendedor acessa seus pedidos ativos.
+    \item O sistema apresenta os pedidos aguardando envio.
+    \item O vendedor seleciona um pedido.
+    \item O sistema apresenta os itens vinculados ao vendedor naquele pedido.
+    \item O vendedor informa o código de rastreio.
+    \item O sistema registra o código de rastreio informado.
+    \item O sistema altera todos os itens do vendedor naquele pedido para o status \textit{Enviado}.
+    \item O sistema verifica se todos os itens do pedido estão \textit{Enviado} ou \textit{Suspenso}.
+    \item Caso verdadeiro, o sistema altera o pedido para \textit{Aguardando Entregas}.
+    \item O sistema notifica internamente o comprador sobre o envio.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Código de rastreio não informado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica ausência do código de rastreio.
+        \item 6b. O sistema informa a obrigatoriedade ao vendedor.
+        \item 6c. O vendedor informa o código.
+        \item 6d. O fluxo retorna ao passo 6.
+    \end{itemize}
+
+    \item \textbf{FA2 – Prazo de envio expirado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O sistema identifica que o prazo de envio ultrapassou 7 dias.
+        \item 1b. O sistema altera o item para \textit{Não Enviado}.
+        \item 1c. O sistema inicia o processo de reembolso.
+        \item 1d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF17, RF18, RF22, RD16, RD18
+
+% ---------------------------------------------------
+
+\subsubsection{UC08 – Confirmar Recebimento do Item}
+\label{uc:06}
+\noindent\textbf{Objetivo:} Permitir que o comprador confirme o recebimento do item adquirido.\\
+\textbf{Atores:} Comprador, Gateway de Pagamento\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Item no status \textit{Enviado}.\\
+\textbf{Pós-condições:} Item marcado como \textit{Recebido}. Pagamento liberado ao vendedor. Pedido eventualmente finalizado.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador acessa seus pedidos ativos.
+    \item O sistema apresenta os itens enviados.
+    \item O comprador seleciona a opção de confirmar recebimento.
+    \item O sistema altera o item para o status \textit{Recebido}.
+    \item O sistema registra a elegibilidade do valor líquido da venda para repasse ao vendedor.
+    \item O sistema verifica se todos os itens do pedido estão \textit{Recebido} ou \textit{Suspenso}.
+    \item Caso verdadeiro, o sistema altera o pedido para \textit{Finalizado}.
+    \item O sistema habilita a avaliação do vendedor.
+    \item O sistema notifica internamente o vendedor sobre a confirmação do recebimento.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Confirmação automática}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O sistema identifica ausência de confirmação manual após 15 dias corridos.
+        \item 1b. O sistema altera automaticamente o item para \textit{Recebido}.
+        \item 1c. O sistema registra a elegibilidade de repasse ao vendedor.
+        \item 1d. O fluxo retorna ao passo 7.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Repasse financeiro real pendente}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica que o repasse financeiro automatizado não está habilitado.
+        \item 6b. O sistema mantém o item como \textit{Recebido}.
+        \item 6c. O sistema mantém o valor líquido registrado para controle operacional.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF15, RF16, RF24, RD19, RD20
+
+% ---------------------------------------------------
+
+\subsubsection{UC09 – Processar Reembolso}
+\label{uc:07}
+\noindent\textbf{Objetivo:} Permitir o reembolso automático de itens não enviados dentro do prazo estipulado.\\
+\textbf{Atores:} Sistema, Gateway de Pagamento\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Item no status \textit{Não Enviado}.\\
+\textbf{Pós-condições:} Comprador reembolsado. Item marcado como \textit{Suspenso}.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O sistema identifica item sem envio após 7 dias.
+    \item O sistema altera o item para o status \textit{Não Enviado}.
+    \item O sistema calcula o valor de reembolso do item e taxa de serviço.
+    \item O sistema solicita o reembolso ao gateway de pagamento.
+    \item O gateway processa o reembolso ao comprador.
+    \item O sistema altera o item para o status \textit{Suspenso}.
+    \item O sistema notifica comprador e vendedor.
+    \item O sistema verifica se todos os itens do pedido estão \textit{Suspenso}.
+    \item Caso verdadeiro, o sistema altera o pedido para \textit{Cancelado}.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Falha no reembolso}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 5a. O gateway retorna falha no reembolso.
+        \item 5b. O sistema registra a inconsistência financeira.
+        \item 5c. O sistema agenda nova tentativa automática.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF19, RF20, RF22, RD13, RD14, RD16, RD17
+
+% ---------------------------------------------------
+
+\subsubsection{UC10 – Reativar Item Suspenso}
+\label{uc:10}
+\noindent\textbf{Objetivo:} Permitir que o vendedor torne um item com status \textit{Suspenso} novamente \textit{Disponível} no catálogo público mediante o pagamento de uma taxa.\\
+\textbf{Atores:} Vendedor, Gateway de Pagamento\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de item vinculado ao vendedor com status \textit{Suspenso}.\\
+\textbf{Pós-condições:} Item marcado como \textit{Disponível} e visível no catálogo público.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O vendedor acessa o painel de gerenciamento de itens suspensos.
+    \item O vendedor seleciona um item para reativação.
+    \item O sistema calcula o valor da taxa proporcional ao valor da compra do item.
+    \item O sistema apresenta o valor da taxa ao vendedor.
+    \item O vendedor confirma a intenção de reativar o item e informa os dados de pagamento.
+    \item O sistema envia a solicitação de cobrança ao gateway de pagamento.
+    \item O gateway aprova a transação financeira.
+    \item O sistema altera o status do item de \textit{Suspenso} para \textit{Disponível}.
+    \item O sistema torna o item novamente visível no catálogo público.
+    \item O sistema informa o sucesso da operação ao vendedor.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Pagamento recusado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 7a. O gateway de pagamento recusa a transação financeira.
+        \item 7b. O sistema informa a falha no pagamento ao vendedor.
+        \item 7c. O sistema mantém o item no status \textit{Suspenso}.
+        \item 7d. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Falha de comunicação com o gateway de pagamento}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema não consegue comunicação com o gateway de pagamento.
+        \item 6b. O sistema informa indisponibilidade temporária ao vendedor.
+        \item 6c. O sistema mantém o item no status \textit{Suspenso}.
+        \item 6d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF21, RD14, RD17
+
+% ---------------------------------------------------
+% Módulo de Interação e Relatórios
+% ---------------------------------------------------
+\subsection{Módulo de Interação e Relatórios}
+
+\subsubsection{UC11 – Comunicar via Chat}
+\label{uc:11}
+\noindent\textbf{Objetivo:} Permitir a comunicação em tempo real entre comprador e vendedor sobre um pedido de compra existente.\\
+\textbf{Atores:} Comprador, Vendedor\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de ao menos um pedido de compra ativo vinculando comprador e vendedor.\\
+\textbf{Pós-condições:} Mensagem enviada com sucesso e destinatário notificado.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa os detalhes de um pedido ativo.
+    \item O usuário aciona a funcionalidade de chat do pedido.
+    \item O sistema apresenta o histórico cronológico de mensagens daquele pedido.
+    \item O usuário redige uma nova mensagem.
+    \item O usuário envia a mensagem.
+    \item O sistema registra a mensagem na base de dados.
+    \item O sistema exibe a mensagem no chat em tempo real.
+    \item O sistema envia uma notificação ao destinatário sobre a nova mensagem.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Mensagem vazia}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O usuário tenta enviar uma mensagem sem conteúdo.
+        \item 4b. O sistema bloqueia o envio da mensagem.
+        \item 4c. O sistema informa a obrigatoriedade do conteúdo.
+        \item 4d. O fluxo retorna ao passo 4.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Usuário não vinculado ao pedido}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica que o usuário não pertence ao pedido selecionado.
+        \item 2b. O sistema bloqueia o acesso ao chat.
+        \item 2c. O sistema informa acesso não autorizado.
+        \item 2d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF8, RF22
+
+% ---------------------------------------------------
+
+\subsubsection{UC12 – Avaliar Vendedor}
+\label{uc:12}
+\noindent\textbf{Objetivo:} Permitir que o comprador avalie a experiência de compra com um vendedor específico após o recebimento do item.\\
+\textbf{Atores:} Comprador\\
+\textbf{Prioridade:} Desejável\\
+\textbf{Criticidade:} Baixa\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de item pertencente ao comprador com status \textit{Recebido}.\\
+\textbf{Pós-condições:} Avaliação registrada e exibida no perfil público do vendedor.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador acessa um pedido finalizado.
+    \item O sistema apresenta a opção de avaliar o vendedor referente ao item adquirido.
+    \item O comprador seleciona a funcionalidade de avaliação.
+    \item O sistema apresenta o formulário de avaliação contendo: nota obrigatória de 1 a 5, e comentário textual opcional.
+    \item O comprador preenche a nota e o comentário desejado.
+    \item O comprador confirma o envio da avaliação.
+    \item O sistema valida o preenchimento da nota obrigatória.
+    \item O sistema registra a avaliação.
+    \item O sistema vincula a avaliação ao histórico de vendas do vendedor.
+    \item O sistema confirma o envio da avaliação ao comprador.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Nota não informada}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 7a. O sistema identifica que nenhuma nota foi selecionada.
+        \item 7b. O sistema impede o envio da avaliação.
+        \item 7c. O sistema informa a obrigatoriedade da nota.
+        \item 7d. O comprador informa a nota.
+        \item 7e. O fluxo retorna ao passo 6.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Avaliação já registrada}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica que o comprador já avaliou o item selecionado.
+        \item 3b. O sistema impede o registro de nova avaliação.
+        \item 3c. O sistema informa que a avaliação já foi realizada anteriormente.
+        \item 3d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF25
+
+% ---------------------------------------------------
+
+\subsubsection{UC13 – Consultar Pedidos}
+\label{uc:13}
+\noindent\textbf{Objetivo:} Permitir que usuários visualizem seus pedidos ativos e acompanhem seus respectivos status.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de ao menos um pedido vinculado ao usuário.\\
+\textbf{Pós-condições:} Informações dos pedidos apresentadas ao usuário.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a área de pedidos da plataforma.
+    \item O sistema recupera todos os pedidos ativos vinculados ao usuário.
+    \item O sistema apresenta os pedidos encontrados.
+    \item O usuário seleciona um pedido específico.
+    \item O sistema apresenta: status geral do pedido, itens vinculados, status individual de cada item, informações de envio e rastreio (quando existentes) e vendedor responsável por cada item.
+    \item O usuário acompanha as informações do pedido.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Nenhum pedido encontrado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica ausência de pedidos ativos vinculados ao usuário.
+        \item 2b. O sistema informa que não existem pedidos ativos.
+        \item 2c. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Tentativa de acesso não autorizado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica tentativa de acesso a pedido pertencente a outro usuário.
+        \item 4b. O sistema bloqueia o acesso.
+        \item 4c. O sistema informa acesso não autorizado.
+        \item 4d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF13, RD10, RD18, RD19
+
+% ---------------------------------------------------
+
+\subsubsection{UC14 – Consultar Histórico de Compras e Vendas}
+\label{uc:14}
+\noindent\textbf{Objetivo:} Permitir que usuários visualizem o histórico de compras e vendas concluídas na plataforma.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Baixa\\
+\textbf{Pré-condições:} Usuário autenticado.\\
+\textbf{Pós-condições:} Histórico de compras e vendas exibido ao usuário.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a área de histórico da plataforma.
+    \item O sistema recupera o histórico de compras concluídas vinculadas ao usuário.
+    \item O sistema recupera o histórico de vendas concluídas vinculadas ao usuário.
+    \item O sistema apresenta: pedidos finalizados, itens comprados e vendidos, valores das transações, datas das operações e status finais dos itens.
+    \item O usuário consulta as informações desejadas.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Histórico vazio}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica ausência de compras ou vendas concluídas.
+        \item 2b. O sistema informa que não há histórico disponível.
+        \item 2c. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF14, RD19
+
+
+\end{document}

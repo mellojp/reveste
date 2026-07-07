@@ -1,0 +1,1893 @@
+﻿\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+\usepackage{adjustbox}
+\usepackage[table]{xcolor}
+\usepackage{microtype}
+
+\geometry{left=3cm,right=2cm,top=3cm,bottom=2cm}
+\setlength{\parindent}{1.3cm}
+\setlength{\parskip}{0.2cm}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black,
+    pdftitle={Documentacao Consolidada - Sistema de Intermediacao de Brechos},
+    pdfauthor={Caroline Santos, Beatriz Eduao, Ian Daniel, Joao Pedro M., Arthur Soares, Luiz Manoel}
+}
+
+\title{\textbf{Documenta\c{c}\~ao Consolidada do\\Sistema de Intermedia\c{c}\~ao de Brech\'os}}
+\author{Caroline Santos, Beatriz Eduao, Ian Daniel\\Joao Pedro M., Arthur Soares, Luiz Manoel}
+\date{Aracaju -- SE\\2026}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+
+\textbf{UNIVERSIDADE FEDERAL DE SERGIPE (UFS)}\\
+\textbf{CENTRO DE CI\^ENCIAS EXATAS E TECNOLOGIA (CCET)}\\
+\textbf{DEPARTAMENTO DE COMPUTA\c{C}\~AO (DCOMP)}\\
+\textbf{ENGENHARIA DE SOFTWARE -- COMP0503}\\
+
+\vspace{3cm}
+
+{\LARGE \textbf{Documenta\c{c}\~ao Consolidada do\\Sistema de Intermedia\c{c}\~ao de Brech\'os}}\\
+
+\vspace{3cm}
+
+Caroline Santos, Beatriz Eduao, Ian Daniel\\
+Joao Pedro M., Arthur Soares, Luiz Manoel\\
+
+\vspace{2cm}
+
+Prof. Dr. Michel Soares\\
+
+\vfill
+
+Aracaju -- SE\\
+2026
+
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\part{Requisitos e An\'alise em Engenharia de Software}
+\section{Introdução}
+\label{sec:Introducao}
+
+\subsection{Propósito do documento}
+\label{sec:Proposito}
+
+O documento intenciona aplicar técnicas de Requisitos e Análise em projetos de Engenharia de Software sobre um Sistema de Intermediação de Brechós, no modelo C2C (Consumer-to-Consumer). Enquanto uma Especificação de Requisitos de Software (\textit{Software Requirements Specification} – SRS), a documentação em questão também visa definir de forma clara o próposito, as funcionalidades e as limitações do projeto.
+
+Para tal, a sua estrutura fundamenta-se no padrão IEEE 830/1998, o qual estabelece diretrizes e práticas recomendadas para a representação de requisitos de software de maneira organizada, consistente e completa, além de incorporar princípios gerais da Engenharia de Requisitos. O público esperado desta SRS abrange: equipe responsável pela implementação do sistema, equipe de testes e garantia de qualidade do sistema, gerentes de projeto, clientes e Stakeholders beneficiados pela iniciativa.
+
+Ao final deste documento, espera-se produzir uma ferramenta acurada e útil sobre as necessidades dos usuários, servindo como alicerce para as fases subsequentes do desenvolvimento do sistema proposto.
+
+\subsection{Escopo do produto}
+\label{sec:Escopo}
+
+\subsubsection{Produtos de software utilizados}
+\label{sec:Produtos}
+
+O desenvolvimento do Sistema de Intermediação de Brechós poderá utilizar ferramentas modernas de desenvolvimento web, banco de dados e versionamento de código. Entre os produtos de software utilizados, destacam-se ambientes de desenvolvimento integrados (IDEs), sistemas gerenciadores de banco de dados relacionais ou não relacionais, bibliotecas de interface gráfica para aplicações web e plataformas de hospedagem em nuvem.
+
+Além disso, o sistema poderá integrar serviços externos responsáveis pelo processamento de pagamentos, autenticação de usuários e armazenamento de imagens enviadas pelos anunciantes.
+
+\subsubsection{O que o sistema realiza (e o que não realiza)}
+\label{sec:Realiza}
+
+Respeitando a sua natureza C2C, o sistema deve intermediar o processo de compra e venda de peças de vestuário entre usuários, no qual os usuários podem exercer ambos papéis de anunciantes e/ou consumidores conforme sua preferência. O sistema deve automatizar a conexão entre usuários que desejam comprar e vender roupas usadas, promovendo os brechós, tradicionalmente manuais, como uma nova experiência organizada e intuitiva. Além disso, o sistema deve possibilitar o gerenciamento de informações pessoais do usuário (nome, e-mail, senha), permitir o anúncio de novos itens ou a exclusão de itens indisponíveis e implementar uma busca personalizada por categorias de peças de vestuário (camiseta, casaco, vestido).
+
+O sistema busca solucionar as problemáticas de: ineficiência no anúncio manual de peças de vestuário, dificuldade de descoberta de itens específicos pelos usuários, falha no canal de comunicação entre anunciantes e consumidores, inconsistência em catálagos de peças anunciadas e ausência de uma plataforma dedicada ao processo de compra e venda de roupas usadas em brechós.
+
+Nesse sentido, o propósito do sistema não é realizar a validação de qualidade, durabilidade ou integridade das roupas. O sistema também não é responsável por garantir que a peça de roupa sirva conforme o esperado ao cliente. Entretanto, o sistema deve permitir o upload de imagens fotográficas nos anúncios dos itens, cabendo ao usuário o julgamento de quais itens o convém.
+
+\subsubsection{Descrição da aplicação de software proposta}
+\label{sec:DescricaoAplicacao}
+
+Inicialmente, a aplicação deve funcionar por uma plataforma Web via navegador, com o fito de que os usuários a encontrem sem uma barreira inicial de instalação de um software específico, além de usufruir do alcance da Internet. A aplicação deve dispor de: interfaces práticas e intuitivas aos usuários, banco de dados, sistema de autenticação, gerenciamento de anúncios, integração com serviços de pagamento e mecanismos de pesquisa e filtragem de itens.
+
+O sistema deverá oferecer funcionalidades voltadas tanto para compradores quanto para vendedores, permitindo que usuários publiquem anúncios contendo imagens, descrição, preço, categoria e estado de conservação das peças anunciadas. Os compradores deverão poder pesquisar produtos, adicionar itens ao carrinho, realizar compras e se comunicar diretamente com vendedores através do chat interno da plataforma.
+
+A arquitetura da aplicação deverá priorizar escalabilidade, segurança e responsividade, permitindo o acesso em dispositivos desktop, tablets e smartphones.
+
+\subsection{Definições \& abreviações}
+\label{sec:Definicoes}
+
+\begin{enumerate}[label=\alph*)]
+    \item \textbf{Software Requirements Specification – SRS:} Especificação de Requisitos de Software.
+    \item \textbf{Consumer-to-Consumer – C2C:} Modelo de E-Commerce entre consumidores.
+    \item \textbf{Usuário:} Indivíduo que utiliza o sistema.
+    \item \textbf{Sistema:} Plataforma de intermediação de brechós.
+    \item \textbf{Plataforma:} Ambiente digital de uso dos usuários finais.
+    \item \textbf{Item:} Peça de vestuário anunciada.
+    \item \textbf{Anúncio:} Publicação de um item.
+    \item \textbf{Carrinho:} Lista de itens adicionados para compra.
+    \item \textbf{Chat:} Canal de comunicação entre usuários.
+\end{enumerate}
+
+\subsection{Referências}
+\label{sec:Referencias}
+
+IEEE Std 830-1998. IEEE Recommended Practice for Software Requirements Specifications. (1998)
+
+Roger S. Pressman \& Bruce R. Maxim. Software Engineering: A Practitioner's Approach. 8th Edition. (2014)
+
+
+\section{Descrição Geral}
+\label{sec:DescricaoGeral}
+
+\subsection{Perspectiva do produto}
+\label{sec:PerspectivaProduto}
+
+\subsubsection{Interfaces de Sistema}
+\label{sec:InterfaceSistema}
+
+O sistema de intermediação de brechós é um produto independente e totalmente contido. Ele não atua como um subsistema ou componente subordinado a um sistema maior. Todas as funcionalidades descritas neste documento representam a totalidade do ecossistema do produto.
+
+
+\subsubsection{Interfaces de Hardware}
+\label{sec:InterfaceHardware}
+
+Não se aplica. O sistema não exige integração direta ou controle de baixo nível com nenhum equipamento ou periférico físico específico.
+
+\subsubsection{Interfaces de Software}
+\label{sec:InterfaceSoftware}
+
+O sistema dependerá da integração com os seguintes softwares e serviços externos para o seu pleno funcionamento:
+
+\begin{itemize}
+    \item \textbf{Sistema Gerenciador de Banco de Dados (SGBD):}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} PostgreSQL
+        \item[ ] \textbf{Versão:} 17.0 em ambiente local via Docker Compose; compatível com PostgreSQL gerenciado em produção.
+        \item[ ] \textbf{Propósito:} Persistência estruturada e relacional dos dados do sistema, incluindo usuários, endereços, anúncios, fotos, carrinhos, compras, pedidos, entregas, pagamentos, reembolsos, conversas e notificações.
+        \item[ ] \textbf{Interface:} Comunicação realizada pelo \textit{backend} Go com o driver pgx/v5, operando localmente ou em servidor gerenciado pela porta TCP padrão 5432.
+    \end{itemize}
+    
+    \vspace{0.5em}
+    
+    \item \textbf{Gateway de Pagamentos:}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} Mercado Pago, com provedor simulado como contingência no ambiente acadêmico.
+        \item[ ] \textbf{Versão:} API REST do Mercado Pago.
+        \item[ ] \textbf{Propósito:} Processamento de cobranças, confirmação assíncrona por \textit{webhook}, pagamento simulado em ambiente sem credenciais e registro de reembolsos simulados. O \textit{split}/repasse financeiro real ao vendedor permanece fora do escopo implementado.
+        \item[ ] \textbf{Interface:} Integração remota via protocolo HTTPS (porta 443), com mensagens em JSON. A autenticidade do \textit{webhook} é validada por assinatura configurada no ambiente.
+    \end{itemize}
+    
+    \vspace{0.5em}
+
+    \item \textbf{Serviço de Armazenamento de Arquivos:}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} Vercel Blob.
+        \item[ ] \textbf{Versão:} API HTTP do Vercel Blob.
+        \item[ ] \textbf{Propósito:} Armazenamento persistente e distribuição pública das fotos dos anúncios. O PostgreSQL armazena apenas URLs públicas e metadados das imagens.
+        \item[ ] \textbf{Interface:} O \textit{backend} emite autorizações temporárias de upload para usuários autenticados; o navegador envia as imagens diretamente ao Blob store via HTTPS. O sistema aceita apenas URLs do host público configurado.
+    \end{itemize}
+
+    \vspace{0.5em}
+
+    \item \textbf{Serviços de Frete e Endereço:}
+    \begin{itemize}
+        \item[ ] \textbf{Nome:} Melhor Envio para cotação de frete, com frete fixo como contingência; ViaCEP para consulta de CEP.
+        \item[ ] \textbf{Propósito:} Cotar frete no checkout, validar endereços e preencher dados de endereço a partir do CEP informado.
+        \item[ ] \textbf{Interface:} Integração remota via HTTPS. Na ausência de credenciais do Melhor Envio, o sistema utiliza cotação fixa para manter o fluxo de compra executável.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Interfaces de Comunicação}
+\label{sec:InterfaceComunicacao}
+
+A comunicação entre cliente e servidor deverá ocorrer através do protocolo HTTPS, garantindo criptografia e segurança na troca de informações. A implementação atual utiliza renderização no servidor (SSR) com HTMX para navegação, formulários, notificações e conversa entre comprador e vendedor. O chat é persistido no PostgreSQL e atualizado por requisições HTTP; não há servidor WebSocket dedicado nem envio SMTP implementado nesta versão.
+
+\subsubsection{Restrições de Memória}
+\label{sec:RestricoesMemoria}
+
+O sistema deverá operar dentro de limites lógicos de memória primária e armazenamento para garantir a estabilidade da aplicação, evitar travamentos e otimizar os custos de infraestrutura:
+
+\begin{itemize}
+    \item \textbf{Limites de Upload (Armazenamento):} Para evitar a saturação do servidor e do banco de dados, o \textit{upload} de arquivos de mídia (como fotos para o cadastro de anúncios e avatares de perfil) deverá ser estritamente limitado a um tamanho máximo de 5MB por arquivo. O sistema permitirá um limite máximo de 5 imagens por anúncio.
+    
+    
+    \item \textbf{Paginação de Dados em Memória:} Para evitar a sobrecarga de memória RAM tanto no servidor quanto no navegador do usuário, listagens extensas de dados nunca devem ser carregadas integralmente na memória. Componentes como o \textit{Feed} de Anúncios, Histórico de Pedidos e o Chat devem utilizar paginação estrita (ex: carregar pacotes de 20 a 30 registros por requisição).
+\end{itemize}
+
+\subsubsection{Operações}
+\label{sec:Operacoes}
+
+O sistema deverá permitir operações de cadastro, autenticação, criação de anúncios, busca de produtos, adição ao carrinho, finalização de compras, troca de mensagens entre usuários e avaliação de vendedores.
+
+\subsubsection{Requisitos de Adaptação do Local}
+\label{sec:RequisitosLocal}
+
+O sistema deverá estar adaptado ao idioma português brasileiro, utilizando moeda em Real (R\$), formatos locais de data e compatibilidade com endereços nacionais.
+
+\subsection{Funções do produto}
+\label{sec:FuncoesProduto}
+
+As principais funções do Sistema de Intermediação de Brechós incluem:
+
+\begin{itemize}
+    \item Cadastro e autenticação de usuários;
+    \item Gerenciamento de perfil do usuário;
+    \item Publicação, edição e exclusão de anúncios;
+    \item Pesquisa e filtragem de produtos;
+    \item Comunicação entre compradores e vendedores;
+    \item Adição de produtos ao carrinho;
+    \item Processamento de compras;
+    \item Histórico de compras e vendas;
+    \item Gerenciamento de pedidos;
+    \item Upload de imagens para anúncios.
+\end{itemize}
+
+\subsection{Características do usuário}
+\label{sec:CaracteristicasUsuario}
+
+O sistema destina-se a um perfil de usuário que demonstre interesse em comprar e/ou vender peças de vestuário na plataforma. Um mesmo usuário pode atuar como comprador e vendedor de acordo com a sua preferência e, portanto, o sistema deve ser estruturado de forma a contemplar ambos casos de utilização. Espera-se que os usuários possuam um conhecimento básico a intermediário no uso de aplicações digitais, bem como um nível básico de familiaridade com plataformas de comércio eletrônico.
+
+Nesse contexto, a interface do sistema deve ser prática e intuitiva o suficiente para favorecer a plena realização das principais operações por usuários, a exemplo de busca por categoria ou compra de itens.
+
+\subsection{Restrições gerais}
+\label{RestricoesGeral}
+As restri\c{c}\~oes gerais do sistema s\~ao divididas sobre as seguintes categorias: Tecnol\'ogica, Operacional, Legal e de Integra\c{c}\~ao.
+
+\subsection{Suposições e dependências}
+\label{sec:Suposicoes}
+
+O sistema pressupõe que os usuários possuam acesso estável à Internet e dispositivos compatíveis com navegação web. Além disso, determinadas funcionalidades dependem de serviços externos, como gateways de pagamento, serviços de hospedagem de imagens, e gateways de rastreio de entregas.
+
+\section{Requisitos Específicos}
+\label{RequisitosEspecificos}
+
+\subsection{Requisitos funcionais}
+\label{RequisitosFuncionais}
+
+\begin{enumerate}[label=RF\arabic*:]
+
+    \item O sistema deve permitir o cadastro de Contas mediante o fornecimento obrigatório de Nome Completo, CPF, E-mail, Senha e Endereço Completo.
+
+    \item O sistema deve validar o CPF durante o cadastro.
+    
+    \item O sistema deve permitir autenticação de acesso via E-mail/CPF e Senha.
+
+    \item O sistema deve permitir que os usuários criem anúncios.
+
+    \item O sistema somente deve criar um anúncio mediante o fornecimento dos seguintes detalhes: Título, Descrição, Categoria, Tamanho, Cor, Estado de Conservação e Preço.
+
+    \item O sistema deve exigir que, no mínimo, duas fotografias sejam vinculadas a um anúncio.
+
+    \item O sistema deve permitir que, no máximo, cinco fotografias sejam vinculadas a um anúncio.
+
+    \item O sistema deve permitir edição de anúncios ativos.
+
+    \item O sistema deve permitir a exclusão de anúncios ativos. 
+
+    \item O sistema deve permitir a pesquisa de anúncios por filtros de Categoria, Tamanho, Faixa de Preço ou de Estado de Conservação.
+
+    \item O sistema deve permitir a pesquisa de anúncios por palavras-chave.
+
+    \item O sistema deve permitir a comunicação em tempo real via chat de mensagens entre usuários.
+
+    \item O sistema deve permitir a associação futura de dados financeiros do vendedor por meio de identificador opaco do provedor de pagamento, sem persistir dados bancários ou de cartão completos na aplicação.
+
+    \item O sistema deve gerenciar um carrinho de compras por usuário.
+
+    \item O sistema deve processar o pagamento do carrinho de compras em uma única transação financeira para o comprador, independentemente de os itens pertencerem a vendedores distintos.
+
+    \item O sistema deve validar os status dos itens de um carrinho na hora da finalização da compra.
+
+    \item O sistema deve permitir que os usuários gerenciem seus pedidos ativos, desde o acompanhamento do status do pedido de compra até o acompanhamento individual do status dos itens dentro do pedido.
+
+    \item O sistema deve exibir o histórico de compras concluídas do usuário.
+
+    \item O sistema deve exibir o histórico de vendas concluídas do usuário.
+
+    \item O sistema deve registrar a elegibilidade de repasse ao vendedor somente após a confirmação de entrega do item. O repasse financeiro real ainda não está automatizado na implementação atual.
+
+    \item O sistema deve permitir que o comprador confirme manualmente o recebimento do item adquirido. 
+
+    \item O sistema deve informar o código de rastreio para o pedido após o pedido ser alterado para \textit{Enviado}.
+
+    \item O sistema deve registrar o código de rastreio informado pelo vendedor e associá-lo ao pedido. A validação externa do rastreio e da compatibilidade entre CEPs permanece como evolução futura.
+
+    \item O sistema deve realizar o reembolso para o comprador do valor do item específico  (incluindo a taxa de serviço) caso o item receba o status de \textit{Não Enviado}. 
+
+    \item O sistema deve alterar automaticamente o status de um item de \textit{Não Enviado} para \textit{Suspenso} após o reembolso.
+
+    \item O sistema deve bloquear o vendedor de continuar com suas atividades após, no máximo, três pedidos não enviados.
+
+    \item O sistema deve permitir que o vendedor de um item altere o status desse item de \textit{Suspenso} para \textit{Disponível} mediante o pagamento de uma taxa proporcional ao valor da compra.
+
+    \item O usuário deve ser notificado quando receber uma mensagem no chat, quando realizar uma venda ou quando o status do seu pedido mudar.
+
+    \item O valor do frete deverá ser calculado individualmente para cada vendedor do carrinho (com base nos CEPs de origem e destino) e a soma desses fretes deverá compor o valor total pago pelo comprador no momento da compra.
+
+     \item O sistema calculará automaticamente uma taxa de serviço percentual sobre o valor total da venda dos itens de um pedido, registrando o valor líquido previsto ao vendedor após a conclusão do pedido.
+
+     \item O sistema deverá permitir que compradores avaliem (notas de 1 a 5 e comentários) os vendedores após a confirmação do recebimento do pedido.
+
+\end{enumerate}
+
+\subsection{Requisitos não-funcionais}
+\label{RequisitosNaoFuncionais}
+
+\begin{enumerate}[label=RNF\arabic*:]
+
+    \item O sistema deverá apresentar tempo de carregamento inferior a 3 segundos na renderização inicial do feed de anúncios.
+
+    \item O sistema deverá proteger a privacidade e os dados sensíveis dos usuários em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+
+    \item O sistema deverá salvar as senhas dos usuários com hash.
+
+    \item O sistema deverá garantir plena compatibilidade de uso nas versões mais recentes dos navegadores Google Chrome, Mozilla Firefox, Safari e Microsoft Edge.
+
+\end{enumerate}
+
+\subsection{Requisitos de interface}
+\label{RequisitosInterface}
+
+\begin{enumerate}[label=RI\arabic*:]
+
+    \item O sistema deverá apresentar alertas de confirmação para ações destrutivas (ex: exclusão de conta ou exclusão de anúncio).
+
+    \item O sistema deve limitar o tamanho dos arquivos de upload (imagens) a até 5MB.
+
+    \item Os formulários deverão validar dados e impedir o envio de requisições incompletas ao servidor.
+
+\end{enumerate}
+
+\subsection{Requisitos do domínio}
+\label{RequisitosDominio}
+
+\begin{enumerate}[label=RD\arabic*:]
+
+    \item Um único usuário poderá exercer simultaneamente os papéis de Comprador e Vendedor na plataforma, utilizando a mesma conta.
+
+    \item Todos os itens devem ser únicos, representando um único anúncio de peça de roupa.
+
+    \item Uma vez excluído, um item deixa de existir para sempre no catálogo público.
+
+    \item Um item só pode ser excluído ou alterado caso esteja no estado \textit{Disponível}.
+    
+    \item O ciclo de vida de um item deverá transitar estritamente pelos seguintes status: \textit{Disponível, Indisponível, Vendido, Enviado, Não Enviado, Suspenso e Recebido}.
+
+    \item Cada anúncio deverá estar associado, de maneira exclusiva, a um único perfil de vendedor e um único item.
+
+    \item Um usuário pode adicionar diversos itens ao seu carrinho de compras.
+
+    \item A finalização do carrinho de compras gerará um ou mais pedidos de compra, de forma que cada pedido agrupe exclusivamente os itens pertencentes a um único vendedor.
+
+     \item A adição de um item ao carrinho não garante a sua reserva física; a reserva do item no sistema deverá ocorrer exclusivamente no momento de geração do pedido de compra.
+
+    \item O ciclo de vida de um pedido de compra deverá transitar estritamente pelos seguintes status: \textit{Criado, Cancelado, Aguardando Envio, Aguardando Entrega e Finalizado}.
+
+    \item Um item inserido em um pedido deverá ser marcado temporariamente como \textit{Indisponível}, ficando oculto no catálogo público.
+
+    \item Caso todos os itens pertencentes a um mesmo pedido de compra assumam o status de \textit{Suspenso}, o pedido correspondente deverá ter seu status automaticamente alterado para \textit{Cancelado}.
+
+    \item Itens que assumirem o status de \textit{Suspenso} (devido à falha no envio) ficarão aptos a retornar ao status de \textit{Disponível} no catálogo exclusivamente após o pagamento da taxa pelo respectivo vendedor, independentemente do status geral do pedido de compra ao qual pertenciam.
+
+    \item Após a confirmação de pagamento, os itens da compra deverão assumir o status de \textit{Vendido}, permanecendo ocultos do catálogo público. Simultaneamente, os pedidos de compra correspondentes deverão receber o status de Aguardando Envios. 
+
+    \item Caso o vendedor de um item não altere o status do item para \textit{Enviado} no tempo mínimo de 7 dias, o item deve ser marcado como \textit{Não Enviado}.
+
+    \item Itens marcados como \textit{Suspenso} ficam ocultos do catálogo público. 
+
+    \item Quando todos os itens de um pedido forem marcados como \textit{Enviado} pelos seus respectivos vendedores ou \textit{Suspenso} pelo sistema, o pedido deve receber o status de \textit{Aguardando Entregas}.
+
+    \item O pedido de compra recebe o status de \textit{Finalizado} quando todos os itens do pedido são marcados como \textit{Recebido} pelo comprador ou \textit{Suspenso} pelo sistema.      
+
+    \item Caso o comprador não confirme o recebimento manualmente em até 15 dias corridos após o pedido ser marcado como \textit{Enviado}, o sistema poderá alterar o status do item para \textit{Recebido} automaticamente e registrar a elegibilidade de repasse ao vendedor.
+
+\end{enumerate}
+
+\clearpage
+\part{Especifica\c{c}\~ao dos Casos de Uso}
+\section{Introdução}
+Este documento tem como objetivo aplicar técnicas de Modelagem Comportamental e Análise de Engenharia de Software ao projeto de um Sistema de Intermediação de Brechós no modelo C2C (Consumer-to-Consumer). Como uma Especificação de Casos de Uso, visa detalhar de forma clara as interações entre os atores e o sistema para a realização das funcionalidades propostas, delimitando o escopo operacional da plataforma.
+Sua estrutura fundamenta-se nos princípios da Unified Modeling Language (UML) e em boas práticas de especificação de requisitos comportamentais, estabelecendo diretrizes para a representação do software de maneira organizada, consistente e orientada ao usuário. O público-alvo desta especificação abrange: a equipe de desenvolvimento, a equipe de testes e qualidade, os gerentes de projeto e os demais stakeholders envolvidos na iniciativa.
+Ao final, espera-se produzir um guia comportamental preciso e útil, descrevendo os fluxos principal, alternativo e de exceção das operações da plataforma, servindo como base para as fases de arquitetura, desenvolvimento e validação do sistema.
+
+\section{Casos de Uso}
+\label{sec:CasosDeUso}
+
+Os casos de uso do sistema foram organizados em módulos funcionais, visando facilitar a compreensão das responsabilidades e fluxos principais da plataforma.
+
+\subsection{Atores do Sistema}
+\label{sec:AtoresSistema}
+
+\subsubsection{Atores Principais}
+\begin{itemize}
+    \item \textbf{Usuário:} Representa qualquer usuário autenticado.
+    \begin{itemize}
+        \item \textbf{Especializações:} Comprador, Vendedor.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Atores Externos}
+\begin{itemize}
+    \item \textbf{Gateway de Pagamento:} Responsável por processamento de cobranças e confirmação de pagamento. Na implementação atual, o Mercado Pago é utilizado quando configurado e um provedor simulado mantém o fluxo acadêmico executável.
+    \item \textbf{Gateway de Frete / Logística:} Responsável por cálculo de frete. Na implementação atual, o Melhor Envio é usado quando configurado e há frete fixo de contingência.
+    \item \textbf{Sistema de Notificações:} Responsável por registrar notificações internas, alertas de mensagens e atualização de pedidos.
+\end{itemize}
+
+% ---------------------------------------------------
+% Módulo de Conta
+% ---------------------------------------------------
+\subsection{Módulo de Conta}
+
+\subsubsection{UC01 – Cadastrar Usuário}
+\label{uc:01}
+\noindent\textbf{Objetivo:} Permitir que um usuário realize seu cadastro na plataforma para utilizar os recursos de compra e venda.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} O usuário não pode possuir cadastro ativo na plataforma.\\
+\textbf{Pós-condições:} Conta de usuário criada com sucesso. Usuário apto a autenticar-se no sistema.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a tela de cadastro.
+    \item O sistema solicita os seguintes dados obrigatórios: Nome completo, CPF, E-mail, Senha e Endereço completo.
+    \item O usuário preenche os dados solicitados.
+    \item O sistema valida o preenchimento dos campos obrigatórios.
+    \item O sistema valida o formato e a autenticidade do CPF informado.
+    \item O sistema verifica se já existe usuário cadastrado com o CPF ou e-mail informado.
+    \item O sistema registra os dados do usuário.
+    \item O sistema confirma a realização do cadastro.
+    \item O usuário é redirecionado para a tela de autenticação.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Campos obrigatórios não preenchidos}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica campos obrigatórios não preenchidos.
+        \item 4b. O sistema informa os campos inválidos.
+        \item 4c. O usuário corrige os dados.
+        \item 4d. O fluxo retorna ao passo 4.
+    \end{itemize}
+    
+    \item \textbf{FA2 – CPF inválido}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 5a. O sistema identifica CPF inválido.
+        \item 5b. O sistema informa a inconsistência ao usuário.
+        \item 5c. O usuário corrige o CPF informado.
+        \item 5d. O fluxo retorna ao passo 5.
+    \end{itemize}
+
+    \item \textbf{FA3 – CPF ou e-mail já cadastrados}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica duplicidade de CPF ou e-mail.
+        \item 6b. O sistema informa que já existe conta vinculada aos dados fornecidos.
+        \item 6c. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF1, RF2, RI3
+
+% ---------------------------------------------------
+
+\subsubsection{UC02 – Autenticar Usuário}
+\label{uc:02}
+\noindent\textbf{Objetivo:} Permitir que usuários autenticados acessem a plataforma.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Usuário previamente cadastrado.\\
+\textbf{Pós-condições:} Sessão autenticada iniciada.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a tela de login.
+    \item O sistema solicita e-mail/CPF e senha.
+    \item O usuário informa suas credenciais.
+    \item O sistema valida as credenciais fornecidas.
+    \item O sistema autentica o usuário.
+    \item O sistema redireciona o usuário para a página inicial autenticada.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Credenciais inválidas}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica credenciais inválidas.
+        \item 4b. O sistema informa falha de autenticação.
+        \item 4c. O usuário pode tentar autenticar-se novamente.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF3
+
+% ---------------------------------------------------
+% Módulo de Anúncios e Catálogo
+% ---------------------------------------------------
+\subsection{Módulo de Anúncios e Catálogo}
+
+\subsubsection{UC03 – Gerenciar Anúncios}
+\label{uc:03}
+\noindent\textbf{Objetivo:} Permitir que vendedores criem, editem e excluam anúncios de peças de roupa.\\
+\textbf{Atores:} Vendedor\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado.\\
+\textbf{Pós-condições:} Anúncio criado, atualizado ou removido do catálogo público.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal – Criar Anúncio:}
+\begin{enumerate}[label=\arabic*.]
+    \item O vendedor acessa a funcionalidade de gerenciamento de anúncios.
+    \item O sistema apresenta o formulário de anúncio.
+    \item O vendedor informa: título, descrição, fotografias, categoria, tamanho, estado de conservação e valor.
+    \item O sistema valida os dados preenchidos.
+    \item O sistema valida a quantidade mínima de fotografias.
+    \item O sistema valida a quantidade máxima de cinco imagens e o tamanho máximo permitido de cada arquivo.
+    \item O sistema registra o anúncio associado ao vendedor.
+    \item O sistema define o status inicial do item como \textit{Disponível}.
+    \item O sistema publica o anúncio no catálogo.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Dados obrigatórios inválidos}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica campos inválidos ou incompletos.
+        \item 4b. O sistema informa os erros encontrados.
+        \item 4c. O vendedor corrige os dados.
+        \item 4d. O fluxo retorna ao passo 4.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Quantidade insuficiente de imagens}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 5a. O sistema identifica menos de duas fotografias.
+        \item 5b. O sistema informa a inconsistência.
+        \item 5c. O vendedor adiciona novas imagens.
+        \item 5d. O fluxo retorna ao passo 5.
+    \end{itemize}
+
+    \item \textbf{FA3 – Imagem acima do limite permitido}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica arquivo acima de 5MB.
+        \item 6b. O sistema informa o erro ao usuário.
+        \item 6c. O vendedor substitui a imagem.
+        \item 6d. O fluxo retorna ao passo 6.
+    \end{itemize}
+
+    \item \textbf{FA4 – Editar anúncio}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O vendedor seleciona um anúncio já existente.
+        \item 1b. O sistema valida se o item está no estado \textit{Disponível}.
+        \item 1c. O sistema apresenta os dados atuais do anúncio.
+        \item 1d. O vendedor altera os dados desejados.
+        \item 1e. O sistema valida os dados alterados.
+        \item 1f. O sistema atualiza o anúncio.
+        \item 1g. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA5 – Exclusão de anúncio}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O vendedor seleciona um anúncio existente.
+        \item 1b. O sistema valida se o item está no estado \textit{Disponível}.
+        \item 1c. O sistema apresenta alerta de confirmação da exclusão.
+        \item 1d. O vendedor confirma a exclusão.
+        \item 1e. O sistema remove o anúncio do catálogo público.
+        \item 1f. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA6 – Tentativa de alteração de item indisponível}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O sistema identifica que o item não está no estado \textit{Disponível}.
+        \item 1b. O sistema bloqueia a operação.
+        \item 1c. O sistema informa a impossibilidade da alteração.
+        \item 1d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF4, RF5, RI1, RI2, RI3, RD2, RD3, RD4, RD5, RD6
+
+% ---------------------------------------------------
+
+\subsubsection{UC04 – Buscar e Filtrar Anúncios}
+\label{uc:08}
+\noindent\textbf{Objetivo:} Permitir que os usuários pesquisem e encontrem anúncios específicos no catálogo público através de palavras-chave e filtros.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Baixa\\
+\textbf{Pré-condições:} Nenhuma. O catálogo público deve estar acessível.\\
+\textbf{Pós-condições:} Lista de anúncios exibida de acordo com os critérios selecionados.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a funcionalidade de busca da plataforma.
+    \item O usuário informa palavras-chave referentes ao título ou descrição do item.
+    \item O usuário seleciona filtros opcionais: categoria, tamanho, faixa de preço, estado de conservação.
+    \item O sistema processa os critérios informados.
+    \item O sistema exclui da busca todos os itens que não estejam no status \textit{Disponível}.
+    \item O sistema apresenta os resultados encontrados ao usuário.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Nenhum resultado encontrado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica que nenhum anúncio corresponde aos critérios informados.
+        \item 4b. O sistema informa ao usuário que não há resultados disponíveis.
+        \item 4c. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Critérios de filtro inválidos}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica critérios de busca inválidos ou inconsistentes.
+        \item 3b. O sistema informa o erro ao usuário.
+        \item 3c. O usuário corrige os critérios informados.
+        \item 3d. O fluxo retorna ao passo 4.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF6, RF7, RNF1, RD5, RD11, RD16, RD17
+
+% ---------------------------------------------------
+% Módulo de Compras e Pedidos
+% ---------------------------------------------------
+\subsection{Módulo de Compras e Pedidos}
+
+\subsubsection{UC05 – Gerenciar Itens do Carrinho}
+\label{uc:09}
+\noindent\textbf{Objetivo:} Permitir que o comprador adicione e remova itens do seu carrinho de compras antes da finalização da compra.\\
+\textbf{Atores:} Comprador\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado.\\
+\textbf{Pós-condições:} Carrinho persistido com os itens selecionados pelo comprador.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal – Adicionar Item:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador visualiza um anúncio no catálogo público.
+    \item O comprador aciona a opção de adicionar o item ao carrinho.
+    \item O sistema valida se o item está no status \textit{Disponível}.
+    \item O sistema adiciona o item ao carrinho do usuário sem realizar sua reserva física.
+    \item O sistema informa que o item foi adicionado com sucesso.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Remover item do carrinho}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O comprador acessa o carrinho de compras.
+        \item 1b. O comprador aciona a opção de remover um item específico.
+        \item 1c. O sistema remove o item do carrinho do usuário.
+        \item 1d. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Tentativa de adicionar item indisponível}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica que o item não está mais no status \textit{Disponível}.
+        \item 3b. O sistema bloqueia a adição do item ao carrinho.
+        \item 3c. O sistema informa a indisponibilidade ao comprador.
+        \item 3d. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA3 – Item já presente no carrinho}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica que o item já está presente no carrinho do comprador.
+        \item 2b. O sistema informa que o item já foi adicionado anteriormente.
+        \item 2c. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF10, RD7, RD9
+
+% ---------------------------------------------------
+
+\subsubsection{UC06 – Finalizar Compra}
+\label{uc:04}
+\noindent\textbf{Objetivo:} Permitir que o comprador finalize os itens presentes no carrinho de compras através de uma única transação financeira.\\
+\textbf{Atores:} Comprador, Gateway de Pagamento, Gateway de Frete\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Usuário autenticado. Carrinho contendo ao menos um item.\\
+\textbf{Pós-condições:} Pedidos de compra gerados. Pagamento processado. Itens marcados como \textit{Vendido}. Pedidos atualizados para \textit{Aguardando Envios}.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador acessa o carrinho de compras.
+    \item O sistema agrupa os itens por vendedor.
+    \item O sistema valida a disponibilidade atual dos itens do carrinho.
+    \item O sistema calcula o frete individual para cada vendedor.
+    \item O sistema calcula o valor total da compra.
+    \item O sistema apresenta o resumo da compra ao comprador.
+    \item O comprador confirma a finalização da compra.
+    \item O sistema cria os pedidos agrupados por vendedor.
+    \item O sistema altera temporariamente os itens para o status \textit{Indisponível}.
+    \item O sistema envia a solicitação de pagamento ao gateway de pagamento.
+    \item O gateway processa o pagamento.
+    \item O gateway retorna aprovação da transação.
+    \item O sistema altera os itens para o status \textit{Vendido}.
+    \item O sistema altera os pedidos para o status \textit{Aguardando Envios}.
+    \item O sistema registra a retenção dos valores pagos.
+    \item O sistema notifica os vendedores sobre a venda realizada.
+    \item O sistema exibe confirmação da compra ao comprador.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Item indisponível}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica item indisponível.
+        \item 3b. O sistema remove o item da compra.
+        \item 3c. O sistema informa a indisponibilidade ao comprador.
+        \item 3d. O fluxo retorna ao passo 2.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Falha no cálculo de frete}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O gateway de frete não responde ou retorna erro.
+        \item 4b. O sistema informa indisponibilidade temporária do cálculo de frete.
+        \item 4c. O caso de uso é encerrado.
+    \end{itemize}
+
+    \item \textbf{FA3 – Pagamento recusado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 12a. O gateway recusa o pagamento.
+        \item 12b. O sistema mantém os pedidos em \textit{Aguardando Pagamento}.
+        \item 12c. O sistema retorna os itens ao status \textit{Disponível}.
+        \item 12d. O sistema informa a falha ao comprador.
+    \end{itemize}
+
+    \item \textbf{FA4 – Expiração do pagamento}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 12a. O comprador não conclui o pagamento dentro do período de 1 hora.
+        \item 12b. O sistema altera os pedidos para \textit{Expirado}.
+        \item 12c. O sistema retorna os itens ao status \textit{Disponível}.
+        \item 12d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF10, RF11, RF12, RF15, RF23, RF24, RD7, RD8, RD9, RD10, RD11, RD12, RD15
+
+% ---------------------------------------------------
+% Módulo de Logística e Pós-Venda
+% ---------------------------------------------------
+\subsection{Módulo de Logística e Pós-Venda}
+
+\subsubsection{UC07 – Informar Código de Rastreio}
+\label{uc:05}
+\noindent\textbf{Objetivo:} Permitir que o vendedor informe o código de rastreio referente ao envio dos itens pertencentes a um pedido.\\
+\textbf{Atores:} Vendedor, Gateway de Logística\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Pedido no status \textit{Aguardando Envios}. Vendedor vinculado ao pedido.\\
+\textbf{Pós-condições:} Itens do vendedor marcados como \textit{Enviado}. Pedido atualizado conforme estado dos itens.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O vendedor acessa seus pedidos ativos.
+    \item O sistema apresenta os pedidos aguardando envio.
+    \item O vendedor seleciona um pedido.
+    \item O sistema apresenta os itens vinculados ao vendedor naquele pedido.
+    \item O vendedor informa o código de rastreio.
+    \item O sistema registra o código de rastreio informado.
+    \item O sistema altera todos os itens do vendedor naquele pedido para o status \textit{Enviado}.
+    \item O sistema verifica se todos os itens do pedido estão \textit{Enviado} ou \textit{Suspenso}.
+    \item Caso verdadeiro, o sistema altera o pedido para \textit{Aguardando Entregas}.
+    \item O sistema notifica internamente o comprador sobre o envio.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Código de rastreio não informado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica ausência do código de rastreio.
+        \item 6b. O sistema informa a obrigatoriedade ao vendedor.
+        \item 6c. O vendedor informa o código.
+        \item 6d. O fluxo retorna ao passo 6.
+    \end{itemize}
+
+    \item \textbf{FA2 – Prazo de envio expirado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O sistema identifica que o prazo de envio ultrapassou 7 dias.
+        \item 1b. O sistema altera o item para \textit{Não Enviado}.
+        \item 1c. O sistema inicia o processo de reembolso.
+        \item 1d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF17, RF18, RF22, RD16, RD18
+
+% ---------------------------------------------------
+
+\subsubsection{UC08 – Confirmar Recebimento do Item}
+\label{uc:06}
+\noindent\textbf{Objetivo:} Permitir que o comprador confirme o recebimento do item adquirido.\\
+\textbf{Atores:} Comprador, Gateway de Pagamento\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Item no status \textit{Enviado}.\\
+\textbf{Pós-condições:} Item marcado como \textit{Recebido}. Pagamento liberado ao vendedor. Pedido eventualmente finalizado.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador acessa seus pedidos ativos.
+    \item O sistema apresenta os itens enviados.
+    \item O comprador seleciona a opção de confirmar recebimento.
+    \item O sistema altera o item para o status \textit{Recebido}.
+    \item O sistema registra a elegibilidade do valor líquido da venda para repasse ao vendedor.
+    \item O sistema verifica se todos os itens do pedido estão \textit{Recebido} ou \textit{Suspenso}.
+    \item Caso verdadeiro, o sistema altera o pedido para \textit{Finalizado}.
+    \item O sistema habilita a avaliação do vendedor.
+    \item O sistema notifica internamente o vendedor sobre a confirmação do recebimento.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Confirmação automática}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 1a. O sistema identifica ausência de confirmação manual após 15 dias corridos.
+        \item 1b. O sistema altera automaticamente o item para \textit{Recebido}.
+        \item 1c. O sistema registra a elegibilidade de repasse ao vendedor.
+        \item 1d. O fluxo retorna ao passo 7.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Repasse financeiro real pendente}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema identifica que o repasse financeiro automatizado não está habilitado.
+        \item 6b. O sistema mantém o item como \textit{Recebido}.
+        \item 6c. O sistema mantém o valor líquido registrado para controle operacional.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF15, RF16, RF24, RD19, RD20
+
+% ---------------------------------------------------
+
+\subsubsection{UC09 – Processar Reembolso}
+\label{uc:07}
+\noindent\textbf{Objetivo:} Permitir o reembolso automático de itens não enviados dentro do prazo estipulado.\\
+\textbf{Atores:} Sistema, Gateway de Pagamento\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Alta\\
+\textbf{Pré-condições:} Item no status \textit{Não Enviado}.\\
+\textbf{Pós-condições:} Comprador reembolsado. Item marcado como \textit{Suspenso}.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O sistema identifica item sem envio após 7 dias.
+    \item O sistema altera o item para o status \textit{Não Enviado}.
+    \item O sistema calcula o valor de reembolso do item e taxa de serviço.
+    \item O sistema solicita o reembolso ao gateway de pagamento.
+    \item O gateway processa o reembolso ao comprador.
+    \item O sistema altera o item para o status \textit{Suspenso}.
+    \item O sistema notifica comprador e vendedor.
+    \item O sistema verifica se todos os itens do pedido estão \textit{Suspenso}.
+    \item Caso verdadeiro, o sistema altera o pedido para \textit{Cancelado}.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Falha no reembolso}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 5a. O gateway retorna falha no reembolso.
+        \item 5b. O sistema registra a inconsistência financeira.
+        \item 5c. O sistema agenda nova tentativa automática.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF19, RF20, RF22, RD13, RD14, RD16, RD17
+
+% ---------------------------------------------------
+
+\subsubsection{UC10 – Reativar Item Suspenso}
+\label{uc:10}
+\noindent\textbf{Objetivo:} Permitir que o vendedor torne um item com status \textit{Suspenso} novamente \textit{Disponível} no catálogo público mediante o pagamento de uma taxa.\\
+\textbf{Atores:} Vendedor, Gateway de Pagamento\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de item vinculado ao vendedor com status \textit{Suspenso}.\\
+\textbf{Pós-condições:} Item marcado como \textit{Disponível} e visível no catálogo público.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O vendedor acessa o painel de gerenciamento de itens suspensos.
+    \item O vendedor seleciona um item para reativação.
+    \item O sistema calcula o valor da taxa proporcional ao valor da compra do item.
+    \item O sistema apresenta o valor da taxa ao vendedor.
+    \item O vendedor confirma a intenção de reativar o item e informa os dados de pagamento.
+    \item O sistema envia a solicitação de cobrança ao gateway de pagamento.
+    \item O gateway aprova a transação financeira.
+    \item O sistema altera o status do item de \textit{Suspenso} para \textit{Disponível}.
+    \item O sistema torna o item novamente visível no catálogo público.
+    \item O sistema informa o sucesso da operação ao vendedor.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Pagamento recusado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 7a. O gateway de pagamento recusa a transação financeira.
+        \item 7b. O sistema informa a falha no pagamento ao vendedor.
+        \item 7c. O sistema mantém o item no status \textit{Suspenso}.
+        \item 7d. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Falha de comunicação com o gateway de pagamento}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 6a. O sistema não consegue comunicação com o gateway de pagamento.
+        \item 6b. O sistema informa indisponibilidade temporária ao vendedor.
+        \item 6c. O sistema mantém o item no status \textit{Suspenso}.
+        \item 6d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF21, RD14, RD17
+
+% ---------------------------------------------------
+% Módulo de Interação e Relatórios
+% ---------------------------------------------------
+\subsection{Módulo de Interação e Relatórios}
+
+\subsubsection{UC11 – Comunicar via Chat}
+\label{uc:11}
+\noindent\textbf{Objetivo:} Permitir a comunicação em tempo real entre comprador e vendedor sobre um pedido de compra existente.\\
+\textbf{Atores:} Comprador, Vendedor\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de ao menos um pedido de compra ativo vinculando comprador e vendedor.\\
+\textbf{Pós-condições:} Mensagem enviada com sucesso e destinatário notificado.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa os detalhes de um pedido ativo.
+    \item O usuário aciona a funcionalidade de chat do pedido.
+    \item O sistema apresenta o histórico cronológico de mensagens daquele pedido.
+    \item O usuário redige uma nova mensagem.
+    \item O usuário envia a mensagem.
+    \item O sistema registra a mensagem na base de dados.
+    \item O sistema exibe a mensagem no chat em tempo real.
+    \item O sistema envia uma notificação ao destinatário sobre a nova mensagem.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Mensagem vazia}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O usuário tenta enviar uma mensagem sem conteúdo.
+        \item 4b. O sistema bloqueia o envio da mensagem.
+        \item 4c. O sistema informa a obrigatoriedade do conteúdo.
+        \item 4d. O fluxo retorna ao passo 4.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Usuário não vinculado ao pedido}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica que o usuário não pertence ao pedido selecionado.
+        \item 2b. O sistema bloqueia o acesso ao chat.
+        \item 2c. O sistema informa acesso não autorizado.
+        \item 2d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF8, RF22
+
+% ---------------------------------------------------
+
+\subsubsection{UC12 – Avaliar Vendedor}
+\label{uc:12}
+\noindent\textbf{Objetivo:} Permitir que o comprador avalie a experiência de compra com um vendedor específico após o recebimento do item.\\
+\textbf{Atores:} Comprador\\
+\textbf{Prioridade:} Desejável\\
+\textbf{Criticidade:} Baixa\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de item pertencente ao comprador com status \textit{Recebido}.\\
+\textbf{Pós-condições:} Avaliação registrada e exibida no perfil público do vendedor.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O comprador acessa um pedido finalizado.
+    \item O sistema apresenta a opção de avaliar o vendedor referente ao item adquirido.
+    \item O comprador seleciona a funcionalidade de avaliação.
+    \item O sistema apresenta o formulário de avaliação contendo: nota obrigatória de 1 a 5, e comentário textual opcional.
+    \item O comprador preenche a nota e o comentário desejado.
+    \item O comprador confirma o envio da avaliação.
+    \item O sistema valida o preenchimento da nota obrigatória.
+    \item O sistema registra a avaliação.
+    \item O sistema vincula a avaliação ao histórico de vendas do vendedor.
+    \item O sistema confirma o envio da avaliação ao comprador.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Nota não informada}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 7a. O sistema identifica que nenhuma nota foi selecionada.
+        \item 7b. O sistema impede o envio da avaliação.
+        \item 7c. O sistema informa a obrigatoriedade da nota.
+        \item 7d. O comprador informa a nota.
+        \item 7e. O fluxo retorna ao passo 6.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Avaliação já registrada}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 3a. O sistema identifica que o comprador já avaliou o item selecionado.
+        \item 3b. O sistema impede o registro de nova avaliação.
+        \item 3c. O sistema informa que a avaliação já foi realizada anteriormente.
+        \item 3d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF25
+
+% ---------------------------------------------------
+
+\subsubsection{UC13 – Consultar Pedidos}
+\label{uc:13}
+\noindent\textbf{Objetivo:} Permitir que usuários visualizem seus pedidos ativos e acompanhem seus respectivos status.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Essencial\\
+\textbf{Criticidade:} Média\\
+\textbf{Pré-condições:} Usuário autenticado. Existência de ao menos um pedido vinculado ao usuário.\\
+\textbf{Pós-condições:} Informações dos pedidos apresentadas ao usuário.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a área de pedidos da plataforma.
+    \item O sistema recupera todos os pedidos ativos vinculados ao usuário.
+    \item O sistema apresenta os pedidos encontrados.
+    \item O usuário seleciona um pedido específico.
+    \item O sistema apresenta: status geral do pedido, itens vinculados, status individual de cada item, informações de envio e rastreio (quando existentes) e vendedor responsável por cada item.
+    \item O usuário acompanha as informações do pedido.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Nenhum pedido encontrado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica ausência de pedidos ativos vinculados ao usuário.
+        \item 2b. O sistema informa que não existem pedidos ativos.
+        \item 2c. O caso de uso é encerrado.
+    \end{itemize}
+    
+    \item \textbf{FA2 – Tentativa de acesso não autorizado}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 4a. O sistema identifica tentativa de acesso a pedido pertencente a outro usuário.
+        \item 4b. O sistema bloqueia o acesso.
+        \item 4c. O sistema informa acesso não autorizado.
+        \item 4d. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF13, RD10, RD18, RD19
+
+% ---------------------------------------------------
+
+\subsubsection{UC14 – Consultar Histórico de Compras e Vendas}
+\label{uc:14}
+\noindent\textbf{Objetivo:} Permitir que usuários visualizem o histórico de compras e vendas concluídas na plataforma.\\
+\textbf{Atores:} Usuário\\
+\textbf{Prioridade:} Importante\\
+\textbf{Criticidade:} Baixa\\
+\textbf{Pré-condições:} Usuário autenticado.\\
+\textbf{Pós-condições:} Histórico de compras e vendas exibido ao usuário.
+
+\vspace{0.5em}
+\noindent\textbf{Fluxo Principal:}
+\begin{enumerate}[label=\arabic*.]
+    \item O usuário acessa a área de histórico da plataforma.
+    \item O sistema recupera o histórico de compras concluídas vinculadas ao usuário.
+    \item O sistema recupera o histórico de vendas concluídas vinculadas ao usuário.
+    \item O sistema apresenta: pedidos finalizados, itens comprados e vendidos, valores das transações, datas das operações e status finais dos itens.
+    \item O usuário consulta as informações desejadas.
+\end{enumerate}
+
+\vspace{0.5em}
+\noindent\textbf{Fluxos Alternativos:}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FA1 – Histórico vazio}
+    \begin{itemize}[label={}, leftmargin=0.5cm]
+        \item 2a. O sistema identifica ausência de compras ou vendas concluídas.
+        \item 2b. O sistema informa que não há histórico disponível.
+        \item 2c. O caso de uso é encerrado.
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Requisitos Relacionados:} RF14, RD19
+
+\clearpage
+\part{Diagramas}
+\label{part:diagramas}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de classes nível de projeto.jpeg}}
+\caption{Diagrama de classes em nivel de projeto}
+\end{figure}
+
+\clearpage
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de sequência - adicionar ao carrinho.jpeg}}
+\caption{Diagrama de sequencia: adicionar ao carrinho}
+\end{figure}
+
+\clearpage
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de sequência - comprar item.jpeg}}
+\caption{Diagrama de sequencia: comprar item}
+\end{figure}
+
+\clearpage
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de sequência - publicar anuncio.jpeg}}
+\caption{Diagrama de sequencia: publicar anuncio}
+\end{figure}
+
+\clearpage
+\part{Descri\c{c}\~ao Arquitetural}
+\section{Identificação da Architecture Description}
+
+Este documento constitui a \textit{Architecture Description} (AD) do Sistema de Intermediação de Brechós, elaborada em conformidade com a norma ISO/IEC/IEEE 42010:2022.
+
+% ----------------------------------------
+\subsection{Entity of Interest}
+
+A entidade de interesse (\textit{Entity of Interest}) desta AD é o \textbf{Sistema de Intermediação de Brechós} --- uma plataforma web no modelo C2C (\textit{Consumer-to-Consumer}) destinada à compra e venda de peças de vestuário usadas. O sistema permite que usuários atuem simultaneamente como compradores e vendedores, intermediando o processo de anúncio, busca, comunicação, pagamento e acompanhamento de pedidos.
+
+O sistema é classificado como uma aplicação web de domínio comercial, independente e totalmente contida.
+
+% ----------------------------------------
+\subsection{Escopo da Architecture Description}
+
+Esta AD cobre a arquitetura de software do sistema em sua totalidade, abrangendo:
+
+\begin{itemize}[noitemsep]
+    \item a organização dos componentes de software e suas interfaces;
+    \item as decisões arquiteturais significativas e suas justificativas;
+    \item o mapeamento dos componentes nos ambientes de execução;
+    \item as táticas arquiteturais adotadas para atender aos atributos de qualidade.
+\end{itemize}
+
+Esta AD \textbf{não} cobre: o design detalhado de interfaces gráficas (UI/UX) nem a implementação interna dos serviços externos integrados (código-fonte do Mercado Pago, Vercel Blob, Melhor Envio ou ViaCEP). A forma de integração com esses serviços (protocolos, padrões de comunicação e contratos de API), bem como a infraestrutura utilizada para hospedagem e execução do sistema, fazem parte do escopo desta AD.
+
+% ----------------------------------------
+\subsection{Ambiente (\textit{Environment})}
+
+Conforme a ISO/IEC/IEEE 42010:2022, o ambiente compreende todas as influências sobre a entidade de interesse. O Sistema de Intermediação de Brechós opera sob as seguintes influências:
+
+\subsubsection{Influências Técnicas}
+\begin{itemize}[noitemsep]
+    \item Plataforma web acessível via navegadores modernos, com HTML renderizado no servidor e melhoria progressiva via HTMX.
+    \item Dependência de conectividade à internet para todas as operações.
+    \item Execução da aplicação Go em um processo HTTP único, com páginas SSR, API JSON e arquivos estáticos servidos pelo próprio backend. Em ambiente local, o PostgreSQL e as migrações são orquestrados por Docker Compose.
+    \item Integração com serviços externos: gateway de pagamentos Mercado Pago (REST/HTTPS), armazenamento de mídia Vercel Blob, cotação de frete Melhor Envio, consulta de CEP ViaCEP e banco de dados relacional PostgreSQL.
+    \item Comunicação cliente-servidor via HTTPS. Conversas e notificações são persistidas no PostgreSQL e acessadas por requisições HTTP/HTMX; não há servidor WebSocket dedicado nem envio SMTP implementado nesta versão.
+    \item Stack tecnológica de implementação definida para o ciclo atual: Go (Golang) no backend, templates HTML renderizados no servidor, HTMX versionado localmente, JavaScript pontual para interações de interface e PostgreSQL para persistência.
+\end{itemize}
+
+\subsubsection{Influências Operacionais}
+\begin{itemize}[noitemsep]
+    \item O sistema deve suportar acesso contínuo de múltiplos usuários simultâneos, com exceção de períodos de manutenção programada.
+    \item Adaptação exclusiva ao idioma português brasileiro (PT-BR), moeda Real (R\$) e formatos locais de data e endereço.
+    \item Upload de imagens limitado a 5MB por arquivo e 2 a 5 imagens por anúncio; o catálogo público utiliza carregamento paginado/progressivo.
+\end{itemize}
+
+\subsubsection{Influências Regulatórias e Legais}
+\begin{itemize}[noitemsep]
+    \item Lei Geral de Proteção de Dados --- LGPD (Lei n\textsuperscript{o} 13.709/2018): armazenamento e tratamento de dados pessoais e sensíveis.
+    \item Código de Defesa do Consumidor --- CDC (Lei n\textsuperscript{o} 8.078/1990): transparência e responsabilidade nas relações de consumo.
+    \item Marco Civil da Internet (Lei n\textsuperscript{o} 12.965/2014): proteção dos direitos dos usuários no ambiente digital.
+    \item Presença obrigatória de Termos de Uso e Políticas de Privacidade na plataforma.
+\end{itemize}
+
+\subsubsection{Influências Organizacionais}
+\begin{itemize}[noitemsep]
+    \item Projeto desenvolvido no âmbito da disciplina COMP0503 --- Engenharia de Software, Universidade Federal de Sergipe, sob orientação do Prof. Dr. Michel Soares.
+    \item Equipe composta por 6 desenvolvedores com restrições de cronograma acadêmico.
+    \item Padronização de código-fonte e documentação atualizada como requisitos organizacionais.
+\end{itemize}
+
+% ----------------------------------------
+\subsection{Referências Normativas}
+
+\begin{itemize}[noitemsep]
+    \item ISO/IEC/IEEE 42010:2022 --- \textit{Software, systems and enterprise --- Architecture description.}
+    \item IEEE Std 830-1998 --- \textit{IEEE Recommended Practice for Software Requirements Specifications.}
+    \item Bass, L.; Clements, P.; Kazman, R. \textit{Software Architecture in Practice.} 3rd ed. Addison-Wesley, 2012.
+    \item Kruchten, P. The 4+1 View Model of Architecture. \textit{IEEE Software}, v.~12, n.~6, p.~42--50, 1995.
+    \item Clements, P. et al. \textit{Documenting Software Architectures: Views and Beyond.} 2nd ed. Addison-Wesley, 2010.
+\end{itemize}
+
+% ----------------------------------------
+\subsection{Glossário}
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Termo} & \textbf{Definição} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Termo} & \textbf{Definição} \\
+\hline
+\endhead
+Architecture Description (AD) & Artefato utilizado para expressar a arquitetura de uma entidade de interesse, conforme ISO/IEC/IEEE 42010:2022. \\
+\hline
+Entity of Interest & Entidade cuja arquitetura está sendo descrita --- neste caso, o Sistema de Intermediação de Brechós. \\
+\hline
+Stakeholder & Indivíduo, equipe ou organização com interesses no sistema. \\
+\hline
+Concern & Qualquer interesse no sistema: expectativa, necessidade, objetivo, restrição, atributo de qualidade, risco. \\
+\hline
+Architecture Viewpoint & Conjunto de convenções para construir, interpretar e analisar um tipo de Architecture View. \\
+\hline
+Architecture View & Representação da arquitetura sob a perspectiva de um conjunto de concerns, governada por viewpoint. \\
+\hline
+Model Kind & Convenções para um tipo de modelo arquitetural (linguagem, notação, técnicas analíticas). \\
+\hline
+Architecture Decision & Decisão de design significativa que afeta \textit{elements} da AD e pertence a um ou mais concerns. \\
+\hline
+Architecture Rationale & Justificativa, explicação ou raciocínio sobre decisões arquiteturais tomadas e alternativas descartadas. \\
+\hline
+Correspondence & Relação entre elementos da AD (rastreabilidade, consistência, refinamento). \\
+\hline
+Correspondence Rule & Regra que governa e verifica correspondências dentro ou entre ADs. \\
+\hline
+C2C & \textit{Consumer-to-Consumer} --- modelo de comércio eletrônico entre consumidores. \\
+\hline
+SRS & \textit{Software Requirements Specification} --- Especificação de Requisitos de Software. \\
+\hline
+\end{longtable}
+
+% ================================================================
+% SEÇÃO 2 — STAKEHOLDERS E CONCERNS
+% ================================================================
+\section{Stakeholders e Concerns}
+
+Conforme a ISO/IEC/IEEE 42010:2022, uma Architecture Description deve identificar os stakeholders cujas preocupações são consideradas fundamentais para a arquitetura, bem como os concerns associados a cada um deles. Esta seção apresenta os stakeholders do Sistema de Intermediação de Brechós e os concerns arquiteturalmente significativos, com ênfase nos atributos de qualidade de desempenho, escalabilidade, segurança e disponibilidade.
+
+% ----------------------------------------
+\subsection{Identificação dos Stakeholders}
+
+\begin{longtable}{|p{3.5cm}|p{3cm}|p{7.5cm}|}
+\hline
+\textbf{Stakeholder} & \textbf{Papel (42010)} & \textbf{Descrição} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Stakeholder} & \textbf{Papel (42010)} & \textbf{Descrição} \\
+\hline
+\endhead
+Comprador & \textit{User} & Usuário que pesquisa, filtra e adquire peças de vestuário na plataforma. Interage com o sistema por meio do feed de anúncios, carrinho de compras, chat e acompanhamento de pedidos. \\
+\hline
+Vendedor & \textit{User} & Usuário que publica anúncios, gerencia itens e realiza envios. Recebe repasses financeiros após a confirmação de entrega. Um usuário pode exercer ambos os papéis (comprador e vendedor) simultaneamente. \\
+\hline
+Equipe de Desenvolvimento & \textit{Developer, Builder, Maintainer} & Responsável pela implementação, testes e manutenção do código-fonte do sistema. \\
+\hline
+Equipe de Infraestrutura & \textit{Operator} & Responsável pela implantação, operação e monitoramento do sistema em ambiente de produção, incluindo a infraestrutura em nuvem. \\
+\hline
+Product Owner & \textit{Acquirer, Owner} & Responsável por avaliar os resultados. No contexto deste projeto, esse papel é exercido pelo Prof. Dr. Michel Soares. \\
+\hline
+\end{longtable}
+
+% ----------------------------------------
+\subsection{Identificação dos Concerns}
+
+A ISO/IEC/IEEE 42010:2022 define \textit{concern} como qualquer interesse no sistema --- expectativas, necessidades, objetivos, restrições, atributos de qualidade ou riscos.
+
+Os concerns identificados para esta AD estão organizados em duas categorias: concerns de qualidade priorizados e concerns contextuais.
+
+\subsubsection{Concerns de Qualidade (Atributos de Qualidade)}
+
+Estes são os concerns prioritários desta Architecture Description.
+
+\vspace{0.5cm}
+
+\noindent\textbf{CQ01 --- Desempenho}
+
+O desempenho diz respeito ao volume de trabalho que o sistema deve executar em um período de tempo e aos limites de tempo de resposta que devem ser respeitados. No Sistema de Intermediação de Brechós, o desempenho é crítico em três pontos: a renderização do catálogo, o processamento transacional do checkout e a atualização das conversas/notificações via requisições HTTP.
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Métrica} & \textbf{Especificação} \\
+\hline
+Tempo de resposta (Response Time) & 95\% das requisições HTTP devem ser respondidas pelo servidor em até 500ms. Nenhuma requisição deve exceder 3 segundos. \\
+\hline
+Throughput & O sistema deve processar no mínimo 100 requisições por segundo no pico de utilização, considerando operações de leitura (feed, busca) e escrita (criação de anúncios, compras). \\
+\hline
+Atualização de conversas & Mensagens enviadas no pedido devem ser persistidas no PostgreSQL e disponibilizadas ao destinatário por requisições HTTP/HTMX, sem infraestrutura WebSocket dedicada. \\
+\hline
+Renderização inicial & O feed de anúncios deve ser renderizado no navegador do usuário em até 3 segundos na primeira carga. \\
+\hline
+\end{longtable}
+
+\noindent As táticas arquiteturais adotadas para atender a este concern são detalhadas na Seção 5 (Architecture Decisions e Rationale).
+
+\vspace{0.5cm}
+
+\noindent\textbf{CQ02 --- Escalabilidade}
+
+A escalabilidade refere-se à capacidade do sistema de manter seu desempenho quando a demanda aumenta, seja em volume de requisições, sessões simultâneas ou tamanho dos dados armazenados. A implementação atual prioriza simplicidade operacional acadêmica: um backend Go stateless em relação ao processo, persistência centralizada no PostgreSQL, arquivos públicos no Vercel Blob e paginação das listagens. O crescimento horizontal depende de múltiplas instâncias compartilhando o mesmo banco e os mesmos serviços externos.
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Dimensão} & \textbf{Decisão Arquitetural} \\
+\hline
+Servidor sem estado de sessão em memória & A aplicação não mantém sessão em memória local. A sessão do navegador é transportada por cookie \textit{HttpOnly}, \textit{SameSite=Lax} e \textit{Secure} em HTTPS, enquanto os dados persistentes ficam no PostgreSQL. Clientes de API podem solicitar transporte Bearer explicitamente. \\
+\hline
+Carga de requisições & Operações de leitura intensiva (feed de anúncios, busca e filtragem) devem utilizar caching para reduzir a carga sobre o banco de dados. A paginação de resultados (20 a 30 registros por requisição) limita o volume de dados trafegados por chamada. \\
+\hline
+Volume de dados & As consultas ao banco de dados utilizam filtros de categoria, tamanho, faixa de preço, status e paginação. Arquivos de mídia são armazenados no Vercel Blob, evitando crescimento do banco de dados relacional com binários. \\
+\hline
+\end{longtable}
+
+\noindent As táticas arquiteturais adotadas para viabilizar a escalabilidade são detalhadas na Seção 5 (Architecture Decisions e Rationale).
+
+\vspace{0.5cm}
+
+\noindent\textbf{CQ03 --- Segurança}
+
+A segurança abrange a capacidade do sistema de proteger dados e recursos contra acessos não autorizados, garantindo autenticação, autorização e criptografia.
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Métrica} & \textbf{Especificação} \\
+\hline
+Autenticação & O sistema deve verificar a identidade dos usuários por meio de credenciais (e-mail/CPF e senha). Senhas devem ser armazenadas com hash bcrypt (custo mínimo 10). \\
+\hline
+Autorização & Usuários autenticados devem ter acesso restrito às operações permitidas ao seu papel. Um vendedor só pode editar ou excluir anúncios próprios. Um comprador só pode acessar pedidos próprios. \\
+\hline
+Criptografia & Todas as comunicações cliente-servidor devem utilizar TLS 1.2 ou superior. Dados completos de cartão não são armazenados no sistema; quando o pagamento real está habilitado, a tokenização ocorre pelo SDK do Mercado Pago e a cobrança é confirmada por \textit{webhook}. \\
+\hline
+Conformidade LGPD & O sistema deve permitir que o usuário solicite a exclusão de seus dados pessoais. Dados sensíveis (CPF, endereço, dados bancários) devem ser armazenados com criptografia em repouso. \\
+\hline
+Sessão do navegador & A sessão web é mantida em cookie \textit{HttpOnly}, \textit{SameSite=Lax} e \textit{Secure} em HTTPS. Requisições mutáveis autenticadas por cookie passam por verificação de origem para reduzir risco de CSRF. \\
+\hline
+\end{longtable}
+
+\noindent As táticas arquiteturais adotadas para atender a este concern são detalhadas na Seção 5 (Architecture Decisions e Rationale).
+
+\vspace{0.5cm}
+
+\noindent\textbf{CQ04 --- Disponibilidade}
+
+A disponibilidade refere-se à probabilidade de que o sistema esteja pronto para executar suas tarefas quando o usuário necessitar. Devido à escolha de infraestrutura gratuita (CC02), a arquitetura não pode garantir SLAs de \textit{uptime} de 99,99\% (como em provedores AWS \textit{Enterprise}). Portanto, a abordagem arquitetural foca em minimizar o MTTR (\textit{Mean Time to Repair}) e em aplicar táticas de tolerância a falhas.
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Métrica / Tática} & \textbf{Especificação Aplicada} \\
+\hline
+Recuperação de Falhas (Processo Go) & A aplicação centraliza API, SSR e arquivos estáticos em um processo Go simples de reiniciar e com endpoints de liveness/readiness (\texttt{/saude} e \texttt{/saude/prontidao}) para monitoramento operacional. \\
+\hline
+Recuperação de Falhas (Degradação Graciosa) & Tática aplicada às integrações externas. Na ausência de credenciais do Melhor Envio, o checkout usa frete fixo; na ausência de credenciais do Mercado Pago, o sistema usa provedor de pagamento simulado para manter o fluxo acadêmico executável. \\
+\hline
+Recuperação de Falhas (\textit{Rollback} e Transações) & Tática aplicada ao checkout. A reserva de anúncios, criação da compra, pedidos, pagamento e liberação de itens em caso de recusa/expiração são controladas por transações no PostgreSQL, reduzindo inconsistências entre carrinho, estoque e pagamento. \\
+\hline
+\end{longtable}
+
+\noindent As táticas arquiteturais adotadas para atender a este concern são detalhadas na Seção 5 (Architecture Decisions e Rationale).
+
+% ----------------------------------------
+\subsubsection{Concerns Contextuais}
+
+\begin{longtable}{|p{1.2cm}|p{4.5cm}|p{8.8cm}|}
+\hline
+\textbf{ID} & \textbf{Concern} & \textbf{Descrição} \\
+\hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Concern} & \textbf{Descrição} \\
+\hline
+\endhead
+CC01 & Propósito do sistema & Intermediar de forma organizada e segura o processo de compra e venda de peças de vestuário usadas entre consumidores, promovendo os brechós como experiência digital intuitiva. \\
+\hline
+CC02 & Viabilidade de construção e implantação & O sistema é desenvolvido por uma equipe de 6 integrantes em contexto acadêmico, com restrições de cronograma. Essas restrições influenciaram a escolha por backend Go único, SSR/HTMX, Docker Compose para PostgreSQL local, integrações com fallback e ausência de etapa de build frontend. \\
+\hline
+CC03 & Manutenibilidade e evolvabilidade & O sistema deve ser estruturado de forma que permita a adição de novas funcionalidades e a correção de defeitos com impacto controlado sobre os demais componentes. Embora não seja um atributo de qualidade priorizado nesta AD, a organização em camadas e o baixo acoplamento entre componentes favorecem a manutenibilidade. \\
+\hline
+CC04 & Riscos e impactos ao longo do ciclo de vida & Os principais riscos identificados incluem: indisponibilidade de serviços externos (Mercado Pago, Melhor Envio, ViaCEP e Vercel Blob), imagens órfãs após upload abandonado, necessidade futura de reconciliação de pagamentos pendentes e exposição de dados pessoais em desconformidade com a LGPD. \\
+\hline
+\end{longtable}
+
+% ----------------------------------------
+\subsection{Matriz Concern $\times$ Stakeholder}
+
+\begin{longtable}{|p{3.5cm}|c|c|c|c|c|}
+\hline
+\textbf{Concern} & \rotatebox{70}{\textbf{Comprador}} & \rotatebox{70}{\textbf{Vendedor}} & \rotatebox{70}{\textbf{Eq. Desenvolvimento}} & \rotatebox{70}{\textbf{Eq. Infraestrutura}} & \rotatebox{70}{\textbf{Product Owner}} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Concern} & \rotatebox{70}{\textbf{Comprador}} & \rotatebox{70}{\textbf{Vendedor}} & \rotatebox{70}{\textbf{Eq. Desenvolvimento}} & \rotatebox{70}{\textbf{Eq. Infraestrutura}} & \rotatebox{70}{\textbf{Product Owner}} \\
+\hline
+\endhead
+\textbf{CQ01 -- Desempenho} & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+\hline
+\textbf{CQ02 -- Escalabilidade} & & & & $\bullet$ & $\bullet$ \\
+\hline
+\textbf{CQ03 -- Segurança} & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+\hline
+\textbf{CQ04 -- Disponibilidade} & $\bullet$ & $\bullet$ & & $\bullet$ & $\bullet$ \\
+\hline
+CC01 -- Propósito & $\bullet$ & $\bullet$ & & & $\bullet$ \\
+\hline
+CC02 -- Viabilidade & & & $\bullet$ & $\bullet$ & $\bullet$ \\
+\hline
+CC03 -- Manutenibilidade & & & $\bullet$ & & $\bullet$ \\
+\hline
+CC04 -- Riscos & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+\hline
+\end{longtable}
+
+% ================================================================
+% SEÇÃO 3 — ARCHITECTURE VIEWPOINTS
+% ================================================================
+\section{Architecture Viewpoints}
+
+Conforme a ISO/IEC/IEEE 42010:2022, um \textit{Architecture Viewpoint} é um conjunto de convenções para construir, interpretar, utilizar e analisar um tipo de \textit{Architecture View}. Cada viewpoint enquadra (\textit{frames}) um conjunto específico de concerns. Esta AD adota quatro viewpoints fundamentais e um integrado (+1), mantendo o escopo estritamente focado em elements exclusivos da arquitetura global.
+
+% ----------------------------------------
+\subsection{VP1 --- Viewpoint Lógico}
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Nome} & Viewpoint Lógico \\
+\hline
+\textbf{Concerns enquadrados} & CC01 (Propósito do sistema), CQ03 (Segurança --- regras de autorização) \\
+\hline
+\textbf{Stakeholders interessados} & Comprador, Vendedor, Equipe de Desenvolvimento, Product Owner \\
+\hline
+\textbf{Model Kinds próprios} & MK1 --- Modelo Conceitual de Domínio \\
+\hline
+\textbf{Referências} & Kruchten (1995), Bass et al. (2012), UML 2.5 Specification \\
+\hline
+\end{longtable}
+
+\noindent\textbf{MK1 --- Modelo Conceitual de Domínio}
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Linguagem/Notação} & UML 2.5 --- Diagrama de Classes (Alto Nível) \\
+\hline
+\textbf{Elementos utilizados} & Entidades conceituais (\texttt{<<class>>}), associações, composições e multiplicidades. (Ocultam-se atributos, enumerações e métodos para preservar a abstração arquitetural). \\
+\hline
+\textbf{Ferramenta} & Draw.io ou Astah \\
+\hline
+\textbf{Propósito} & Representar a estrutura conceitual do domínio do sistema, identificando as entidades e os relacionamentos semânticos que sustentam as regras de negócio da intermediação C2C, sem viés de implementação. \\
+\hline
+\end{longtable}
+
+\paragraph{Referências Externas Complementares:} O projeto não utiliza a modelagem Entidade-Relacionamento (ER) clássica como visão arquitetural principal. A definição do esquema físico de banco de dados e as amarrações de chaves no PostgreSQL são tratadas como artefatos de \textit{Design de Software} e implementadas por migrações SQL e adaptadores Data Mapper com pgx, sem ORM. Portanto, esses detalhes técnicos foram intencionalmente abstraídos desta Descrição Arquitetural para focar puramente na estrutura conceitual de alto nível.
+
+% ----------------------------------------
+\subsection{VP2 --- Viewpoint de Desenvolvimento}
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Nome} & Viewpoint de Desenvolvimento \\
+\hline
+\textbf{Concerns enquadrados} & CC03 (Manutenibilidade e evolvabilidade), CC02 (Viabilidade de construção) \\
+\hline
+\textbf{Stakeholders interessados} & Equipe de Desenvolvimento \\
+\hline
+\textbf{Model Kinds próprios} & MK2 --- Diagrama de Camadas \\
+\hline
+\textbf{Referências} & Parnas (1972), Dijkstra (1968), Bass et al. (2012) \\
+\hline
+\end{longtable}
+
+\noindent\textbf{MK2 --- Diagrama de Camadas}
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Linguagem/Notação} & UML 2.5 --- Diagrama de Pacotes, organizado em camadas horizontais com restrições de visibilidade \\
+\hline
+\textbf{Elementos utilizados} & Pacotes (\texttt{<<package>>}), dependências direcionadas, estereótipos de camada \\
+\hline
+\textbf{Ferramenta} & Draw.io ou Astah \\
+\hline
+\textbf{Propósito} & Representar a organização do código-fonte em camadas (Apresentação, Aplicação, Domínio, Infraestrutura) e as restrições de dependência entre elas \\
+\hline
+\end{longtable}
+
+\paragraph{Referências Externas Complementares:} Os padrões arquiteturais em formato de texto e os guias de estilo de implementação estão concentrados e documentados na \textbf{Seção 5 (Architecture Decisions e Rationale)} deste documento, eliminando sobreposições com os artefatos de código.
+
+% ----------------------------------------
+\subsection{VP3 --- Viewpoint de Processos}
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Nome} & Viewpoint de Processos \\
+\hline
+\textbf{Concerns enquadrados} & CQ01 (Desempenho --- fluxos de resposta), CQ03 (Segurança --- fluxo de autenticação), CQ04 (Disponibilidade --- tratamento de falhas) \\
+\hline
+\textbf{Stakeholders interessados} & Comprador, Vendedor, Equipe de Desenvolvimento, Equipe de Infraestrutura \\
+\hline
+\textbf{Model Kinds próprios} & Nenhum (Utiliza apenas diagramas externos de referência) \\
+\hline
+\textbf{Referências} & Bass et al. (2012), Kruchten (1995) \\
+\hline
+\end{longtable}
+
+\paragraph{Referências Externas Complementares:} O processamento do checkout, os jobs periódicos de expiração de reservas e prazos de envio, as requisições HTMX e os \textit{webhooks} de pagamento compõem a Visão de Processos. Não foram criados Model Kinds proprietários nesta seção, uma vez que a dinâmica dos fluxos temporais encontra-se representada nos diagramas complementares de sequência e nas regras de domínio implementadas.
+
+% ----------------------------------------
+\subsection{VP4 --- Viewpoint de Implantação}
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Nome} & Viewpoint de Implantação \\
+\hline
+\textbf{Concerns enquadrados} & CQ01 (Desempenho --- topologia de infraestrutura), CQ02 (Escalabilidade), CQ04 (Disponibilidade --- redundancy e monitoramento), CC02 (Viabilidade --- restrições do plano de hospedagem), CC04 (Riscos --- dependência de serviços externos) \\
+\hline
+\textbf{Stakeholders interessados} & Equipe de Infraestrutura, Equipe de Desenvolvimento, Product Owner \\
+\hline
+\textbf{Model Kinds próprios} & MK3 --- Diagrama de Implantação \\
+\hline
+\textbf{Referências} & Bass et al. (2012), Clements et al. (2010) \\
+\hline
+\end{longtable}
+
+\noindent\textbf{MK3 --- Diagrama de Implantação}
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Linguagem/Notação} & UML 2.5 --- Diagrama de Implantação (\textit{Deployment Diagram}) \\
+\hline
+\textbf{Elementos utilizados} & Nós de execução (\texttt{<<device>>}, \texttt{<<executionEnvironment>>}), artefatos, associações de comunicação, protocolos \\
+\hline
+\textbf{Ferramenta} & Draw.io ou Astah \\
+\hline
+\textbf{Propósito} & Representar o mapeamento dos componentes de software (do VP1) nos nós de hardware e serviços, mostrando onde cada componente é executado e como os nós se comunicam \\
+\hline
+\end{longtable}
+
+\paragraph{Referências Externas Complementares:} A representação técnica e a visualização física de infraestrutura foram agregadas e consolidadas junto ao escopo do MK3. A implementação atual utiliza um processo Go para servir SSR, API JSON e arquivos estáticos; PostgreSQL para persistência; Vercel Blob para imagens; e serviços externos de pagamento, frete e CEP.
+
+% ----------------------------------------
+\subsection{Viewpoint de Cenários (+1)}
+
+\begin{longtable}{|p{4.5cm}|p{10cm}|}
+\hline
+\textbf{Nome} & Viewpoint de Cenários (Casos de Uso) \\
+\hline
+\textbf{Concerns enquadrados} & CC01 (Propósito do sistema), CQ01 (Desempenho), CQ04 (Disponibilidade) \\
+\hline
+\textbf{Stakeholders interessados} & Comprador, Vendedor, Equipe de Desenvolvimento, Product Owner \\
+\hline
+\textbf{Model Kinds próprios} & Nenhum (Utiliza Diagramas UML externos à AD) \\
+\hline
+\textbf{Referências} & Kruchten (1995) \\
+\hline
+\end{longtable}
+
+\paragraph{Referências Externas Complementares:} Em conformidade com o modelo 4+1, esta visão atua como o elo que unifica as quatro visões anteriores, ilustrando como os elementos da arquitetura trabalham juntos. A validação destes fluxos baseia-se em diagramas dinâmicos gerados e mantidos no documento externo de modelagem UML da equipe:
+\begin{itemize}[noitemsep]
+    \item \textbf{Diagrama de Sequência:} Fornece a rastreabilidade temporal de trocas de mensagens, exemplificando o comportamento da API Central durante transações.
+    \item \textbf{Diagrama de Atividades:} Mapeia os cenários de interação e o fluxo de controle transversal entre usuários, o sistema e o \textit{Gateway} de Pagamento.
+\end{itemize}
+
+% ----------------------------------------
+\subsection{Rastreabilidade Concern $\rightarrow$ Viewpoint}
+
+\begin{longtable}{|p{5cm}|p{9.5cm}|}
+\hline
+\textbf{Concern} & \textbf{Viewpoint(s) que o enquadra(m)} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Concern} & \textbf{Viewpoint(s) que o enquadra(m)} \\
+\hline
+\endhead
+CQ01 -- Desempenho & VP3 (Processos), VP4 (Implantação), Cenários (+1) \\
+\hline
+CQ02 -- Escalabilidade & VP4 (Implantação) \\
+\hline
+CQ03 -- Segurança & VP1 (Lógico), VP3 (Processos) \\
+\hline
+CQ04 -- Disponibilidade & VP3 (Processos), VP4 (Implantação), Cenários (+1) \\
+\hline
+CC01 -- Propósito & VP1 (Lógico), Cenários (+1) \\
+\hline
+CC02 -- Viabilidade & VP2 (Desenvolvimento), VP4 (Implantação) \\
+\hline
+CC03 -- Manutenibilidade & VP2 (Desenvolvimento) \\
+\hline
+CC04 -- Riscos & VP4 (Implantação) \\
+\hline
+\end{longtable}
+
+% ================================================================
+% SEÇÃO 4 — ARCHITECTURE VIEWS (IMAGENS EXPANDIDAS EM RETRATO)
+% ================================================================
+\section{Architecture Views}
+
+Esta seção instancia os modelos estruturais definidos nos \textit{Architecture Viewpoints} Lógico, de Desenvolvimento, de Implantação e de Cenários (Seção 3), apresentando as representações visuais da arquitetura do Sistema de Intermediação de Brechós em escala ampliada e sem rotação.
+
+\subsection{View Lógica (VP1)}
+
+A View Lógica apresenta o Modelo Conceitual de Domínio do sistema. Este diagrama abstrai os detalhes de implementação de código (métodos e classes de infraestrutura) para focar exclusivamente nas entidades centrais do negócio de intermediação de brechós (C2C) e seus relacionamentos. Este modelo serve como base para a camada de Domínio, orientando o padrão \textit{Data Mapper} adotado na arquitetura.
+
+\begin{figure}[H]
+\centering
+\begin{adjustbox}{center}
+\includegraphics[width=1.1\textwidth, keepaspectratio]{../AquiteturaDeSoftwareES/modelo_conceitual_dominio_vp1.drawio.png}
+\end{adjustbox}
+\caption{Modelo Conceitual de Domínio do Sistema de Brechós (MK1 --- VP1)}
+\label{fig:dominio}
+\end{figure}
+
+\newpage
+
+\subsection{View de Desenvolvimento (VP2)}
+
+A View de Desenvolvimento detalha a organização lógica do código-fonte estruturada em camadas horizontais bem definidas, conforme as restrições de arquitetura e isolamento de dependências. O Diagrama de Camadas (MK2) explicita os limites de visibilidade direcionais, garantindo o completo isolamento das regras de negócio contidas no núcleo do Domínio em relação às tecnologias de Infraestrutura e Apresentação.
+
+Na materialização física destas camadas, a camada de Apresentação é implementada por templates HTML renderizados no servidor, estilos e assets estáticos em \texttt{apps/front}, HTMX versionado localmente e JavaScript pontual para galeria, uploads e interações específicas. As camadas subjacentes (Aplicação, Domínio e Infraestrutura) são implementadas em Go, garantindo forte tipagem, baixo acoplamento e testes unitários/integrados sobre as regras C2C.
+
+\begin{figure}[H]
+\centering
+% O adjustbox estica horizontalmente além das margens de texto e re-centraliza simetricamente na folha
+\begin{adjustbox}{center}
+\includegraphics[width=1.25\textwidth, keepaspectratio]{../AquiteturaDeSoftwareES/diagrama_camadas.png}
+\end{adjustbox}
+\caption{Diagrama de Camadas do Sistema de Brechós (MK2 --- VP2)}
+\label{fig:camadas}
+\end{figure}
+
+\newpage % Isola o próximo diagrama para garantir espaço vertical máximo
+
+% ----------------------------------------
+\subsection{View de Implantação (VP4)}
+
+A View de Implantação expõe o mapeamento físico e lógico dos artefatos estruturais do software nos respectivos nós computacionais de execução. Diferente de uma arquitetura \textit{three-tier} tradicional, a infraestrutura adota uma \textbf{Topologia Distribuída em Nuvem (Cloud-Native)}, aproveitando serviços gerenciados (PaaS, DBaaS e \textit{Serverless}) para maximizar a escalabilidade e o isolamento de falhas.
+
+O Diagrama de Implantação (MK3) deve ser interpretado à luz da implementação atual: a apresentação, a API JSON e as páginas SSR são servidas por um único processo Go; o PostgreSQL armazena o estado transacional; o Vercel Blob armazena as imagens públicas dos anúncios; o Mercado Pago processa cobranças quando configurado; o Melhor Envio cota frete quando há credenciais; e o ViaCEP consulta endereços por CEP. Não há contêiner dedicado para WebSocket nem integração com Stripe ou Amazon S3 nesta versão.
+
+\begin{figure}[H]
+\centering
+\begin{adjustbox}{center}
+\includegraphics[width=1.25\textwidth, keepaspectratio]{../AquiteturaDeSoftwareES/diagrama_implantacao.png}
+\end{adjustbox}
+\caption{Diagrama de Implantação de Infraestrutura Serverless (MK3 --- VP4)}
+\label{fig:implantacao}
+\end{figure}
+
+\newpage
+
+% ----------------------------------------
+\subsection{View de Cenários (+1)}
+
+A View de Cenários (+1) consolida e valida a arquitetura, demonstrando como os elementos lógicos, de processo e físicos colaboram para entregar as funcionalidades centrais do sistema. A ilustração e validação dos cenários críticos do negócio C2C (como a publicação de um anúncio pelo vendedor e o fluxo transversal de compra) são realizadas por meio de Diagramas de Atividades e de Sequência.
+
+Devido ao seu alto nível de detalhamento de interações, assinaturas de métodos e fluxo de controle estrito, \textbf{estes diagramas compõem formalmente o Documento de Design UML (anexo externo à AD)}, atuando como o elo prático entre esta abstração arquitetural e a implementação técnica das funcionalidades.
+
+\newpage
+
+% ================================================================
+% SEÇÃO 5 — ARCHITECTURE DECISIONS E RATIONALE
+% ================================================================
+\section{Architecture Decisions e Rationale}
+
+Esta seção apresenta as decisões arquiteturais significativas tomadas para o Sistema de Intermediação de Brechós, justificando-as com base nos conceitos de táticas arquiteturais e nos cenários de atributos de qualidade formulados na Seção 2.
+
+\subsection{Decisão 01: Estilo Arquitetural em Camadas (Arquitetura Limpa) e Servidor Stateless}
+
+\noindent\textbf{Decisão:} O sistema adota uma organização lógica estruturada em quatro camadas horizontais rígidas (Apresentação, Aplicação, Domínio e Infraestrutura) sob a ótica da \textbf{Arquitetura Limpa (Clean Architecture)}, empregando o Princípio da Inversão de Dependência, combinada com um modelo de comunicação \textit{stateless} (sem estado) no servidor de aplicação.
+
+\vspace{0.3cm}
+\noindent\textbf{Concerns Enquadrados:} CC03 (Manutenibilidade), CQ02 (Escalabilidade) e CQ04 (Disponibilidade).
+
+\vspace{0.3cm}
+\noindent\textbf{Rationale (Justificativa):} 
+\begin{itemize}
+    \item \textbf{Uso de Camadas e Arquitetura Limpa (CC03):} A imposição de restrições de visibilidade estritas entre as camadas isola as regras de negócio das tecnologias de infraestrutura. A adoção da Inversão de Controle força a Infraestrutura a depender do Domínio, protegendo o núcleo do negócio de mudanças em APIs externas e bancos de dados, alinhando-se aos princípios mais modernos de isolamento. Isso reduz o acoplamento global, permitindo modificações isoladas em componentes específicos (como a troca de bibliotecas na camada de Apresentação) sem causar efeitos colaterais na lógica de domínio, o que atende diretamente ao interesse de manutenibilidade da equipe de desenvolvimento.
+    \item \textbf{Estruturação Stateless (CQ02 e CQ04):} O backend Go não mantém estado de sessão em memória. A sessão web é transportada por cookie seguro e os dados permanentes ficam no PostgreSQL. Essa separação permite reiniciar ou replicar o processo de aplicação sem perder sessões persistidas ou dados transacionais, desde que as instâncias compartilhem o mesmo banco e as mesmas chaves de configuração.
+\end{itemize}
+
+\noindent\textbf{Trade-offs e Riscos:} A introdução de camadas intermediárias adiciona uma pequena latência no tempo de resposta (\textit{overhead} de chamadas de métodos e mapeamentos entre objetos de diferentes camadas). A opção por um processo Go único simplifica a operação acadêmica, mas exige cuidado futuro para escalar horizontalmente, configurar proxy reverso confiável, compartilhar segredos de sessão e monitorar o PostgreSQL.
+
+% ----------------------------------------
+\subsection{Decisão 02: Padrão de Persistência com Data Mapper}
+
+\noindent\textbf{Decisão:} Isolamento da persistência de dados através do padrão \textit{Data Mapper}, separando completamente as entidades puras do domínio das tabelas e esquemas relacionais do banco de dados PostgreSQL.
+
+\vspace{0.3cm}
+\noindent\textbf{Concerns Enquadrados:} CC03 (Manutenibilidade e Evolvabilidade) e CC02 (Viabilidade de Construção).
+
+\vspace{0.3cm}
+\noindent\textbf{Rationale (Justificativa):} 
+Diferente do padrão \textit{Active Record} (onde a lógica de banco de dados fica misturada com a lógica de negócio), o \textit{Data Mapper} permite que as regras complexas do ciclo de vida de pedidos e anúncios do brechó permaneçam agnósticas em relação ao banco de dados. Isso viabiliza a criação de testes unitários robustos e independentes da infraestrutura física, acelerando o ciclo de desenvolvimento em ambiente acadêmico (CC02). Além disso, mudanças na modelagem física do PostgreSQL impactam apenas o arquivo de mapeamento da infraestrutura, protegendo a integridade do núcleo do sistema.
+
+\vspace{0.3cm}
+\noindent\textbf{Trade-offs:} O isolamento provido pelo \textit{Data Mapper} exige um rigoroso \textit{trade-off} com o Desempenho (CQ01). A separação estrita entre o Domínio e a Infraestrutura adiciona um \textit{overhead} de processamento para realizar o mapeamento e a tradução constante entre os objetos da aplicação e as tabelas relacionais, além de exigir que a equipe escreva um volume maior de código inicial (\textit{boilerplate}).
+
+% ----------------------------------------
+\subsection{Decisão 03: SSR com HTMX e Comunicação por HTTP}
+
+\noindent\textbf{Decisão:} Adoção de renderização no servidor (SSR) com templates Go e melhoria progressiva via HTMX, mantendo a navegação, formulários, conversas e notificações sobre requisições HTTP convencionais. O frontend não possui etapa de build, não usa runtime SPA e mantém JavaScript próprio apenas para interações locais específicas.
+
+\vspace{0.3cm}
+\noindent\textbf{Concerns Enquadrados:} CQ01 (Desempenho), CQ03 (Segurança), CQ04 (Disponibilidade) e CC02 (Viabilidade).
+
+\vspace{0.3cm}
+\noindent\textbf{Rationale (Justificativa):} 
+O uso de SSR/HTMX reduziu a complexidade de build e implantação, facilitou a validação acadêmica e manteve as URLs navegáveis com HTML convencional. Como a sessão fica em cookie \textit{HttpOnly}, o token não é exposto ao JavaScript nem persistido em Web Storage. A mesma aplicação Go atende as páginas HTML e a API JSON, reaproveitando os mesmos controladores de casos de uso e reduzindo duplicidade entre camadas.
+
+\vspace{0.3cm}
+\noindent\textbf{Trade-offs e Sensibilidade:} A ausência de WebSocket reduz a infraestrutura e o consumo de conexões persistentes, mas torna a comunicação menos imediata que uma solução \textit{full-duplex}. Para o escopo implementado, a conversa por pedido e as notificações por HTTP/HTMX atendem ao fluxo acadêmico sem servidor adicional.
+
+% ----------------------------------------
+\subsection{Decisão 04: Stack Tecnológica de Implementação (Go, SSR/HTMX e PostgreSQL)}
+
+\noindent\textbf{Decisão:} Adoção da linguagem Go para backend, casos de uso, domínio, adaptadores HTTP/SSR e migrações; HTMX e templates Go para a camada de apresentação; PostgreSQL como banco relacional; Vercel Blob para arquivos; Mercado Pago, Melhor Envio e ViaCEP como integrações externas.
+
+\vspace{0.3cm}
+\noindent\textbf{Concerns Enquadrados:} CQ01 (Desempenho), CQ02 (Escalabilidade) e CC02 (Viabilidade de Construção).
+
+\vspace{0.3cm}
+\noindent\textbf{Rationale (Justificativa):} 
+A linguagem Go foi selecionada por sua simplicidade operacional, forte tipagem, bom desempenho e biblioteca padrão robusta para HTTP. A combinação SSR/HTMX evita a complexidade de um frontend SPA, reduz dependências e permite que os mesmos controladores atendam HTML e JSON. O PostgreSQL foi mantido como fonte transacional de verdade, enquanto Vercel Blob evita armazenar binários no banco. Mercado Pago, Melhor Envio e ViaCEP refletem provedores adequados ao contexto brasileiro do sistema.
+
+\vspace{0.3cm}
+\noindent\textbf{Trade-offs:} SSR/HTMX reduz a autonomia de uma SPA rica e exige cuidado com templates e fragmentos HTML. As integrações reais ainda possuem limitações: pagamentos e reembolsos têm fallback simulado, o split/repasse ao vendedor não está completo e a limpeza de imagens órfãs permanece como melhoria futura.
+
+% ================================================================
+% SEÇÃO 6 — CORRESPONDENCES E CORRESPONDENCE RULES
+% ================================================================
+\section{Correspondences e Correspondence Rules}
+
+Conforme estabelecido pela ISO/IEC/IEEE 42010:2022, as \textit{Correspondences} (Correspondências) expressam as relações entre os elementos arquiteturais presentes em diferentes \textit{Architecture Views}, enquanto as \textit{Correspondence Rules} (Regras de Correspondência) definem as restrições e invariantes que governam essas relações. 
+
+O objetivo desta seção é garantir a consistência global e auditar a \textit{Architecture Description}, assegurando rastreabilidade de ponta a ponta: desde as exigências de negócio e restrições de qualidade (Seção 2), passando pelas decisões técnicas tomadas (Seção 5), até a materialização nos artefatos de código e topologia física (Seção 4). Isso previne a erosão arquitetural durante o ciclo de desenvolvimento.
+
+\subsection{Regras de Correspondência (Correspondence Rules)}
+
+As seguintes regras normativas foram estipuladas para governar a arquitetura do Sistema de Intermediação de Brechós.
+
+\begin{itemize}[noitemsep]
+    \item \textbf{CR-01 (Completude e Alocação de Implantação):} Todo componente de software lógico mapeado e estruturado nos viewpoints deve possuir rastreabilidade exata para pelo menos um nó de execução no Diagrama de Implantação (VP4). Nenhum artefato de software pode existir flutuando sem um contêiner ou ambiente de hospedagem físico associado. 
+    
+    \item \textbf{CR-02 (Cobertura de Atributos de Qualidade):} Todo concern de qualidade priorizado (CQ01 a CQ04) deve estar fundamentado e mitigado por, no mínimo, uma Decisão Arquitetural documentada (Seção 5). 
+    \textit{Validação: Matriz de Rastreabilidade Qualidade-Decisão (Seção 6.2.1).}
+    
+    \item \textbf{CR-03 (Isolamento de Domínio e Inversão de Controle):} No Viewpoint de Desenvolvimento (VP2), os artefatos contidos na camada de \textbf{Domínio} (regras de intermediação C2C, ciclo de vida de pedidos) estão expressamente proibidos de acoplar dependências externas (APIs HTTP, conectores PostgreSQL). A injeção de dependência deve ser utilizada para inverter o controle, forçando a camada de Infraestrutura a implementar as interfaces definidas pelo Domínio.
+    \textit{Validação: Revisão de código (\textit{Pull Requests}) garantindo a ausência de \textit{imports} de infraestrutura nas classes de entidade.}
+    
+    \item \textbf{CR-04 (Delegação Financeira Restrita):} Nenhum componente interno do sistema está autorizado a persistir ou trafegar dados completos de cartões de crédito (PAN, CVV) no banco de dados da aplicação. O fluxo deve empregar \textit{tokens} opacos gerados no \textit{frontend} e enviados diretamente ao \textit{Gateway} de Pagamento.
+    \textit{Validação: Auditoria no mapeamento físico do banco de dados (esquema SQL).}
+\end{itemize}
+
+\subsection{Correspondências Identificadas (Correspondences)}
+
+As matrizes a seguir formalizam a aplicação prática das regras definidas, evidenciando a consistência e a integridade desta \textit{Architecture Description}.
+
+\subsubsection{Mapeamento de Concerns para Decisões Arquiteturais (Aplica CR-02)}
+
+Esta matriz comprova que as restrições não funcionais do sistema foram ativamente resolvidas através de táticas arquiteturais concretas.
+
+\begin{longtable}{|p{2cm}|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{ID / Concern} & \textbf{Atributo Alvo} & \textbf{Decisão Arquitetural e Tática de Mitigação} \\
+\hline
+\endfirsthead
+\hline
+\textbf{ID / Concern} & \textbf{Atributo Alvo} & \textbf{Decisão Arquitetural e Tática de Mitigação} \\
+\hline
+\endhead
+\textbf{CQ01} & Desempenho & \textbf{Decisão 01, 03 e 04:} Uso de Go, SSR/HTMX, paginação do catálogo e processamento transacional do checkout para reduzir complexidade e manter respostas previsíveis. \\
+\hline
+\textbf{CQ02} & Escalabilidade & \textbf{Decisão 01 e 04:} Aplicação sem sessão em memória local, persistência centralizada no PostgreSQL, imagens fora do banco no Vercel Blob e listagens paginadas. \\
+\hline
+\textbf{CQ03} & Segurança & \textbf{Decisão 01, 03 e CR-04:} Sessão por cookie \textit{HttpOnly}, verificação de origem contra CSRF, não armazenamento de PAN/CVV e tokenização de cartão via Mercado Pago quando o pagamento real está habilitado. \\
+\hline
+\textbf{CQ04} & Disponibilidade & \textbf{Decisão 03 e 04:} Uso de endpoints de saúde, fallback de frete fixo, provedor de pagamento simulado sem credenciais e jobs periódicos para expirar reservas e prazos de envio. \\
+\hline
+\textbf{CC03} & Manutenibilidade & \textbf{Decisão 02 e CR-03:} Uso rigoroso do padrão \textit{Data Mapper}. Permite que a lógica central do brechó seja testada de forma unitária, acelerando a identificação de falhas e refatorações. \\
+\hline
+\end{longtable}
+
+\subsubsection{Rastreabilidade Lógica vs. Física de Implantação (Aplica CR-01)}
+
+A matriz a seguir demonstra a alocação dos elementos lógicos nos respectivos nós de infraestrutura necessários para a operação do sistema web.
+
+\begin{longtable}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Elemento Lógico} & \textbf{Nó de Execução (VP4)} & \textbf{Relação Semântica} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Elemento Lógico} & \textbf{Nó de Execução (VP4)} & \textbf{Relação Semântica} \\
+\hline
+\endhead
+Páginas SSR/HTMX & Processo Go da aplicação e navegador Web & \textit{Is rendered by} (HTML gerado no servidor e melhorado progressivamente no cliente) \\
+\hline
+Serviço de Arquivos Estáticos & Processo Go da aplicação & \textit{Is hosted on} (Responsável por entregar CSS, JavaScript local, logos e assets) \\
+\hline
+API Central (Regras C2C) & Processo Go da aplicação & \textit{Is deployed on} (Processa cadastro, anúncios, carrinho, checkout, pedidos, vendas, notificações e conversas) \\
+\hline
+Subsistema de Conversas e Notificações & Processo Go e PostgreSQL & \textit{Reads/Writes to} (Persiste mensagens/notificações e renderiza atualizações por HTTP/HTMX) \\
+\hline
+Módulo de Persistência & PostgreSQL & \textit{Reads/Writes to} (Garante o armazenamento permanente e ACID das entidades) \\
+\hline
+Gerenciador de Mídias & Vercel Blob & \textit{Communicates with} (Armazena e distribui as fotos públicas dos anúncios) \\
+\hline
+Integrações de Negócio & Mercado Pago, Melhor Envio e ViaCEP & \textit{Communicates with} (Processa cobranças, cota frete e consulta CEP) \\
+\hline
+\end{longtable}
+
+\subsubsection{Matriz de Restrição de Dependência de Camadas (Aplica CR-03)}
+
+Para garantir que a manutenibilidade não seja corrompida por acoplamento indevido, a arquitetura estabelece um vetor direcional estrito de dependências. A tabela abaixo mapeia as relações permitidas entre as camadas do \textit{backend}.
+
+\begin{longtable}{|p{3.5cm}|p{10.5cm}|}
+\hline
+\textbf{Camada Origem} & \textbf{Pode depender e importar recursos da(s) Camada(s) Destino} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Camada Origem} & \textbf{Pode depender e importar recursos da(s) Camada(s) Destino} \\
+\hline
+\endhead
+\textbf{Apresentação} (Controladores Rest) & Camada de Aplicação (Casos de Uso) \\
+\hline
+\textbf{Aplicação} (Casos de Uso) & Camada de Domínio (Entidades e Interfaces) \\
+\hline
+\textbf{Infraestrutura} (Repositórios) & Camada de Domínio (Implementa as Interfaces do Domínio) \\
+\hline
+\textbf{Domínio} (Regras de Negócio C2C) & \textbf{NENHUMA.} (O Domínio é puro e isolado de todas as outras camadas). \\
+\hline
+\end{longtable}
+
+\end{document}
