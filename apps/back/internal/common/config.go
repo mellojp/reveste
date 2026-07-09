@@ -49,8 +49,10 @@ func Load() (Config, error) {
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL nao foi definida no arquivo .env ou no ambiente")
 	}
-	if cfg.HTTPAddress == "" {
-		if porta := strings.TrimSpace(os.Getenv("PORT")); porta != "" {
+	if porta := strings.TrimSpace(os.Getenv("PORT")); cfg.ExecucaoVercel && porta != "" {
+		cfg.HTTPAddress = ":" + porta
+	} else if cfg.HTTPAddress == "" {
+		if porta != "" {
 			cfg.HTTPAddress = ":" + porta
 		} else {
 			cfg.HTTPAddress = ":8080"
