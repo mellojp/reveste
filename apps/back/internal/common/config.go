@@ -18,6 +18,8 @@ type Config struct {
 	BlobPublicHost   string
 	ConfiarProxy     bool
 	IntervaloJobs    time.Duration
+	ExecucaoVercel   bool
+	CronSecret       string
 	MelhorEnvioToken string
 	MelhorEnvioURL   string
 	MelhorEnvioUA    string
@@ -41,12 +43,18 @@ func Load() (Config, error) {
 		BlobPublicHost:  strings.ToLower(strings.TrimSpace(os.Getenv("BLOB_PUBLIC_HOST"))),
 		ConfiarProxy:    proxyConfiavel(os.Getenv("TRUST_PROXY")),
 		IntervaloJobs:   time.Minute,
+		ExecucaoVercel:  strings.TrimSpace(os.Getenv("VERCEL")) == "1",
+		CronSecret:      strings.TrimSpace(os.Getenv("CRON_SECRET")),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL nao foi definida no arquivo .env ou no ambiente")
 	}
 	if cfg.HTTPAddress == "" {
-		cfg.HTTPAddress = ":8080"
+		if porta := strings.TrimSpace(os.Getenv("PORT")); porta != "" {
+			cfg.HTTPAddress = ":" + porta
+		} else {
+			cfg.HTTPAddress = ":8080"
+		}
 	}
 	if cfg.BlobPublicHost == "" {
 		cfg.BlobPublicHost = hostBlobDoToken(cfg.VercelBlobToken)

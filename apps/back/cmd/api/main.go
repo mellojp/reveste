@@ -168,6 +168,7 @@ func executar(logger *slog.Logger) error {
 			limitadorLogin,
 			cfg.ConfiarProxy,
 			webhookPagamento,
+			cfg.CronSecret,
 			paginasHTML,
 		),
 		ReadHeaderTimeout: 5 * time.Second,
@@ -184,9 +185,13 @@ func executar(logger *slog.Logger) error {
 
 	ctxEncerramento, parar := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer parar()
-	go executarJobsPeriodicos(
-		ctxEncerramento, logger, cfg.IntervaloJobs, controladorCheckout, controladorPedidos,
-	)
+	if cfg.ExecucaoVercel {
+		logger.Info("jobs periodicos: desativados no runtime Vercel; use /tarefas/processar via Cron")
+	} else {
+		go executarJobsPeriodicos(
+			ctxEncerramento, logger, cfg.IntervaloJobs, controladorCheckout, controladorPedidos,
+		)
+	}
 	select {
 	case err := <-errosServidor:
 		if errors.Is(err, http.ErrServerClosed) {

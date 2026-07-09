@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "go",
+  "buildCommand": "go build -o server ./apps/back/cmd/api",
+  "crons": [
+    {
+      "path": "/tarefas/processar",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

@@ -8,7 +8,9 @@ import (
 
 func (a *API) comJSON(proximo nethttp.Handler) nethttp.Handler {
 	return nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
-		if strings.HasPrefix(r.URL.Path, "/v1/") || strings.HasPrefix(r.URL.Path, "/saude") {
+		if strings.HasPrefix(r.URL.Path, "/v1/") ||
+			strings.HasPrefix(r.URL.Path, "/saude") ||
+			strings.HasPrefix(r.URL.Path, "/tarefas/") {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		}
 		if strings.HasPrefix(r.URL.Path, "/v1/") {

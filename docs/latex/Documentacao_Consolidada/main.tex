@@ -52,8 +52,12 @@
 
 \vspace{3cm}
 
-Caroline Santos, Beatriz Eduao, Ian Daniel\\
-Joao Pedro M., Arthur Soares, Luiz Manoel\\
+\textbf{Caroline Santos} -- 100\%\\
+\textbf{Beatriz Eduão} -- 100\%\\
+\textbf{Ian Daniel} -- 100\%\\
+\textbf{João Pedro M.} -- 100\%\\
+\textbf{Arthur Soares} -- 100\%\\
+\textbf{Luiz Manoel} -- 100\%\\
 
 \vspace{2cm}
 
@@ -69,6 +73,181 @@ Aracaju -- SE\\
 \tableofcontents
 \clearpage
 
+\part{Plano de Projeto}
+\section{Introdução}
+A compra e venda de roupas usadas ainda ocorre, com frequência, de forma fragmentada em redes sociais, aplicativos de mensagens e perfis individuais. Esse modelo dificulta a organização dos anúncios, a busca por peças específicas, o acompanhamento das negociações, a comunicação entre comprador e vendedor e a construção de confiança durante a transação.
+
+O projeto propõe uma plataforma web de intermediação de brechós no modelo C2C (\textit{Consumer-to-Consumer}), permitindo que um mesmo usuário possa comprar e vender peças de vestuário usadas. Ao longo do desenvolvimento, a proposta inicial foi refinada para contemplar não apenas cadastro e anúncios, mas também carrinho, checkout, pedidos por vendedor, entrega, notificações, conversa por pedido, avaliações e integração com serviços externos.
+
+\section{Problema}
+O problema central identificado é a ausência de uma plataforma centralizada, simples e confiável para anunciar, buscar, negociar e acompanhar compras de roupas usadas. Sem uma solução dedicada, compradores enfrentam dificuldade para encontrar produtos, comparar opções e acompanhar pedidos; vendedores, por sua vez, dependem de processos manuais para divulgar itens, responder interessados e controlar vendas.
+
+Além disso, negociações realizadas fora de uma plataforma estruturada tendem a apresentar pouca rastreabilidade, baixa padronização de informações, comunicação dispersa e maior dependência de confiança informal entre as partes.
+
+\section{Objetivos}
+O objetivo geral do projeto é desenvolver um marketplace web para intermediação de compra e venda de roupas usadas entre usuários, oferecendo uma experiência organizada para publicação, descoberta, compra e acompanhamento de itens.
+
+Os objetivos específicos consolidados são:
+
+\begin{itemize}
+    \item permitir cadastro, autenticação, sessão segura e gerenciamento de perfil;
+    \item permitir cadastro, edição, exclusão lógica e consulta de anúncios com fotos;
+    \item oferecer catálogo público com busca, filtros e paginação;
+    \item permitir carrinho persistente sem reserva antecipada dos anúncios;
+    \item executar checkout único, gerando pedidos separados por vendedor;
+    \item registrar pagamentos, taxas, frete, pedidos, entregas e reembolsos simulados quando necessário;
+    \item permitir acompanhamento de compras e vendas, com status de pedido e código de rastreio;
+    \item oferecer conversa por pedido e notificações internas;
+    \item permitir avaliação do vendedor após a finalização do pedido;
+    \item manter uma arquitetura simples de operar em ambiente acadêmico, mas coerente com boas práticas de segurança, persistência e evolução.
+\end{itemize}
+
+\section{Possíveis Soluções}
+Durante o planejamento, foram consideradas três alternativas em alto nível:
+
+\begin{itemize}
+    \item \textbf{Aplicação web:} plataforma acessível pelo navegador, sem necessidade de instalação, adequada ao escopo da disciplina e ao acesso por diferentes dispositivos.
+
+    \item \textbf{Aplicativo mobile:} solução voltada principalmente ao uso em celular, com melhor integração nativa, mas maior custo de desenvolvimento e manutenção.
+
+    \item \textbf{Plataforma híbrida:} início pela web e evolução futura para mobile ou PWA, conforme validação do uso e necessidade dos usuários.
+\end{itemize}
+
+A solução adotada foi a aplicação web renderizada no servidor, com backend em Go, páginas SSR e melhoria progressiva com HTMX. Essa escolha reduziu a complexidade de build e implantação, manteve URLs navegáveis e permitiu que os mesmos casos de uso atendessem páginas HTML e endpoints HTTP.
+
+O sistema foi estruturado em camadas, separando apresentação, aplicação, domínio e infraestrutura. A persistência usa PostgreSQL como fonte transacional de verdade. As imagens dos anúncios são armazenadas fora do banco, por meio do Vercel Blob. Para pagamentos, o projeto prevê integração com Mercado Pago quando configurado e mantém um provedor simulado para viabilizar o fluxo acadêmico. Para frete e endereço, foram previstos Melhor Envio e ViaCEP, com contingência de frete fixo quando não houver credenciais externas.
+
+As principais regras de negócio consolidadas foram:
+
+\begin{itemize}
+    \item cada anúncio representa uma única peça de roupa;
+    \item o carrinho não reserva anúncios; a reserva ocorre apenas no checkout;
+    \item uma compra pode gerar múltiplos pedidos, agrupados por vendedor;
+    \item cada pedido possui entrega, conversa, histórico de status e possibilidade de avaliação;
+    \item dados financeiros sensíveis, como cartão completo ou conta bancária completa, não são armazenados pela aplicação;
+    \item pagamentos, reembolsos e repasses foram modelados com foco em rastreabilidade, mantendo simulação quando a integração real não estiver configurada.
+\end{itemize}
+
+\section{Componentes Necessários}
+Os componentes necessários para a solução consolidada são:
+
+\begin{itemize}
+    \item \textbf{Aplicação web:} páginas SSR com HTMX para catálogo, autenticação, perfil, anúncios, carrinho, checkout, pedidos, vendas, conversa e notificações.
+
+    \item \textbf{Backend em Go:} responsável pelos casos de uso, regras de domínio, validações, sessões, rotas HTTP, templates e jobs periódicos.
+
+    \item \textbf{Banco de dados PostgreSQL:} responsável por armazenar usuários, endereços, anúncios, fotos, carrinhos, compras, pedidos, entregas, pagamentos, reembolsos, conversas, mensagens, avaliações e notificações.
+
+    \item \textbf{Armazenamento de imagens:} Vercel Blob para manter fotos públicas dos anúncios, evitando armazenamento de arquivos binários no PostgreSQL.
+
+    \item \textbf{Gateway de pagamento:} Mercado Pago quando configurado, com provedor simulado para manter o fluxo executável em ambiente acadêmico.
+
+    \item \textbf{Serviços de frete e endereço:} Melhor Envio para cotação de frete quando disponível, frete fixo como contingência e ViaCEP para consulta de endereço.
+
+    \item \textbf{Jobs periódicos:} rotinas para expiração de reservas de checkout e tratamento de prazos de envio.
+
+    \item \textbf{Testes e migrações:} testes unitários e de integração, além de migrações versionadas do banco com ferramenta própria do projeto.
+\end{itemize}
+
+\section{Equipe}
+A equipe foi composta por seis integrantes, todos vinculados à disciplina de Engenharia de Software e com participação ao longo de todo o projeto. A formação e experiência consideradas foram compatíveis com o contexto acadêmico: conhecimento em análise de requisitos, modelagem, programação web, banco de dados, testes, documentação e integração de sistemas.
+
+A decomposição do trabalho foi feita por frentes de funcionalidade e integração:
+
+\begin{itemize}
+    \item gestão de usuários, autenticação, perfil e endereços;
+    \item gestão de anúncios, fotos, catálogo, busca e filtros;
+    \item carrinho, checkout, compras, pedidos e vendas;
+    \item pagamentos, frete, reembolso, entrega e rastreio;
+    \item conversa por pedido, notificações e avaliação;
+    \item arquitetura, persistência, testes, documentação e integração final.
+\end{itemize}
+
+Essa organização permitiu que os módulos fossem desenvolvidos em paralelo, com consolidação posterior das regras de domínio e dos fluxos transacionais.
+
+\section{Cronograma}
+O projeto foi desenvolvido ao longo da disciplina em incrementos sucessivos. O cronograma inicialmente previsto foi ajustado conforme as decisões arquiteturais e a ampliação do escopo funcional. Os principais \textit{milestones} e \textit{deliverables} foram:
+
+\begin{itemize}
+    \item \textbf{Milestone 1 -- Planejamento e definição do projeto:} escolha do domínio de brechós, identificação do problema, definição inicial de objetivos, atores e funcionalidades principais. \textbf{Deliverable:} plano de projeto inicial.
+
+    \item \textbf{Milestone 2 -- Requisitos e análise:} elaboração da especificação de requisitos, regras de domínio, restrições, requisitos funcionais, não funcionais e casos de uso. \textbf{Deliverable:} documento de requisitos e análise.
+
+    \item \textbf{Milestone 3 -- Modelagem e arquitetura:} consolidação do modelo conceitual, diagramas, decisões arquiteturais, definição de camadas, persistência e integrações externas. \textbf{Deliverables:} casos de uso, diagramas UML e descrição arquitetural.
+
+    \item \textbf{Milestone 4 -- Primeiro incremento de implementação:} cadastro, autenticação, sessões, perfil, endereços, publicação e consulta de anúncios. \textbf{Deliverable:} fluxo inicial executável.
+
+    \item \textbf{Milestone 5 -- Fluxo comercial:} carrinho persistente, checkout, reserva transacional, geração de pedidos por vendedor, acompanhamento de compras e vendas. \textbf{Deliverable:} fluxo de compra e venda integrado.
+
+    \item \textbf{Milestone 6 -- Integrações e regras operacionais:} upload de imagens, pagamento real ou simulado, frete, rastreio, reembolso simulado, bloqueio por não envio e jobs periódicos. \textbf{Deliverable:} regras operacionais implementadas.
+
+    \item \textbf{Milestone 7 -- Interação entre usuários:} conversa por pedido, notificações internas e avaliação do vendedor. \textbf{Deliverable:} fluxo de comunicação e pós-venda.
+
+    \item \textbf{Milestone 8 -- Consolidação final:} migração para SSR/HTMX, refinamento visual, testes, documentação consolidada e registro de pendências técnicas. \textbf{Deliverable:} documentação consolidada e aplicação final.
+\end{itemize}
+
+\section{Riscos}
+Durante o desenvolvimento, os principais riscos identificados e tratados foram:
+
+\begin{itemize}
+    \item \textbf{Aumento de escopo:} o projeto evoluiu de um catálogo com negociação para um fluxo transacional completo. A mitigação foi priorizar um MVP web e registrar pendências para operação real.
+
+    \item \textbf{Complexidade de pagamentos e reembolsos:} marketplace, repasse e reembolso parcial exigem integração financeira robusta. A mitigação foi usar provedor simulado quando necessário e não armazenar dados sensíveis.
+
+    \item \textbf{Dependência de serviços externos:} indisponibilidade ou ausência de credenciais poderia bloquear testes. A mitigação foi prever fallback para pagamento e frete.
+
+    \item \textbf{Concorrência no checkout:} múltiplos compradores poderiam tentar comprar o mesmo anúncio. A mitigação foi reservar itens apenas no checkout, dentro de transação no PostgreSQL.
+
+    \item \textbf{Segurança e privacidade:} autenticação, upload de fotos, sessão e dados pessoais exigem cuidado. A mitigação incluiu sessão em cookie seguro, validação de origem, uso de templates com escape contextual e restrição do host de imagens.
+
+    \item \textbf{Operação em produção:} jobs, observabilidade, reconciliação financeira e escala ainda exigem evolução antes de uso com dinheiro real.
+
+\end{itemize}
+
+\section{Interfaces e Dependências}
+Internamente, o sistema depende da integração entre os módulos de usuários, anúncios, carrinho, checkout, pedidos, pagamentos, entregas, conversas, avaliações e notificações. Esses módulos compartilham regras de domínio e persistência relacional, com histórico preservado para auditoria de compras e vendas.
+
+Externamente, as principais dependências são:
+
+\begin{itemize}
+    \item PostgreSQL para persistência relacional;
+    \item Vercel Blob para armazenamento e distribuição das fotos dos anúncios;
+    \item Mercado Pago para pagamentos quando configurado;
+    \item Melhor Envio para cotação de frete quando configurado;
+    \item ViaCEP para consulta de endereço por CEP;
+    \item navegador web moderno para acesso à plataforma.
+\end{itemize}
+
+A aplicação foi projetada para continuar executável em ambiente acadêmico mesmo sem algumas credenciais externas, usando provedores simulados ou contingências quando necessário.
+
+\section{Estimativas de Custos}
+Por se tratar de um projeto acadêmico, os custos financeiros diretos permanecem baixos. O principal custo é o tempo de desenvolvimento, integração, testes e documentação da equipe.
+
+\begin{itemize}
+    \item \textbf{Infraestrutura:} uso de banco PostgreSQL, hospedagem da aplicação e armazenamento de imagens. Em ambiente acadêmico, esses recursos podem ser executados localmente ou em camadas gratuitas.
+
+    \item \textbf{Serviços externos:} Mercado Pago, Melhor Envio, ViaCEP e Vercel Blob podem introduzir custos ou limites conforme volume de uso e configuração.
+
+    \item \textbf{Domínio e implantação:} registro de domínio, hospedagem pública e configuração de HTTPS são opcionais para a entrega acadêmica, mas necessários para uma operação real.
+
+    \item \textbf{Operação real:} antes de transações financeiras reais, seriam necessários custos adicionais com monitoramento, segurança, reconciliação financeira, suporte e conformidade legal.
+\end{itemize}
+
+\section{Questões em Aberto e Decisões Pendentes}
+Ao final do projeto, a solução consolidada contempla os fluxos centrais de uma plataforma de brechós: cadastro, autenticação, perfil, anúncios com fotos, catálogo, carrinho, checkout, pedidos por vendedor, vendas, entregas, notificações, conversa por pedido e avaliações. A documentação também registra requisitos, casos de uso, diagramas, decisões arquiteturais e regras de correspondência.
+
+As principais questões em aberto e decisões pendentes para evolução futura são:
+
+\begin{itemize}
+    \item substituir reembolso e repasse simulados por integração financeira completa;
+    \item adicionar reconciliação robusta de pagamentos, webhooks assinados e idempotência operacional;
+    \item evoluir notificações e integrações externas para processamento assíncrono;
+    \item aprimorar validação de frete, rastreio e políticas de cancelamento ou contestação;
+    \item ampliar testes E2E, observabilidade, auditoria de autorização e conformidade com LGPD;
+    \item avaliar futura versão mobile ou PWA conforme a necessidade dos usuários.
+\end{itemize}
+
+\clearpage
 \part{Requisitos e An\'alise em Engenharia de Software}
 \section{Introdução}
 \label{sec:Introducao}
@@ -93,7 +272,7 @@ O desenvolvimento do Sistema de Intermediação de Brechós poderá utilizar fer
 Além disso, o sistema poderá integrar serviços externos responsáveis pelo processamento de pagamentos, autenticação de usuários e armazenamento de imagens enviadas pelos anunciantes.
 
 \subsubsection{O que o sistema realiza (e o que não realiza)}
-\label{sec:Realiza}
+\label{sec:SistemaRealiza}
 
 Respeitando a sua natureza C2C, o sistema deve intermediar o processo de compra e venda de peças de vestuário entre usuários, no qual os usuários podem exercer ambos papéis de anunciantes e/ou consumidores conforme sua preferência. O sistema deve automatizar a conexão entre usuários que desejam comprar e vender roupas usadas, promovendo os brechós, tradicionalmente manuais, como uma nova experiência organizada e intuitiva. Além disso, o sistema deve possibilitar o gerenciamento de informações pessoais do usuário (nome, e-mail, senha), permitir o anúncio de novos itens ou a exclusão de itens indisponíveis e implementar uma busca personalizada por categorias de peças de vestuário (camiseta, casaco, vestido).
 
@@ -247,8 +426,8 @@ O sistema destina-se a um perfil de usuário que demonstre interesse em comprar 
 Nesse contexto, a interface do sistema deve ser prática e intuitiva o suficiente para favorecer a plena realização das principais operações por usuários, a exemplo de busca por categoria ou compra de itens.
 
 \subsection{Restrições gerais}
-\label{RestricoesGeral}
-As restri\c{c}\~oes gerais do sistema s\~ao divididas sobre as seguintes categorias: Tecnol\'ogica, Operacional, Legal e de Integra\c{c}\~ao.
+\label{sec:RestricoesGerais}
+As restri\c{c}\~oes gerais do sistema s\~ao divididas sobre as seguintes categorias: Tecnol\'ogica, Operacional, Legal e de Integra\c{c}\~ao. A tabela com a descrição das restrições e suas respectivas categorias encontra-se listada no Apêndice.
 
 \subsection{Suposições e dependências}
 \label{sec:Suposicoes}
@@ -256,10 +435,10 @@ As restri\c{c}\~oes gerais do sistema s\~ao divididas sobre as seguintes categor
 O sistema pressupõe que os usuários possuam acesso estável à Internet e dispositivos compatíveis com navegação web. Além disso, determinadas funcionalidades dependem de serviços externos, como gateways de pagamento, serviços de hospedagem de imagens, e gateways de rastreio de entregas.
 
 \section{Requisitos Específicos}
-\label{RequisitosEspecificos}
+\label{sec:RequisitosEspecificos}
 
 \subsection{Requisitos funcionais}
-\label{RequisitosFuncionais}
+\label{sec:RequisitosFuncionais}
 
 \begin{enumerate}[label=RF\arabic*:]
 
@@ -328,7 +507,7 @@ O sistema pressupõe que os usuários possuam acesso estável à Internet e disp
 \end{enumerate}
 
 \subsection{Requisitos não-funcionais}
-\label{RequisitosNaoFuncionais}
+\label{sec:RequisitosNaoFuncionais}
 
 \begin{enumerate}[label=RNF\arabic*:]
 
@@ -343,7 +522,7 @@ O sistema pressupõe que os usuários possuam acesso estável à Internet e disp
 \end{enumerate}
 
 \subsection{Requisitos de interface}
-\label{RequisitosInterface}
+\label{sec:RequisitosInterface}
 
 \begin{enumerate}[label=RI\arabic*:]
 
@@ -356,7 +535,7 @@ O sistema pressupõe que os usuários possuam acesso estável à Internet e disp
 \end{enumerate}
 
 \subsection{Requisitos do domínio}
-\label{RequisitosDominio}
+\label{sec:RequisitosDominio}
 
 \begin{enumerate}[label=RD\arabic*:]
 
@@ -399,6 +578,145 @@ O sistema pressupõe que os usuários possuam acesso estável à Internet e disp
     \item Caso o comprador não confirme o recebimento manualmente em até 15 dias corridos após o pedido ser marcado como \textit{Enviado}, o sistema poderá alterar o status do item para \textit{Recebido} automaticamente e registrar a elegibilidade de repasse ao vendedor.
 
 \end{enumerate}
+
+\clearpage
+\section{Apêndice}
+\label{sec:Apendice}
+
+\begin{longtable}{|l|p{9.5cm}|}
+
+\caption{Restrições Gerais do Sistema} \\
+
+\hline
+\cellcolor{gray!30} \textbf{Categoria} &
+\cellcolor{gray!30} \textbf{Descrição da Restrição} \\
+\hline
+\endfirsthead
+
+\hline
+\cellcolor{gray!30} \textbf{Categoria} &
+\cellcolor{gray!30} \textbf{Descrição da Restrição} \\
+\hline
+\endhead
+
+Tecnológica & Ofertar compatibilidade com navegadores modernos: Chrome (ver. 147.0.7727.138), Firefox (ver. 150.0.2), Safari (ver. 26) e Microsoft Edge (ver. 148.0.3967.54). \\
+\hline
+
+Tecnológica & Limitação do tamanho máximo de imagens enviadas pelos usuários e uso de técnicas de compressão (Restrição de Memória). \\
+\hline
+
+Tecnológica & O acesso à plataforma dependerá de conexão com a Internet. \\
+\hline
+
+Operacional & O sistema deve estar sujeito ao acesso contínuo dos usuários, exceto em períodos de manutenção programada. \\
+\hline
+
+Operacional & O sistema deverá suportar o acesso de múltiplicos usuários simultaneamente. \\
+\hline
+
+Operacional & A plataforma é isenta de responsabilidade sobre a logística de envios, qualidade física e higienização das peças transacionadas. \\
+\hline
+
+Operacional & Adaptação somente ao idioma Português Brasileiro (PT-BR), moeda Real (R\$) e formatos locais de data e endereço. \\
+\hline
+
+Legal & Conformidade com a LGPD (Lei nº 13.709/2018) para armazenamento e tratamento de dados pessoais e sensíveis dos usuários. \\
+\hline
+
+Legal & Conformidade com o Código de Defesa do Consumidor (Lei nº 8.078/1990) para transparência e responsabilidade com os usuários. \\
+\hline
+
+Legal & Conformidade com o Marco Civil da Internet (Lei nº 12.965/2014) para proteção dos direitos dos usuários no sistema. \\
+\hline
+
+Legal & Presença obrigatória de Termos de Uso e Políticas de Privacidade na plataforma. \\
+\hline
+
+Organizacional & A documentação do sistema deve estar atualizada e relacionada com o software em produção. \\
+\hline
+
+Organizacional & As atividades do projeto devem seguir o cronograma estabelecido. \\
+\hline
+
+Organizacional & As equipe de desenvolvimento deve aplicar padronização sobre o código-fonte. \\
+\hline
+
+Organizacional & O projeto deve seguir as diretrizes e princípios da Engenharia de Software. \\
+\hline
+
+Integração & O sistema dependerá da disponibilidade de serviços externos (Gateways de pagamento e hospedagem em nuvem). \\
+\hline
+
+Integração & As integrações externas devem ser compatíveis com as tecnologias Web utilizadas para o sistema. \\
+\hline
+
+Integração & O processamento e validação de transações financeiras ocorrerão fora do sistema, via API de terceiros (Gateways de pagamento). \\
+\hline
+
+Integração & Dependência de serviços externos (hospedagem em nuvem) para armazenamento de imagens enviadas nos anúncios. \\
+\hline
+
+\end{longtable}
+
+\clearpage
+\section{Índice}
+\label{sec:Indice}
+
+Introdução\dotfill \pageref{sec:Introducao}
+
+\hspace{1cm}Propósito do documento\dotfill \pageref{sec:Proposito}
+
+\hspace{1cm}Escopo do produto\dotfill \pageref{sec:Escopo}
+
+\hspace{2cm}Produtos de software utilizados\dotfill \pageref{sec:Produtos}
+
+\hspace{2cm}O que o sistema realiza (e o que não realiza)\dotfill \pageref{sec:SistemaRealiza}
+
+\hspace{2cm}Descrição da aplicação de software proposta\dotfill \pageref{sec:DescricaoAplicacao}
+
+\hspace{1cm}Definições \& abreviações\dotfill \pageref{sec:Definicoes}
+
+\hspace{1cm}Referências\dotfill \pageref{sec:Referencias}
+
+Descrição Geral\dotfill \pageref{sec:DescricaoGeral}
+
+\hspace{1cm}Perspectiva do produto\dotfill \pageref{sec:PerspectivaProduto}
+
+\hspace{2cm}Interfaces de Sistema\dotfill \pageref{sec:InterfaceSistema}
+
+\hspace{2cm}Interfaces de Hardware\dotfill \pageref{sec:InterfaceHardware}
+
+\hspace{2cm}Interfaces de Software\dotfill \pageref{sec:InterfaceSoftware}
+
+\hspace{2cm}Interfaces de Comunicação\dotfill \pageref{sec:InterfaceComunicacao}
+
+\hspace{2cm}Restrições de Memória\dotfill \pageref{sec:RestricoesMemoria}
+
+\hspace{2cm}Operações\dotfill \pageref{sec:Operacoes}
+
+\hspace{2cm}Requisitos de Adaptação do Local\dotfill \pageref{sec:RequisitosLocal}
+
+\hspace{1cm}Funções do produto\dotfill \pageref{sec:FuncoesProduto}
+
+\hspace{1cm}Características do usuário\dotfill \pageref{sec:CaracteristicasUsuario}
+
+\hspace{1cm}Restrições gerais\dotfill \pageref{sec:RestricoesGerais}
+
+\hspace{1cm}Suposições e dependências\dotfill \pageref{sec:Suposicoes}
+
+Requisitos Específicos\dotfill \pageref{sec:RequisitosEspecificos}
+
+\hspace{1cm}Requisitos funcionais\dotfill \pageref{sec:RequisitosFuncionais}
+
+\hspace{1cm}Requisitos não-funcionais\dotfill \pageref{sec:RequisitosNaoFuncionais}
+
+\hspace{1cm}Requisitos de interface\dotfill \pageref{sec:RequisitosInterface}
+
+\hspace{1cm}Requisitos do domínio\dotfill \pageref{sec:RequisitosDominio}
+
+Apêndice\dotfill \pageref{sec:Apendice}
+
+Índice\dotfill \pageref{sec:Indice}
 
 \clearpage
 \part{Especifica\c{c}\~ao dos Casos de Uso}
@@ -1150,31 +1468,51 @@ Os casos de uso do sistema foram organizados em módulos funcionais, visando fac
 \clearpage
 \part{Diagramas}
 \label{part:diagramas}
-
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de classes nível de projeto.jpeg}}
-\caption{Diagrama de classes em nivel de projeto}
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de casos de uso_01.png}}
+\caption{Diagrama de casos de uso (parte I)}
 \end{figure}
 
 \clearpage
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de sequência - adicionar ao carrinho.jpeg}}
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de casos de uso_02.png}}
+\caption{Diagrama de casos de uso (parte II) -- especificacao do pacote Uso Comprador}
+\end{figure}
+
+\clearpage
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de casos de uso_03.png}}
+\caption{Diagrama de casos de uso (parte III) -- especificacao do pacote Uso Vendedor}
+\end{figure}
+
+\clearpage
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de classes nível de projeto.jpeg}}
+\caption{Diagrama de classes em nivel de análise}
+\end{figure}
+
+\clearpage
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de sequência - adicionar ao carrinho.jpeg}}
 \caption{Diagrama de sequencia: adicionar ao carrinho}
 \end{figure}
 
 \clearpage
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de sequência - comprar item.jpeg}}
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de sequência - comprar item.jpeg}}
 \caption{Diagrama de sequencia: comprar item}
 \end{figure}
 
 \clearpage
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{../../diagramas/diagrama de sequência - publicar anuncio.jpeg}}
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{\detokenize{diagramas/diagrama de sequência - publicar anuncio.jpeg}}
 \caption{Diagrama de sequencia: publicar anuncio}
 \end{figure}
 
@@ -1662,7 +2000,7 @@ A View Lógica apresenta o Modelo Conceitual de Domínio do sistema. Este diagra
 \begin{figure}[H]
 \centering
 \begin{adjustbox}{center}
-\includegraphics[width=1.1\textwidth, keepaspectratio]{../AquiteturaDeSoftwareES/modelo_conceitual_dominio_vp1.drawio.png}
+\includegraphics[width=1.1\textwidth, keepaspectratio]{modelo_conceitual_dominio_vp1.drawio.png}
 \end{adjustbox}
 \caption{Modelo Conceitual de Domínio do Sistema de Brechós (MK1 --- VP1)}
 \label{fig:dominio}
@@ -1680,7 +2018,7 @@ Na materialização física destas camadas, a camada de Apresentação é implem
 \centering
 % O adjustbox estica horizontalmente além das margens de texto e re-centraliza simetricamente na folha
 \begin{adjustbox}{center}
-\includegraphics[width=1.25\textwidth, keepaspectratio]{../AquiteturaDeSoftwareES/diagrama_camadas.png}
+\includegraphics[width=1.25\textwidth, keepaspectratio]{diagrama_camadas.png}
 \end{adjustbox}
 \caption{Diagrama de Camadas do Sistema de Brechós (MK2 --- VP2)}
 \label{fig:camadas}
@@ -1698,7 +2036,7 @@ O Diagrama de Implantação (MK3) deve ser interpretado à luz da implementaçã
 \begin{figure}[H]
 \centering
 \begin{adjustbox}{center}
-\includegraphics[width=1.25\textwidth, keepaspectratio]{../AquiteturaDeSoftwareES/diagrama_implantacao.png}
+\includegraphics[width=1.25\textwidth, keepaspectratio]{diagrama_implantacao.png}
 \end{adjustbox}
 \caption{Diagrama de Implantação de Infraestrutura Serverless (MK3 --- VP4)}
 \label{fig:implantacao}

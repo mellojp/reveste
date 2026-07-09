@@ -30,6 +30,7 @@ type API struct {
 	limitador        *transporte.LimitadorLogin
 	confiarProxy     bool
 	webhookPagamento WebhookPagamento
+	cronSecret       string
 }
 
 func NovaAPI(
@@ -49,6 +50,7 @@ func NovaAPI(
 	limitador *transporte.LimitadorLogin,
 	confiarProxy bool,
 	webhookPagamento WebhookPagamento,
+	cronSecret string,
 	paginasHTML nethttp.Handler,
 ) nethttp.Handler {
 	api := &API{
@@ -68,6 +70,7 @@ func NovaAPI(
 		limitador:        limitador,
 		confiarProxy:     confiarProxy,
 		webhookPagamento: webhookPagamento,
+		cronSecret:       cronSecret,
 	}
 	mux := nethttp.NewServeMux()
 
@@ -84,6 +87,7 @@ func NovaAPI(
 	api.registrarRotasUploads(mux)
 	api.registrarRotasCEP(mux)
 	api.registrarRotasWebhooks(mux)
+	api.registrarRotasTarefas(mux)
 	api.registrarRotasFrontend(mux, paginasHTML)
 
 	return api.comRecuperacao(api.comSeguranca(api.comJSON(api.comProtecaoCSRF(mux))))
