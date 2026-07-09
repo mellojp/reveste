@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -25,15 +25,15 @@ import (
 	"reveste/apps/back/internal/web"
 )
 
-func main() {
+func Main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	if err := executar(logger); err != nil {
+	if err := Executar(logger); err != nil {
 		logger.Error("api encerrada com erro", "erro", err)
 		os.Exit(1)
 	}
 }
 
-func executar(logger *slog.Logger) error {
+func Executar(logger *slog.Logger) error {
 	cfg, err := common.Load()
 	if err != nil {
 		return fmt.Errorf("carregar configuracao: %w", err)
