@@ -11,13 +11,55 @@
 .card-interactive:hover { border-color: #c9cabe; box-shadow: var(--shadow-soft); transform: translateY(-2px); }
 
 .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(1rem, 2.2vw, 2rem); }
-.product-card { min-width: 0; transition: transform .3s var(--ease-premium); }
-.product-card:hover { transform: translateY(-4px); }
-.product-image {
+/* Card inteiro (foto + infos + preco) como uma peca neumorfica: fundo quente + sombra leve. */
+.product-card {
+  position: relative;
+  min-width: 0;
+  padding: .6rem;
+  border-radius: var(--radius-lg);
+  background: #fcf9f3;
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, .6), 4px 5px 12px rgba(120, 98, 68, .12);
+  transition: transform .3s var(--ease-premium), box-shadow .25s var(--ease-premium);
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, .7), 6px 7px 16px rgba(120, 98, 68, .17);
+}
+/* Colchetes de borda dupla marrom (clay) so nos cantos superior-esquerdo e inferior-direito.
+   No hover cada colchete cresce a partir do canto para os dois lados ao mesmo tempo. */
+.product-card::before,
+.product-card::after {
+  content: "";
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  pointer-events: none;
+  border-style: double;
+  border-color: var(--sage-dark);
+  border-width: 0;
+  transition: clip-path .42s var(--ease-premium);
+}
+.product-card::before {
+  top: 0;
+  left: 0;
+  border-top-width: 5px;
+  border-left-width: 5px;
+  border-top-left-radius: var(--radius-lg);
+  clip-path: circle(0 at 0 0);
+}
+.product-card::after {
+  right: 0;
+  bottom: 0;
+  border-right-width: 5px;
+  border-bottom-width: 5px;
+  border-bottom-right-radius: var(--radius-lg);
+  clip-path: circle(0 at 100% 100%);
+}
+.product-card:hover::before { clip-path: circle(68px at 0 0); }
+.product-card:hover::after { clip-path: circle(68px at 100% 100%); }.product-image {
   position: relative;
   overflow: hidden;
   aspect-ratio: .83;
-  border: 1px solid rgba(64, 88, 68, .08);
   border-radius: var(--radius-md);
   background: var(--sand);
 }
@@ -81,7 +123,7 @@
 .add-cart.is-added::after { content: "✓"; position: absolute; font-size: .78rem; font-weight: 800; }
 .add-cart.is-added svg { opacity: .25; }
 .add-cart svg { width: 21px; }
-.product-info { padding: .9rem .1rem; }
+.product-info { padding: .8rem .4rem .2rem; }
 .product-meta { display: block; margin-bottom: .35rem; color: var(--muted); font-size: .73rem; text-transform: capitalize; }
 .product-info h3 { overflow: hidden; margin-bottom: .5rem; text-overflow: ellipsis; white-space: nowrap; }
 .product-info strong { font-size: 1rem; }

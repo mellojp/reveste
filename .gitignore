@@ -3,3 +3,5 @@
 *.exe
 *.test
 coverage.out
+# Dados de teste descartaveis (imagens de anuncios semeadas localmente); nunca commitar.
+/apps/front/assets/seed-fotos/
