@@ -5,7 +5,7 @@
   top: 0;
   display: grid;
   width: 100%;
-  min-height: 76px;
+  min-height: var(--altura-header);
   margin: 0;
   padding-inline: max(clamp(1rem, 4vw, 4rem), calc((100% - 1440px) / 2 + 3rem));
   grid-template-columns: minmax(48px, 1fr) auto minmax(120px, 1fr);
@@ -79,7 +79,7 @@
   font-size: .64rem;
   font-weight: 700;
 }
-#page { min-height: calc(100vh - 76px); outline: none; view-transition-name: page; }
+#page { min-height: calc(100vh - var(--altura-header)); outline: none; view-transition-name: page; }
 .page-section { width: min(1320px, calc(100% - 2rem)); margin-inline: auto; padding-block: clamp(4.5rem, 8vw, 8rem); }
 .compact-section { width: min(1180px, calc(100% - 2rem)); }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 2.5rem; }
@@ -149,10 +149,11 @@
 }
 
 @media (max-width: 760px) {
+  /* O header encolhe aqui. Quem gruda embaixo dele acompanha sozinho pela variavel. */
+  :root { --altura-header: 62px; }
   .site-header {
     position: sticky;
     height: auto;
-    min-height: 62px;
     padding: .45rem 1rem;
     grid-template-columns: 46px minmax(0, 1fr) auto;
     grid-template-rows: 46px;
@@ -207,7 +208,6 @@
   .brand { grid-column: 1; grid-row: 1; width: 44px; height: 44px; }
   .brand img { width: 34px; }
   .badge { top: -2px; right: -5px; }
-  #page { min-height: calc(100vh - 62px); }
   .section-heading { align-items: flex-start; flex-direction: column; }
   #site-footer {
     padding: 3.5rem 1.25rem 2rem;

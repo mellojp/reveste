@@ -25,7 +25,10 @@
 <div class="hero-arch hero-arch-one" aria-hidden="true"></div>
 <div class="hero-arch hero-arch-two" aria-hidden="true"></div>
 <div class="hero-track" data-hero-trilha tabindex="0" role="group" aria-roledescription="carrossel" aria-label="Peças em destaque">
-<div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/atsu_tettey-woman-9230049_1920.jpg" width="1305" height="1920" fetchpriority="high" decoding="async" alt="Mulher de boina e colete de tweed marrom, com gravata floral estampada, em frente a uma porta de madeira verde."></div></div>
+<!-- Abaixo de 700px a .hero-art some, mas esta imagem nao e lazy (ela e o LCP no desktop), entao
+     o navegador a baixaria mesmo escondida: 586KB jogados fora no celular. O source devolve um
+     GIF de 1x1 nessas larguras. As outras quatro sao lazy e, sem caixa de layout, nunca carregam. -->
+<div class="hero-slide"><div class="hero-photo"><picture><source media="(max-width: 700px)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><img src="/assets/hero/atsu_tettey-woman-9230049_1920.jpg" width="1305" height="1920" fetchpriority="high" decoding="async" alt="Mulher de boina e colete de tweed marrom, com gravata floral estampada, em frente a uma porta de madeira verde."></picture></div></div>
 <div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/lucfier-woman-7649360_1920.jpg" width="1280" height="1920" loading="lazy" decoding="async" alt="Mulher em vestido de alças verde-sálvia, cercada por plantas dentro de uma estufa."></div></div>
 <div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/prithpalbhatia9-male-4725378_1920.jpg" width="1277" height="1920" loading="lazy" decoding="async" alt="Homem de gorro e suéter preto sentado na caçamba de um caminhão enferrujado, cercado por vegetação."></div></div>
 <div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/eriscolors-woman-6635589_1920.jpg" width="1280" height="1920" loading="lazy" decoding="async" alt="Mulher de cabelo afro posando em um terraço, com blusa preta e calça xadrez verde."></div></div>

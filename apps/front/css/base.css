@@ -25,6 +25,9 @@
   --serif: Georgia, "Times New Roman", serif;
   --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --ease-premium: cubic-bezier(0.3, 0, 0.2, 1);
+  /* Altura do header. Quem gruda logo abaixo dele (o hero) precisa do mesmo numero, e o
+     header encolhe no mobile. Como variavel, os dois nao podem mais divergir. */
+  --altura-header: 76px;
 }
 
 * { box-sizing: border-box; min-width: 0; }
