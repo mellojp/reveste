@@ -1,4 +1,5 @@
 import { uploadPhoto } from "./uploads.js";
+import { inicializarCarrosselHero } from "./hero-carrossel.js";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const editors = new WeakMap();
@@ -277,6 +278,7 @@ document.addEventListener("click", (event) => {
 document.addEventListener("htmx:load", (event) => {
   initializeEditors(event.detail.elt);
   initializeRegistrationForms(event.detail.elt);
+  inicializarCarrosselHero(event.detail.elt);
 });
 document.addEventListener("htmx:responseError", () => {
   document.querySelectorAll("[data-register-form].is-submitting").forEach(resetRegistrationSubmission);
@@ -292,6 +294,7 @@ document.addEventListener("htmx:historyRestore", () => {
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors(document);
   initializeRegistrationForms(document);
+  inicializarCarrosselHero(document);
   exibirAvisoDaURL();
   rolarChatSeNecessario();
 });

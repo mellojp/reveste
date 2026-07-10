@@ -1,5 +1,48 @@
 {{define "inicio"}}
-<section class="home-hero"><div class="home-hero-inner"><div class="hero-copy"><span class="eyebrow">Moda circular, escolhas únicas</span><h1>Vista novas histórias.</h1><p>Peças especiais merecem continuar circulando. Compre de outras pessoas, renove seu estilo e reduza o impacto no planeta.</p><div class="hero-actions"><a class="button button-light button-large" href="/catalogo">Explorar peças</a><a class="hero-link" href="/vender">Desapegar agora <span>↗</span></a></div><div class="hero-proof"><span><strong>Curadoria pessoal</strong> para escolhas únicas</span><span><strong>Peças únicas</strong> de outras pessoas</span></div></div><div class="hero-art" aria-hidden="true"><div class="hero-sun"></div><div class="hero-arch hero-arch-one"></div><div class="hero-arch hero-arch-two"></div><div class="clothing-card card-shirt"><svg viewBox="0 0 180 190"><path d="M58 30 76 18h28l18 12 34 19-19 35-17-9v89H60V75l-17 9-19-35 34-19Z"/><path d="M76 18c0 18 28 18 28 0"/></svg></div><div class="clothing-card card-dress"><svg viewBox="0 0 180 220"><path d="M72 20h36l11 47-13 25 39 105H35L74 92 61 67l11-47Z"/><path d="M72 20c3 22 33 22 36 0"/></svg></div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✦</span></div></div></section>
+<section class="home-hero" data-hero-carrossel data-hero-autoplay="off">
+<div class="home-hero-inner">
+<div class="hero-copy">
+<div class="hero-eyebrows">
+<span class="eyebrow hero-story is-active" data-hero-texto="1">Moda circular, escolhas únicas</span>
+<span class="eyebrow hero-story" data-hero-texto="2" aria-hidden="true">Peças únicas, não coleções</span>
+<span class="eyebrow hero-story" data-hero-texto="3" aria-hidden="true">O que não te serve mais</span>
+<span class="eyebrow hero-story" data-hero-texto="4" aria-hidden="true">Menos produção, mais circulação</span>
+<span class="eyebrow hero-story" data-hero-texto="5" aria-hidden="true">De pessoa para pessoa</span>
+</div>
+<h1>Vista novas histórias.</h1>
+<div class="hero-paragraphs" aria-live="off">
+<p class="hero-story is-active" data-hero-texto="1">Peças especiais merecem continuar circulando. Compre de outras pessoas, renove seu estilo e reduza o impacto no planeta.</p>
+<p class="hero-story" data-hero-texto="2" aria-hidden="true">Aqui nada vem em vinte tamanhos e cinco cores. Cada anúncio é uma peça só, escolhida por alguém que gostou dela antes de você.</p>
+<p class="hero-story" data-hero-texto="3" aria-hidden="true">Aquela peça parada no fundo da gaveta pode ser a descoberta de outra pessoa. Publique em poucos minutos e deixe ela seguir viagem.</p>
+<p class="hero-story" data-hero-texto="4" aria-hidden="true">Cada peça que volta a circular é uma peça que não precisou ser fabricada. Renovar o guarda-roupa sem tirar nada novo do planeta.</p>
+<p class="hero-story" data-hero-texto="5" aria-hidden="true">Sem vitrine genérica e sem intermediário. Você conversa com quem está vendendo, entende a história da peça e recebe em casa.</p>
+</div>
+<div class="hero-actions"><a class="button button-light button-large" href="/catalogo">Explorar peças</a><a class="hero-link" href="/vender">Desapegar agora <span>↗</span></a></div>
+<div class="hero-proof"><span><strong>Curadoria pessoal</strong> para escolhas únicas</span><span><strong>Peças únicas</strong> de outras pessoas</span></div>
+</div>
+<div class="hero-art">
+<div class="hero-sun" aria-hidden="true"></div>
+<div class="hero-arch hero-arch-one" aria-hidden="true"></div>
+<div class="hero-arch hero-arch-two" aria-hidden="true"></div>
+<div class="hero-track" data-hero-trilha tabindex="0" role="group" aria-roledescription="carrossel" aria-label="Peças em destaque">
+<div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/atsu_tettey-woman-9230049_1920.jpg" width="1305" height="1920" fetchpriority="high" decoding="async" alt="Mulher de boina e colete de tweed marrom, com gravata floral estampada, em frente a uma porta de madeira verde."></div></div>
+<div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/lucfier-woman-7649360_1920.jpg" width="1280" height="1920" loading="lazy" decoding="async" alt="Mulher em vestido de alças verde-sálvia, cercada por plantas dentro de uma estufa."></div></div>
+<div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/prithpalbhatia9-male-4725378_1920.jpg" width="1277" height="1920" loading="lazy" decoding="async" alt="Homem de gorro e suéter preto sentado na caçamba de um caminhão enferrujado, cercado por vegetação."></div></div>
+<div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/eriscolors-woman-6635589_1920.jpg" width="1280" height="1920" loading="lazy" decoding="async" alt="Mulher de cabelo afro posando em um terraço, com blusa preta e calça xadrez verde."></div></div>
+<div class="hero-slide"><div class="hero-photo"><img src="/assets/hero/chentusoul-woman-6115105_1920.jpg" width="1280" height="1920" loading="lazy" decoding="async" alt="Mulher em vestido chemise de chiffon com estampa floral azul, sobre fundo bege."></div></div>
+</div>
+<span class="hero-spark spark-one" aria-hidden="true">✦</span>
+<span class="hero-spark spark-two" aria-hidden="true">✦</span>
+<div class="hero-dots">
+<button type="button" class="hero-dot" data-hero-ponto aria-current="true" aria-label="Ir para o slide 1 de 5"></button>
+<button type="button" class="hero-dot" data-hero-ponto aria-current="false" aria-label="Ir para o slide 2 de 5"></button>
+<button type="button" class="hero-dot" data-hero-ponto aria-current="false" aria-label="Ir para o slide 3 de 5"></button>
+<button type="button" class="hero-dot" data-hero-ponto aria-current="false" aria-label="Ir para o slide 4 de 5"></button>
+<button type="button" class="hero-dot" data-hero-ponto aria-current="false" aria-label="Ir para o slide 5 de 5"></button>
+</div>
+</div>
+</div>
+</section>
 <div class="home-cover">
 <section class="home-benefits"><div><strong>01</strong><span>Encontre uma peça</span><p>Explore anúncios únicos e filtre pelo seu estilo.</p></div><div><strong>02</strong><span>Guarde na sacola</span><p>Organize suas escolhas antes de decidir.</p></div><div><strong>03</strong><span>Faça circular</span><p>Publique o que não usa mais em poucos minutos.</p></div></section>
 <section class="page-section category-section home-categories"><div class="section-heading"><div><span class="eyebrow">Encontre seu estilo</span><h2>Explore por categoria</h2></div><a class="text-link" href="/catalogo">Ver catálogo completo</a></div><div class="category-row">{{range $i, $opcao := .OpcoesCategoria}}<a class="category-chip {{if eq $i 0}}active{{end}}" href="/catalogo{{if $opcao.Valor}}?categoria={{$opcao.Valor}}{{end}}">{{$opcao.Rotulo}}</a>{{end}}</div></section>

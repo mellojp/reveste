@@ -1,13 +1,44 @@
 /* Hero preso ao rolar: a camada de papel (.home-cover) sobe deslizando por cima, deixando o
    verde como uma parte interna atras. Cantos arredondados no topo da camada revelam um filete
    de verde ao subir. */
+/* O verde chapado deixava o texto boiando num retangulo morto. O radial da profundidade
+   afundando a base, e o ponto mais claro e o proprio --moss: o degrade so escurece, nunca
+   clareia. Isso importa porque a eyebrow (#e89a72) ja vive em 3.38:1 sobre o musgo, e
+   qualquer clareada no topo, onde ela fica, pioraria isso. O grao entra como segunda
+   camada, ladrilhado em 200px: fino o bastante para ler como textura de papel, nao ruido. */
 .home-hero {
   position: sticky;
   top: 76px;
   z-index: 0;
   overflow: hidden;
   color: white;
-  background: var(--moss);
+  background-color: var(--moss);
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.035'/%3E%3C/svg%3E"),
+    radial-gradient(130% 100% at 20% -20%, #315c46 0%, #2e5843 58%, #2a5140 100%);
+  background-repeat: repeat, no-repeat;
+  background-size: 200px 200px, auto;
+}
+/* O header paira sobre o hero, entao ele projeta sombra, nao luz: o hero fica rebaixado sob
+   ele. Escurecer tambem e seguro, ja que clarear o topo estragaria o contraste da eyebrow.
+   Vive dentro do hero (e nao como box-shadow do header) para nao vazar para as outras
+   paginas, e com z-index acima das duas colunas para a sombra cair igual sobre o verde e
+   sobre a areia. As paradas imitam a queda de um blur real, que nao e linear. */
+.home-hero::before {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 40px;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(23, 41, 31, .34) 0%,
+    rgba(23, 41, 31, .17) 26%,
+    rgba(23, 41, 31, .05) 58%,
+    rgba(23, 41, 31, 0) 100%
+  );
 }
 .home-cover {
   position: relative;
@@ -31,7 +62,14 @@
 }
 .home-hero .eyebrow { color: #e89a72; }
 .home-hero h1 { max-width: 590px; margin-bottom: 1.5rem; font-size: clamp(3.3rem, 7vw, 6.2rem); line-height: .96; }
-.hero-copy > p { max-width: 580px; margin-bottom: 2rem; color: #dfe7dd; font-size: 1.08rem; }
+/* Os cinco textos dividem a mesma celula do grid: a altura trava no maior deles e o hero
+   nao muda de tamanho ao trocar de slide. Se mudasse, a .home-cover deslizando por cima
+   tremeria a cada 6 segundos. */
+.hero-eyebrows { display: grid; }
+.hero-paragraphs { display: grid; margin-bottom: 2rem; }
+.hero-paragraphs p { max-width: 580px; margin: 0; color: #dfe7dd; font-size: 1.08rem; }
+.hero-story { grid-area: 1 / 1; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease, visibility .5s; }
+.hero-story.is-active { opacity: 1; visibility: visible; transform: none; }
 .hero-actions { display: flex; align-items: center; gap: 1.5rem; }
 .hero-link { display: inline-flex; align-items: center; gap: .5rem; border-bottom: 1px solid rgba(255,255,255,.55); padding-bottom: .2rem; font-weight: 700; }
 .hero-link span { transition: transform .2s; }
@@ -39,11 +77,22 @@
 .hero-proof { display: flex; margin-top: 3.4rem; gap: 2rem; color: #c9d5c8; font-size: .77rem; }
 .hero-proof span { padding-left: 1rem; border-left: 2px solid #db6f3d; }
 .hero-proof strong { display: block; color: white; }
-.hero-art { position: relative; overflow: hidden; min-height: 620px; background: #d7bda1; }
+.hero-art {
+  --hero-photo-width: 440px;
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  min-height: 620px;
+  background: #d7bda1;
+}
+/* O grao passa a ficar ACIMA das fotos: as cinco tem luz e granulacao diferentes e a
+   textura comum costura as cinco. pointer-events: none para nao engolir o swipe. */
 .hero-art::after {
   position: absolute;
+  z-index: 3;
   inset: 0;
   content: "";
+  pointer-events: none;
   opacity: .22;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.17'/%3E%3C/svg%3E");
 }
@@ -51,11 +100,59 @@
 .hero-arch { position: absolute; bottom: -1px; border-radius: 220px 220px 0 0; }
 .hero-arch-one { right: 6%; width: 72%; height: 76%; background: #7e9b79; }
 .hero-arch-two { right: 23%; width: 45%; height: 59%; background: #f0d8bb; }
-.clothing-card { position: absolute; z-index: 2; display: grid; place-items: center; border: 8px solid rgba(255,255,255,.72); border-radius: 8px; box-shadow: 0 28px 50px rgba(45,45,30,.22); }
-.clothing-card svg { width: 74%; color: #183a2b; stroke-width: 4; }
-.card-shirt { top: 18%; left: 4%; width: 230px; height: 280px; background: #e8a36e; transform: rotate(-8deg); }
-.card-dress { right: 4%; bottom: 9%; width: 250px; height: 330px; background: #f5e9d5; transform: rotate(7deg); }
-.card-dress svg { color: #a44e36; }
+.hero-track {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  grid-area: 1 / 1;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.hero-track::-webkit-scrollbar { display: none; }
+.hero-track:focus-visible { outline: 2px solid var(--surface); outline-offset: -5px; }
+.hero-slide {
+  display: grid;
+  flex: 0 0 100%;
+  place-items: center;
+  padding: clamp(2rem, 4vw, 3.2rem) clamp(1.5rem, 3vw, 3rem) clamp(4.4rem, 6vw, 5.2rem);
+  scroll-snap-align: center;
+}
+/* A foto e contida, nao sangra: a coluna e paisagem e um cover cortaria ~40% da altura
+   da peca. A largura manda e o 2:3 deriva a altura, entao a roupa aparece inteira. O
+   cover do img so absorve o 1.9% a mais de uma das fotos. O raio do topo repete o dos
+   arcos, entao a foto entra no desenho em vez de tapa-lo. */
+.hero-photo {
+  position: relative;
+  width: min(100%, var(--hero-photo-width));
+  max-height: 100%;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
+  border-radius: 210px 210px 14px 14px;
+  box-shadow: 0 30px 60px rgba(45, 45, 30, .3);
+}
+.hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Vela de musgo para as fotos quentes e frias conviverem. O rodape escuro que sustentava a
+   legenda virou uma sombra leve, so para a foto nao flutuar solta sobre o arco. */
+.hero-photo::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(24, 58, 43, 0) 74%, rgba(24, 58, 43, .3) 100%), rgba(49, 92, 70, .16);
+}
+.hero-dots { position: absolute; z-index: 4; bottom: clamp(1.1rem, 2.4vw, 1.8rem); left: 50%; display: flex; transform: translateX(-50%); gap: .5rem; }
+.hero-dot { width: 10px; height: 10px; padding: 0; border: 0; border-radius: var(--radius-pill); background: rgba(255, 255, 255, .55); box-shadow: 0 1px 6px rgba(0, 0, 0, .28); cursor: pointer; transition: width .35s ease, background-color .35s ease; }
+.hero-dot:hover { background: white; }
+.hero-dot:focus-visible { outline: 2px solid var(--surface); outline-offset: 3px; }
+.hero-dot[aria-current="true"] { position: relative; width: 38px; overflow: hidden; background: rgba(255, 255, 255, .45); }
+/* A barra de progresso e o sol do hero antigo: o laranja nao sumiu, mudou de funcao. */
+.hero-dot[aria-current="true"]::after { position: absolute; inset: 0; content: ""; border-radius: inherit; background: #db6f3d; transform: scaleX(1); transform-origin: left; }
+.home-hero[data-hero-autoplay="on"] .hero-dot[aria-current="true"]::after,
+.home-hero[data-hero-autoplay="pausado"] .hero-dot[aria-current="true"]::after { animation: hero-dot-progress 6s linear forwards; }
+.home-hero[data-hero-autoplay="pausado"] .hero-dot[aria-current="true"]::after { animation-play-state: paused; }
+@keyframes hero-dot-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .hero-spark { position: absolute; z-index: 3; color: var(--surface); font-size: 2.4rem; }
 .spark-one { top: 8%; left: 14%; }
 .spark-two { right: 4%; bottom: 4%; }
@@ -903,7 +1000,8 @@ body:has(.form-page) {
 
 @media (max-width: 980px) {
   .home-hero-inner { grid-template-columns: 1fr; }
-  .hero-art { min-height: 480px; }
+  /* Em coluna unica a altura passa a ser a da propria foto, sem piso. */
+  .hero-art { min-height: 0; }
   .home-benefits { grid-template-columns: 1fr; }
   .home-benefits > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .home-benefits > div:last-child { border-bottom: 0; }
@@ -945,10 +1043,8 @@ body:has(.form-page) {
   .home-hero h1 { font-size: clamp(3rem, 14vw, 4.8rem); }
   .hero-actions { align-items: flex-start; flex-direction: column; }
   .hero-proof { flex-direction: column; gap: 1rem; }
-  .hero-art { min-height: 380px; }
+  .hero-art { --hero-photo-width: 320px; }
   .hero-sun { width: 190px; }
-  .card-shirt { width: 165px; height: 205px; }
-  .card-dress { width: 180px; height: 238px; }
   .circular-banner { margin-bottom: 4rem; align-items: flex-start; flex-direction: column; }
   .catalog-layout { grid-template-columns: 1fr; gap: 1rem; }
   .filter-mobile-toggle { display: inline-flex; width: max-content; }
@@ -1065,8 +1161,7 @@ body:has(.form-page) {
   .page-intro h1,
   .catalog-header h1 { overflow-wrap: anywhere; }
   .hero-copy { padding-inline: 1rem; }
-  .card-shirt { left: -1.5rem; }
-  .card-dress { right: -1.5rem; }
+  .hero-art { --hero-photo-width: 260px; }
   .registration-content,
   .auth-content { padding-inline: .85rem; }
 }
@@ -1083,4 +1178,8 @@ body:has(.form-page) {
   .registration-section:focus-within {
     transform: none;
   }
+  /* O autoplay ja fica desligado no JS; aqui somem a barra de progresso e as transicoes. */
+  .hero-story { transition: none; transform: none; }
+  .hero-dot { transition: none; }
+  .home-hero .hero-dot[aria-current="true"]::after { animation: none; }
 }
